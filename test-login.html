@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste do Sistema de Login - RIDEC</title>
+    <link rel="stylesheet" href="login-styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+        }
+        
+        .test-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f7fafc;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .test-section h3 {
+            color: #2d3748;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .test-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+        
+        .test-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .test-btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .test-btn-primary:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+        }
+        
+        .test-btn-secondary {
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+        
+        .test-btn-secondary:hover {
+            background: #cbd5e0;
+        }
+        
+        .test-btn-success {
+            background: #48bb78;
+            color: white;
+        }
+        
+        .test-btn-success:hover {
+            background: #38a169;
+        }
+        
+        .test-btn-warning {
+            background: #ed8936;
+            color: white;
+        }
+        
+        .test-btn-warning:hover {
+            background: #dd6b20;
+        }
+        
+        .test-info {
+            background: #ebf8ff;
+            border: 1px solid #bee3f8;
+            color: #2b6cb0;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        
+        .test-warning {
+            background: #fef5e7;
+            border: 1px solid #fbd38d;
+            color: #c05621;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        
+        .test-success {
+            background: #f0fff4;
+            border: 1px solid #9ae6b4;
+            color: #2f855a;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .status-success {
+            background: #c6f6d5;
+            color: #2f855a;
+        }
+        
+        .status-error {
+            background: #fed7d7;
+            color: #c53030;
+        }
+        
+        .status-warning {
+            background: #fef5e7;
+            color: #c05621;
+        }
+        
+        .status-info {
+            background: #ebf8ff;
+            color: #2b6cb0;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="test-container">
+            <div class="test-header">
+                <h1><i class="fas fa-vial"></i> Teste do Sistema de Login RIDEC</h1>
+                <p>Página de demonstração e teste das funcionalidades de autenticação</p>
+            </div>
+
+            <!-- Status do Sistema -->
+            <div class="test-section">
+                <h3><i class="fas fa-info-circle"></i> Status do Sistema</h3>
+                <div id="systemStatus">
+                    <div class="status-indicator status-info">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        Verificando sistema...
+                    </div>
+                </div>
+                <div class="test-buttons">
+                    <button class="test-btn test-btn-primary" onclick="checkSystemStatus()">
+                        <i class="fas fa-sync-alt"></i>
+                        Verificar Status
+                    </button>
+                </div>
+            </div>
+
+            <!-- Testes de Autenticação -->
+            <div class="test-section">
+                <h3><i class="fas fa-key"></i> Testes de Autenticação</h3>
+                <div class="test-info">
+                    <strong>Credenciais de Teste:</strong><br>
+                    • Admin: admin@ridec.com / admin123<br>
+                    • Usuário: user@ridec.com / user123
+                </div>
+                <div class="test-buttons">
+                    <a href="login.html" class="test-btn test-btn-primary">
+                        <i class="fas fa-sign-in-alt"></i>
+                        Ir para Login
+                    </a>
+                    <button class="test-btn test-btn-secondary" onclick="testAuthManager()">
+                        <i class="fas fa-cog"></i>
+                        Testar AuthManager
+                    </button>
+                    <button class="test-btn test-btn-warning" onclick="testSupabaseConnection()">
+                        <i class="fas fa-database"></i>
+                        Testar Supabase
+                    </button>
+                </div>
+            </div>
+
+            <!-- Testes de Validação -->
+            <div class="test-section">
+                <h3><i class="fas fa-check-circle"></i> Testes de Validação</h3>
+                <div class="test-warning">
+                    <strong>Atenção:</strong> Estes testes simulam validações sem fazer login real.
+                </div>
+                <div class="test-buttons">
+                    <button class="test-btn test-btn-secondary" onclick="testEmailValidation()">
+                        <i class="fas fa-envelope"></i>
+                        Testar Email
+                    </button>
+                    <button class="test-btn test-btn-secondary" onclick="testPasswordValidation()">
+                        <i class="fas fa-lock"></i>
+                        Testar Senha
+                    </button>
+                    <button class="test-btn test-btn-secondary" onclick="testFormValidation()">
+                        <i class="fas fa-clipboard-check"></i>
+                        Testar Formulário
+                    </button>
+                </div>
+            </div>
+
+            <!-- Testes de Interface -->
+            <div class="test-section">
+                <h3><i class="fas fa-palette"></i> Testes de Interface</h3>
+                <div class="test-info">
+                    Teste os diferentes estados e animações da interface de login.
+                </div>
+                <div class="test-buttons">
+                    <button class="test-btn test-btn-secondary" onclick="testLoadingStates()">
+                        <i class="fas fa-spinner"></i>
+                        Estados de Loading
+                    </button>
+                    <button class="test-btn test-btn-secondary" onclick="testErrorStates()">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Estados de Erro
+                    </button>
+                    <button class="test-btn test-btn-secondary" onclick="testSuccessStates()">
+                        <i class="fas fa-check-circle"></i>
+                        Estados de Sucesso
+                    </button>
+                </div>
+            </div>
+
+            <!-- Testes de Integração -->
+            <div class="test-section">
+                <h3><i class="fas fa-plug"></i> Testes de Integração</h3>
+                <div class="test-info">
+                    Teste a integração com o sistema principal e banco de dados.
+                </div>
+                <div class="test-buttons">
+                    <button class="test-btn test-btn-success" onclick="testDatabaseConnection()">
+                        <i class="fas fa-database"></i>
+                        Testar Banco
+                    </button>
+                    <button class="test-btn test-btn-success" onclick="testUserProfile()">
+                        <i class="fas fa-user"></i>
+                        Testar Perfil
+                    </button>
+                    <button class="test-btn test-btn-success" onclick="testPermissions()">
+                        <i class="fas fa-shield-alt"></i>
+                        Testar Permissões
+                    </button>
+                </div>
+            </div>
+
+            <!-- Navegação -->
+            <div class="test-section">
+                <h3><i class="fas fa-compass"></i> Navegação</h3>
+                <div class="test-buttons">
+                    <a href="index.html" class="test-btn test-btn-primary">
+                        <i class="fas fa-home"></i>
+                        Sistema Principal
+                    </a>
+                    <a href="login.html" class="test-btn test-btn-secondary">
+                        <i class="fas fa-sign-in-alt"></i>
+                        Tela de Login
+                    </a>
+                    <button class="test-btn test-btn-warning" onclick="clearAllData()">
+                        <i class="fas fa-trash"></i>
+                        Limpar Dados
+                    </button>
+                </div>
+            </div>
+
+            <!-- Logs -->
+            <div class="test-section">
+                <h3><i class="fas fa-list"></i> Logs do Sistema</h3>
+                <div id="systemLogs" style="background: #1a202c; color: #e2e8f0; padding: 15px; border-radius: 8px; font-family: monospace; font-size: 12px; max-height: 200px; overflow-y: auto;">
+                    <div>🚀 Sistema de teste inicializado...</div>
+                </div>
+                <div class="test-buttons">
+                    <button class="test-btn test-btn-secondary" onclick="clearLogs()">
+                        <i class="fas fa-eraser"></i>
+                        Limpar Logs
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <script src="auth-manager.js"></script>
+    <script>
+        // Sistema de logs
+        function addLog(message, type = 'info') {
+            const logsContainer = document.getElementById('systemLogs');
+            const timestamp = new Date().toLocaleTimeString();
+            const icon = {
+                'info': 'ℹ️',
+                'success': '✅',
+                'warning': '⚠️',
+                'error': '❌'
+            }[type] || 'ℹ️';
+            
+            const logEntry = document.createElement('div');
+            logEntry.innerHTML = `${icon} [${timestamp}] ${message}`;
+            logsContainer.appendChild(logEntry);
+            logsContainer.scrollTop = logsContainer.scrollHeight;
+        }
+
+        function clearLogs() {
+            document.getElementById('systemLogs').innerHTML = '<div>🚀 Logs limpos...</div>';
+        }
+
+        // Verificar status do sistema
+        async function checkSystemStatus() {
+            addLog('Verificando status do sistema...', 'info');
+            
+            const statusDiv = document.getElementById('systemStatus');
+            statusDiv.innerHTML = '<div class="status-indicator status-info"><i class="fas fa-spinner fa-spin"></i> Verificando...</div>';
+            
+            try {
+                // Verificar se Supabase está carregado
+                if (typeof supabase === 'undefined') {
+                    throw new Error('Supabase não carregado');
+                }
+                
+                // Verificar configuração
+                if (typeof SUPABASE_CONFIG === 'undefined') {
+                    throw new Error('Configuração do Supabase não encontrada');
+                }
+                
+                // Verificar AuthManager
+                if (typeof window.authManager === 'undefined') {
+                    throw new Error('AuthManager não inicializado');
+                }
+                
+                // Testar conexão
+                const supabaseClient = supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey);
+                const { data, error } = await supabaseClient.from('empresa').select('count').limit(1);
+                
+                if (error) {
+                    throw error;
+                }
+                
+                statusDiv.innerHTML = '<div class="status-indicator status-success"><i class="fas fa-check-circle"></i> Sistema funcionando perfeitamente</div>';
+                addLog('Sistema verificado com sucesso!', 'success');
+                
+            } catch (error) {
+                statusDiv.innerHTML = '<div class="status-indicator status-error"><i class="fas fa-exclamation-circle"></i> Erro no sistema: ' + error.message + '</div>';
+                addLog('Erro ao verificar sistema: ' + error.message, 'error');
+            }
+        }
+
+        // Testar AuthManager
+        function testAuthManager() {
+            addLog('Testando AuthManager...', 'info');
+            
+            if (typeof window.authManager === 'undefined') {
+                addLog('AuthManager não encontrado!', 'error');
+                return;
+            }
+            
+            const authInfo = window.authManager.getUserInfo();
+            addLog('AuthManager status: ' + JSON.stringify(authInfo), 'info');
+            
+            if (authInfo.isAuthenticated) {
+                addLog('Usuário autenticado: ' + authInfo.user?.email, 'success');
+            } else {
+                addLog('Nenhum usuário autenticado', 'warning');
+            }
+        }
+
+        // Testar conexão Supabase
+        async function testSupabaseConnection() {
+            addLog('Testando conexão com Supabase...', 'info');
+            
+            try {
+                if (typeof supabase === 'undefined') {
+                    throw new Error('Biblioteca Supabase não carregada');
+                }
+                
+                const supabaseClient = supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey);
+                const { data, error } = await supabaseClient.from('empresa').select('count').limit(1);
+                
+                if (error) {
+                    throw error;
+                }
+                
+                addLog('Conexão com Supabase estabelecida!', 'success');
+                
+            } catch (error) {
+                addLog('Erro na conexão Supabase: ' + error.message, 'error');
+            }
+        }
+
+        // Testar validação de email
+        function testEmailValidation() {
+            addLog('Testando validação de email...', 'info');
+            
+            const testEmails = [
+                'test@example.com',
+                'invalid-email',
+                'user@domain.co.uk',
+                'test.email@subdomain.example.com'
+            ];
+            
+            testEmails.forEach(email => {
+                const isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+                addLog(`Email "${email}": ${isValid ? 'Válido' : 'Inválido'}`, isValid ? 'success' : 'error');
+            });
+        }
+
+        // Testar validação de senha
+        function testPasswordValidation() {
+            addLog('Testando validação de senha...', 'info');
+            
+            const testPasswords = [
+                '123456',
+                'password',
+                '12345',
+                'strongpassword123'
+            ];
+            
+            testPasswords.forEach(password => {
+                const isValid = password.length >= 6;
+                addLog(`Senha "${password}": ${isValid ? 'Válida' : 'Inválida'}`, isValid ? 'success' : 'error');
+            });
+        }
+
+        // Testar validação de formulário
+        function testFormValidation() {
+            addLog('Testando validação de formulário...', 'info');
+            
+            const testData = {
+                email: 'test@example.com',
+                password: 'password123',
+                confirmPassword: 'password123'
+            };
+            
+            const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(testData.email);
+            const passwordValid = testData.password.length >= 6;
+            const passwordsMatch = testData.password === testData.confirmPassword;
+            
+            addLog(`Email válido: ${emailValid}`, emailValid ? 'success' : 'error');
+            addLog(`Senha válida: ${passwordValid}`, passwordValid ? 'success' : 'error');
+            addLog(`Senhas coincidem: ${passwordsMatch}`, passwordsMatch ? 'success' : 'error');
+            
+            const formValid = emailValid && passwordValid && passwordsMatch;
+            addLog(`Formulário completo: ${formValid}`, formValid ? 'success' : 'warning');
+        }
+
+        // Testar estados de loading
+        function testLoadingStates() {
+            addLog('Testando estados de loading...', 'info');
+            
+            // Simular loading
+            addLog('Simulando loading de login...', 'info');
+            setTimeout(() => {
+                addLog('Loading concluído!', 'success');
+            }, 2000);
+        }
+
+        // Testar estados de erro
+        function testErrorStates() {
+            addLog('Testando estados de erro...', 'info');
+            
+            const errorMessages = [
+                'Email ou senha incorretos',
+                'Usuário não encontrado',
+                'Senha muito fraca',
+                'Email já cadastrado'
+            ];
+            
+            errorMessages.forEach((message, index) => {
+                setTimeout(() => {
+                    addLog(`Erro ${index + 1}: ${message}`, 'error');
+                }, index * 500);
+            });
+        }
+
+        // Testar estados de sucesso
+        function testSuccessStates() {
+            addLog('Testando estados de sucesso...', 'info');
+            
+            const successMessages = [
+                'Login realizado com sucesso!',
+                'Conta criada com sucesso!',
+                'Email de recuperação enviado!',
+                'Perfil atualizado!'
+            ];
+            
+            successMessages.forEach((message, index) => {
+                setTimeout(() => {
+                    addLog(`Sucesso ${index + 1}: ${message}`, 'success');
+                }, index * 500);
+            });
+        }
+
+        // Testar conexão com banco
+        async function testDatabaseConnection() {
+            addLog('Testando conexão com banco de dados...', 'info');
+            
+            try {
+                if (typeof window.supabaseDB === 'undefined') {
+                    throw new Error('SupabaseDB não encontrado');
+                }
+                
+                const empresas = await window.supabaseDB.getEmpresas();
+                addLog(`Conexão com banco estabelecida! Encontradas ${empresas.length} empresas.`, 'success');
+                
+            } catch (error) {
+                addLog('Erro na conexão com banco: ' + error.message, 'error');
+            }
+        }
+
+        // Testar perfil de usuário
+        function testUserProfile() {
+            addLog('Testando perfil de usuário...', 'info');
+            
+            if (window.authManager && window.authManager.isAuthenticated) {
+                const userInfo = window.authManager.getUserInfo();
+                addLog('Perfil carregado: ' + JSON.stringify(userInfo.profile), 'success');
+            } else {
+                addLog('Nenhum usuário autenticado para testar perfil', 'warning');
+            }
+        }
+
+        // Testar permissões
+        function testPermissions() {
+            addLog('Testando sistema de permissões...', 'info');
+            
+            if (window.authManager) {
+                const permissions = ['read', 'write', 'admin', 'super_admin'];
+                permissions.forEach(permission => {
+                    const hasPermission = window.authManager.hasPermission(permission);
+                    addLog(`Permissão "${permission}": ${hasPermission ? 'Concedida' : 'Negada'}`, hasPermission ? 'success' : 'warning');
+                });
+            } else {
+                addLog('AuthManager não encontrado para testar permissões', 'error');
+            }
+        }
+
+        // Limpar todos os dados
+        function clearAllData() {
+            addLog('Limpando todos os dados...', 'warning');
+            
+            if (confirm('Tem certeza que deseja limpar todos os dados?')) {
+                localStorage.clear();
+                addLog('Dados limpos com sucesso!', 'success');
+            } else {
+                addLog('Operação cancelada pelo usuário', 'info');
+            }
+        }
+
+        // Inicializar página
+        document.addEventListener('DOMContentLoaded', () => {
+            addLog('Página de teste carregada', 'success');
+            checkSystemStatus();
+        });
+    </script>
+</body>
+</html>
+

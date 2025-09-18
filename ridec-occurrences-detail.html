@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ocorrências do RIDEC - Sistema de Controle</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="occurrences-styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Estilos específicos para a página de ocorrências de RIDEC */
+        .ridec-occurrences-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .ridec-occurrences-header {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .ridec-occurrences-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+        }
+
+        .ridec-header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .ridec-header-title {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .ridec-header-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+        }
+
+        .ridec-header-text h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin: 0 0 5px 0;
+        }
+
+        .ridec-header-subtitle {
+            color: #64748b;
+            font-size: 1.1rem;
+            margin: 0;
+        }
+
+        .ridec-header-stats {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .ridec-stat-item {
+            text-align: center;
+            background: rgba(102, 126, 234, 0.1);
+            padding: 15px 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(102, 126, 234, 0.2);
+        }
+
+        .ridec-stat-number {
+            display: block;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .ridec-stat-label {
+            font-size: 0.9rem;
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .ridec-occurrences-content {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .ridec-occurrences-filters {
+            background: #f8fafc;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .ridec-filters-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            color: #475569;
+            font-weight: 600;
+        }
+
+        .ridec-filters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .ridec-filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .ridec-filter-label {
+            font-weight: 600;
+            color: #374151;
+            font-size: 0.9rem;
+        }
+
+        .ridec-filter-input {
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .ridec-filter-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .ridec-filter-select {
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: white;
+            cursor: pointer;
+        }
+
+        .ridec-filter-select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .ridec-filter-actions {
+            display: flex;
+            gap: 15px;
+            align-items: end;
+        }
+
+        .btn-ridec-filter {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-ridec-filter:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-ridec-clear {
+            background: #f1f5f9;
+            color: #64748b;
+            border: 2px solid #e2e8f0;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-ridec-clear:hover {
+            background: #e2e8f0;
+            color: #475569;
+        }
+
+        .ridec-occurrences-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
+        }
+
+        .ridec-occurrence-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .ridec-occurrence-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+        }
+
+        .ridec-occurrence-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .ridec-occurrence-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+
+        .ridec-occurrence-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin: 0;
+            line-height: 1.3;
+        }
+
+        .ridec-occurrence-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .ridec-occurrence-badge.active {
+            background: rgba(245, 158, 11, 0.1);
+            color: #d97706;
+        }
+
+        .ridec-occurrence-badge.completed {
+            background: rgba(16, 185, 129, 0.1);
+            color: #059669;
+        }
+
+        .ridec-occurrence-badge.overdue {
+            background: rgba(239, 68, 68, 0.1);
+            color: #dc2626;
+        }
+
+        .ridec-occurrence-badge.pending {
+            background: rgba(107, 114, 128, 0.1);
+            color: #6b7280;
+        }
+
+        .ridec-occurrence-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .ridec-info-item {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .ridec-info-label {
+            font-size: 0.8rem;
+            color: #64748b;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .ridec-info-value {
+            font-size: 1rem;
+            color: #1e293b;
+            font-weight: 600;
+        }
+
+        .ridec-occurrence-progress {
+            margin-bottom: 20px;
+        }
+
+        .ridec-progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .ridec-progress-label {
+            font-size: 0.9rem;
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .ridec-progress-percentage {
+            font-size: 0.9rem;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .ridec-progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .ridec-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .ridec-occurrence-stages {
+            margin-bottom: 20px;
+        }
+
+        .ridec-stages-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 15px;
+        }
+
+        .ridec-stages-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .ridec-stage-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: #f8fafc;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .ridec-stage-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            color: white;
+        }
+
+        .ridec-stage-icon.completed {
+            background: #10b981;
+        }
+
+        .ridec-stage-icon.active {
+            background: #f59e0b;
+        }
+
+        .ridec-stage-icon.pending {
+            background: #6b7280;
+        }
+
+        .ridec-stage-info {
+            flex: 1;
+        }
+
+        .ridec-stage-name {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin: 0;
+        }
+
+        .ridec-stage-time {
+            font-size: 0.8rem;
+            color: #64748b;
+            margin: 0;
+        }
+
+        .ridec-occurrence-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn-ridec-action {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-ridec-action.primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-ridec-action.primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-ridec-action.secondary {
+            background: #f1f5f9;
+            color: #64748b;
+            border: 1px solid #e2e8f0;
+        }
+
+        .btn-ridec-action.secondary:hover {
+            background: #e2e8f0;
+            color: #475569;
+        }
+
+        .btn-ridec-action.danger {
+            background: #fef2f2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+        }
+
+        .btn-ridec-action.danger:hover {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+        .btn-create-ridec-occurrence {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1rem;
+            margin: 20px 0;
+        }
+
+        .btn-create-ridec-occurrence:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .ridec-empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #64748b;
+        }
+
+        .ridec-empty-icon {
+            font-size: 4rem;
+            color: #cbd5e1;
+            margin-bottom: 20px;
+        }
+
+        .ridec-empty-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #475569;
+            margin-bottom: 10px;
+        }
+
+        .ridec-empty-description {
+            font-size: 1rem;
+            color: #64748b;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .ridec-occurrences-container {
+                padding: 15px;
+            }
+
+            .ridec-header-content {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .ridec-header-stats {
+                justify-content: center;
+            }
+
+            .ridec-filters-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .ridec-occurrences-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .ridec-occurrence-info {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="ridec-occurrences-container">
+        <!-- Header -->
+        <header class="ridec-occurrences-header">
+            <div class="ridec-header-content">
+                <div class="ridec-header-title">
+                    <div class="ridec-header-icon">
+                        <i class="fas fa-clipboard-list"></i>
+                    </div>
+                    <div class="ridec-header-text">
+                        <h1 id="ridecTitle">Ocorrências do RIDEC</h1>
+                        <p class="ridec-header-subtitle" id="ridecDescription">Gerencie e acompanhe todas as ocorrências deste modelo RIDEC</p>
+                    </div>
+                </div>
+                <div style="position: absolute; top: 20px; right: 20px;">
+                    <a href="index.html" class="btn btn-secondary" style="background: rgba(255, 255, 255, 0.2); color: white; border: 1px solid rgba(255, 255, 255, 0.3); text-decoration: none; padding: 10px 20px; border-radius: 10px; font-weight: 600; transition: all 0.3s ease;">
+                        <i class="fas fa-arrow-left"></i> Voltar ao Sistema
+                    </a>
+                </div>
+                <div class="ridec-header-stats">
+                    <div class="ridec-stat-item">
+                        <span class="ridec-stat-number" id="totalOccurrences">0</span>
+                        <span class="ridec-stat-label">Total</span>
+                    </div>
+                    <div class="ridec-stat-item">
+                        <span class="ridec-stat-number" id="activeOccurrences">0</span>
+                        <span class="ridec-stat-label">Ativas</span>
+                    </div>
+                    <div class="ridec-stat-item">
+                        <span class="ridec-stat-number" id="completedOccurrences">0</span>
+                        <span class="ridec-stat-label">Concluídas</span>
+                    </div>
+                    <div class="ridec-stat-item">
+                        <span class="ridec-stat-number" id="overdueOccurrences">0</span>
+                        <span class="ridec-stat-label">Atrasadas</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Conteúdo Principal -->
+        <div class="ridec-occurrences-content">
+            <!-- Filtros -->
+            <section class="ridec-occurrences-filters">
+                <div class="ridec-filters-header">
+                    <i class="fas fa-filter"></i>
+                    <h3>Filtros e Busca</h3>
+                </div>
+                <div class="ridec-filters-grid">
+                    <div class="ridec-filter-group">
+                        <label class="ridec-filter-label">Buscar por título</label>
+                        <input type="text" class="ridec-filter-input" id="searchTitle" placeholder="Digite o título da ocorrência...">
+                    </div>
+                    <div class="ridec-filter-group">
+                        <label class="ridec-filter-label">Status</label>
+                        <select class="ridec-filter-select" id="filterStatus">
+                            <option value="">Todos os status</option>
+                            <option value="active">Ativa</option>
+                            <option value="completed">Concluída</option>
+                            <option value="overdue">Atrasada</option>
+                            <option value="pending">Pendente</option>
+                        </select>
+                    </div>
+                    <div class="ridec-filter-group">
+                        <label class="ridec-filter-label">Data de criação</label>
+                        <input type="date" class="ridec-filter-input" id="filterDate">
+                    </div>
+                    <div class="ridec-filter-actions">
+                        <button class="btn-ridec-filter" id="applyFilters">
+                            <i class="fas fa-search"></i>
+                            Aplicar Filtros
+                        </button>
+                        <button class="btn-ridec-clear" id="clearFilters">
+                            <i class="fas fa-times"></i>
+                            Limpar
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Botão Criar Nova Ocorrência -->
+            <button class="btn-create-ridec-occurrence" id="createOccurrenceBtn">
+                <i class="fas fa-plus"></i>
+                Criar Nova Ocorrência
+            </button>
+
+            <!-- Lista de Ocorrências -->
+            <section id="occurrencesList">
+                <div class="ridec-occurrences-grid" id="occurrencesGrid">
+                    <!-- Cards de ocorrências serão inseridos aqui dinamicamente -->
+                </div>
+
+                <!-- Estado vazio -->
+                <div id="emptyState" class="ridec-empty-state" style="display: none;">
+                    <div class="ridec-empty-icon">
+                        <i class="fas fa-clipboard-list"></i>
+                    </div>
+                    <h3 class="ridec-empty-title">Nenhuma ocorrência encontrada</h3>
+                    <p class="ridec-empty-description">Não há ocorrências que correspondam aos filtros aplicados ou ainda não foram criadas ocorrências para este modelo RIDEC.</p>
+                    <button class="btn-create-ridec-occurrence" id="createFirstOccurrence">
+                        <i class="fas fa-plus"></i>
+                        Criar Primeira Ocorrência
+                    </button>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <script src="ridec-occurrences-detail.js"></script>
+</body>
+</html> 

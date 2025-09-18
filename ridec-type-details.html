@@ -1,0 +1,6056 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalhes do Tipo de RIDEC - Sistema RIDEC</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Reset e Base */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #2d3748;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header Moderno */
+        .modern-header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.1),
+                0 0 0 1px rgba(255, 255, 255, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .modern-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2, #f093fb, #f5576c);
+            border-radius: 24px 24px 0 0;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            z-index: 2;
+        }
+
+        .back-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 12px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .back-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .header-title {
+            text-align: center;
+            flex: 1;
+        }
+
+        .ridec-type-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+
+        .ridec-type-subtitle {
+            color: #718096;
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 15px;
+        }
+
+        .floating-btn {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(102, 126, 234, 0.2);
+            padding: 12px 20px;
+            border-radius: 12px;
+            color: #667eea;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(10px);
+        }
+
+        .floating-btn:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        /* Cards de Estatísticas Modernos */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 
+                0 10px 30px rgba(0, 0, 0, 0.1),
+                0 0 0 1px rgba(255, 255, 255, 0.2);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--card-color), var(--card-color-light));
+            border-radius: 20px 20px 0 0;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.15),
+                0 0 0 1px rgba(255, 255, 255, 0.3);
+        }
+
+        .stat-card.total {
+            --card-color: #4299e1;
+            --card-color-light: #3182ce;
+        }
+
+        .stat-card.active {
+            --card-color: #48bb78;
+            --card-color-light: #38a169;
+        }
+
+        .stat-card.overdue {
+            --card-color: #f56565;
+            --card-color-light: #e53e3e;
+        }
+
+        .stat-card.completed {
+            --card-color: #805ad5;
+            --card-color-light: #6b46c1;
+        }
+
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, var(--card-color), var(--card-color-light));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            color: white;
+            font-size: 1.5rem;
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--card-color);
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            color: #718096;
+            font-weight: 600;
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Seção de Configuração do Modelo */
+        .config-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            margin-bottom: 30px;
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.1),
+                0 0 0 1px rgba(255, 255, 255, 0.2);
+            overflow: hidden;
+        }
+
+        .config-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            position: relative;
+        }
+
+        .config-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="75" cy="75" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="50" cy="10" r="0.5" fill="rgba(255,255,255,0.1)"/><circle cx="10" cy="60" r="0.5" fill="rgba(255,255,255,0.1)"/><circle cx="90" cy="40" r="0.5" fill="rgba(255,255,255,0.1)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            opacity: 0.3;
+        }
+
+        .config-header-content {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .config-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .config-title i {
+            font-size: 2rem;
+        }
+
+        .edit-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .edit-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .config-content {
+            padding: 40px;
+        }
+
+        /* Informações do Modelo */
+        .model-info-card {
+            background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 40px;
+            border: 1px solid rgba(102, 126, 234, 0.1);
+        }
+
+        .model-header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .model-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 2rem;
+        }
+
+        .model-details h3 {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #2d3748;
+            margin-bottom: 8px;
+        }
+
+        .model-badge {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: inline-block;
+        }
+
+        .model-description {
+            color: #718096;
+            font-size: 1.1rem;
+            line-height: 1.7;
+            margin-bottom: 25px;
+        }
+
+        .model-meta-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .meta-item {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(102, 126, 234, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .meta-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .meta-content h4 {
+            font-size: 0.9rem;
+            color: #718096;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .meta-content p {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #2d3748;
+            margin: 0;
+        }
+
+        /* Configuração das Etapas */
+        .stages-section {
+            margin-bottom: 40px;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .section-title i {
+            color: #667eea;
+        }
+
+        /* Etapas Padrão */
+        .default-stages-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .stage-card {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            border: 1px solid rgba(102, 126, 234, 0.1);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stage-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--stage-color), var(--stage-color-light));
+            border-radius: 16px 16px 0 0;
+        }
+
+        .stage-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+        }
+
+        .stage-card.ri {
+            --stage-color: #4299e1;
+            --stage-color-light: #3182ce;
+        }
+
+        .stage-card.d {
+            --stage-color: #48bb78;
+            --stage-color-light: #38a169;
+        }
+
+        .stage-card.e {
+            --stage-color: #ed8936;
+            --stage-color-light: #dd6b20;
+        }
+
+        .stage-card.c {
+            --stage-color: #805ad5;
+            --stage-color-light: #6b46c1;
+        }
+
+        .stage-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stage-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--stage-color), var(--stage-color-light));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .stage-info h4 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 4px;
+        }
+
+        .stage-info p {
+            color: #718096;
+            font-size: 0.9rem;
+            margin: 0;
+        }
+
+        .stage-input-group {
+            position: relative;
+        }
+
+        .stage-input {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #2d3748;
+            background: #f7fafc;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .stage-input:focus {
+            outline: none;
+            border-color: var(--stage-color);
+            background: white;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        }
+
+        .stage-unit {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #718096;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        /* Etapas A */
+        .custom-stages-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .add-stage-btn {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 4px 15px rgba(72, 187, 120, 0.3);
+        }
+
+        .add-stage-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(72, 187, 120, 0.4);
+        }
+
+        .stages-a-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .stage-a-card {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            border: 1px solid rgba(102, 126, 234, 0.1);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+
+        .stage-a-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .stage-a-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .stage-a-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #2d3748;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .stage-a-title i {
+            color: #667eea;
+        }
+
+        .stage-a-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .action-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .action-btn.edit {
+            background: #4299e1;
+            color: white;
+        }
+
+        .action-btn.edit:hover {
+            background: #3182ce;
+            transform: translateY(-1px);
+        }
+
+        .action-btn.delete {
+            background: #f56565;
+            color: white;
+        }
+
+        .action-btn.delete:hover {
+            background: #e53e3e;
+            transform: translateY(-1px);
+        }
+
+        .stage-a-fields {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .field-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .field-label {
+            font-size: 0.9rem;
+            color: #4a5568;
+            font-weight: 600;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .field-input {
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            background: #f7fafc;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .field-input:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        }
+
+        /* Botões de Ação */
+        .config-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: flex-end;
+            padding-top: 30px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .save-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .save-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .reset-btn {
+            background: #e2e8f0;
+            color: #4a5568;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .reset-btn:hover {
+            background: #cbd5e0;
+            transform: translateY(-2px);
+        }
+
+        /* Lista de RIDECs - Design moderno e elegante */
+        .ridec-list-section {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            margin-top: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.8);
+        }
+
+        .ridec-list-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .ridec-list-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%);
+            animation: shimmer 3s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .ridec-list-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .ridec-list-title i {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 8px;
+            border-radius: 12px;
+            font-size: 1.1rem;
+        }
+
+        .create-occurrence-btn {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            position: relative;
+            z-index: 1;
+            text-decoration: none;
+        }
+
+        .create-occurrence-btn:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .create-occurrence-btn i {
+            font-size: 0.9rem;
+        }
+
+        .ridec-list-content {
+            padding: 25px;
+        }
+
+        .ridec-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .ridec-item {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            border-radius: 16px;
+            padding: 24px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            min-height: 200px;
+        }
+
+        .ridec-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2, #f093fb);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .ridec-item:hover {
+            transform: translateX(8px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+            border-color: #c7d2fe;
+        }
+
+        .ridec-item:hover::before {
+            opacity: 1;
+        }
+
+        .ridec-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .ridec-header-left {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .ridec-header-right {
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .ridec-header-right .action-btn.delete {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+            padding: 8px 10px;
+            border-radius: 8px;
+            min-width: auto;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .ridec-header-right .action-btn.delete:hover {
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            box-shadow: 0 4px 16px rgba(239, 68, 68, 0.4);
+            transform: translateY(-2px) scale(1.05);
+        }
+
+        .ridec-header-right .action-btn.delete i {
+            font-size: 0.9rem;
+        }
+
+        .ridec-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 10px;
+            line-height: 1.3;
+            background: linear-gradient(135deg, #1e293b 0%, #475569 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .ridec-meta {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.8rem;
+            color: #64748b;
+            background: rgba(241, 245, 249, 0.8);
+            padding: 4px 8px;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .meta-item:hover {
+            background: rgba(226, 232, 240, 0.8);
+            transform: scale(1.05);
+        }
+
+        .meta-item i {
+            font-size: 0.75rem;
+            color: #667eea;
+        }
+
+        .ridec-status {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            white-space: nowrap;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .ridec-status.pending {
+            background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+            color: white;
+        }
+
+        .ridec-status.active {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+        }
+
+        .ridec-status.completed {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+
+        .ridec-status.overdue {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+        }
+
+        .ridec-progress {
+            margin: 16px 0;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: linear-gradient(90deg, #f1f5f9 0%, #e2e8f0 100%);
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 8px;
+            position: relative;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 6px;
+            transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.3) 50%, transparent 70%);
+            animation: progressShimmer 2s infinite;
+        }
+
+        @keyframes progressShimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .progress-fill.active {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        }
+
+        .progress-fill.completed {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+
+        .progress-fill.overdue {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        }
+
+        .progress-fill.pending {
+            background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+        }
+
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8rem;
+            color: #64748b;
+            font-weight: 500;
+        }
+
+
+
+        .action-btn {
+            padding: 8px 16px;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            border: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .action-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .action-btn:hover::before {
+            left: 100%;
+        }
+
+        .action-btn.view {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .action-btn.edit {
+            background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+            color: #475569;
+            border: 1px solid #cbd5e0;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .action-btn.view:hover {
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .action-btn.edit:hover {
+            background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e0 100%);
+        }
+
+
+
+        /* Modal de Confirmação de Exclusão */
+        .delete-confirm-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .delete-confirm-modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10000;
+            animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .delete-confirm-content {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border-radius: 20px;
+            padding: 0;
+            box-shadow: 
+                0 20px 60px rgba(0, 0, 0, 0.3),
+                0 0 0 1px rgba(255, 255, 255, 0.8);
+            max-width: 450px;
+            width: 90vw;
+            overflow: hidden;
+        }
+
+        .delete-confirm-header {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            padding: 24px;
+            text-align: center;
+            position: relative;
+        }
+
+        .delete-confirm-header i {
+            font-size: 2rem;
+            margin-bottom: 12px;
+            display: block;
+            animation: pulse 2s infinite;
+        }
+
+        .delete-confirm-header h3 {
+            margin: 0;
+            font-size: 1.4rem;
+            font-weight: 700;
+        }
+
+        .delete-confirm-body {
+            padding: 24px;
+            text-align: center;
+        }
+
+        .delete-confirm-body p {
+            margin: 0 0 16px 0;
+            color: #374151;
+            font-size: 1rem;
+        }
+
+        .ridec-to-delete {
+            background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            border-radius: 12px;
+            padding: 16px;
+            margin: 16px 0;
+        }
+
+        .ridec-to-delete strong {
+            display: block;
+            font-size: 1.1rem;
+            color: #1e293b;
+            margin-bottom: 4px;
+        }
+
+        .ridec-to-delete .ridec-meta {
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+
+        .delete-warning {
+            color: #dc2626 !important;
+            font-weight: 600;
+            font-size: 0.9rem;
+            background: rgba(239, 68, 68, 0.1);
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .delete-confirm-actions {
+            display: flex;
+            gap: 12px;
+            padding: 24px;
+            background: #f8fafc;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .btn-cancel, .btn-confirm-delete {
+            flex: 1;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-cancel {
+            background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+            color: #475569;
+            border: 1px solid #cbd5e0;
+        }
+
+        .btn-cancel:hover {
+            background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e0 100%);
+            transform: translateY(-2px);
+        }
+
+        .btn-confirm-delete {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+        }
+
+        .btn-confirm-delete:hover {
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            box-shadow: 0 8px 25px rgba(239, 68, 68, 0.4);
+            transform: translateY(-2px);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -60%);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, -50%);
+            }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #64748b;
+        }
+
+        .empty-state i {
+            font-size: 2.5rem;
+            color: #cbd5e0;
+            margin-bottom: 12px;
+        }
+
+        .empty-state h3 {
+            font-size: 1.1rem;
+            color: #1a202c;
+            margin-bottom: 6px;
+        }
+
+        .empty-state p {
+            font-size: 0.9rem;
+            margin-bottom: 16px;
+        }
+
+        /* Cards das Etapas - Design Moderno e Elegante */
+        .ridec-stages-summary {
+            margin-top: 24px;
+            padding: 28px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.95) 100%);
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+            position: relative;
+            overflow: hidden;
+            flex-shrink: 0;
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.08),
+                0 0 0 1px rgba(255, 255, 255, 0.5);
+        }
+
+        .ridec-stages-summary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, 
+                #667eea 0%, 
+                #764ba2 25%, 
+                #f093fb 50%, 
+                #667eea 75%, 
+                #764ba2 100%);
+            background-size: 300% 100%;
+            animation: gradientFlow 4s ease infinite;
+        }
+
+        @keyframes gradientFlow {
+            0% { background-position: 0% 0%; }
+            50% { background-position: 100% 0%; }
+            100% { background-position: 0% 0%; }
+        }
+
+        .stages-summary-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 24px;
+            font-weight: 800;
+            color: #1e293b;
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+        }
+
+        .stages-summary-header i {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 10px;
+            border-radius: 12px;
+            font-size: 1rem;
+            box-shadow: 
+                0 4px 16px rgba(102, 126, 234, 0.3),
+                0 0 0 1px rgba(255, 255, 255, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stages-summary-header i::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        .stages-summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+        }
+
+        .stage-summary-item {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border-radius: 24px;
+            padding: 28px;
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 
+                0 12px 40px rgba(0, 0, 0, 0.06),
+                0 0 0 1px rgba(255, 255, 255, 0.6);
+            min-height: 220px;
+            display: flex;
+            flex-direction: column;
+            backdrop-filter: blur(15px);
+            cursor: pointer;
+            transform-style: preserve-3d;
+            perspective: 1000px;
+        }
+
+        .stage-summary-item:hover {
+            transform: translateY(-8px) scale(1.03) rotateX(2deg);
+            box-shadow: 
+                0 24px 80px rgba(0, 0, 0, 0.12),
+                0 0 0 1px rgba(255, 255, 255, 0.8);
+        }
+
+        .stage-summary-item:hover {
+            transform: translateY(-8px) scale(1.03);
+            box-shadow: 
+                0 24px 80px rgba(0, 0, 0, 0.12),
+                0 0 0 1px rgba(255, 255, 255, 0.8);
+        }
+
+        .stage-summary-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: var(--item-color);
+            opacity: 0.9;
+            transition: all 0.5s ease;
+            transform: scaleX(0);
+            transform-origin: left;
+        }
+
+        .stage-summary-item:hover::before {
+            transform: scaleX(1);
+        }
+
+        .stage-summary-item::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, 
+                rgba(255, 255, 255, 0.15) 0%, 
+                rgba(255, 255, 255, 0.08) 100%);
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            pointer-events: none;
+        }
+
+        .stage-summary-item:hover::after {
+            opacity: 1;
+        }
+
+        /* Efeito de partículas flutuantes */
+        .stage-summary-item .particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.1) 1px, transparent 1px),
+                radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.1) 1px, transparent 1px),
+                radial-gradient(circle at 40% 60%, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+            background-size: 50px 50px, 30px 30px, 40px 40px;
+            background-position: 0 0, 25px 25px, 50px 50px;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            pointer-events: none;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .stage-summary-item:hover .particles {
+            opacity: 0.3;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .stage-summary-header {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            margin-bottom: 24px;
+            padding-bottom: 18px;
+            border-bottom: 1px solid rgba(226, 232, 240, 0.3);
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .stage-summary-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 60px;
+            height: 3px;
+            background: var(--item-color);
+            border-radius: 2px;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            transform: scaleX(0);
+            transform-origin: left;
+        }
+
+        .stage-summary-item:hover .stage-summary-header::after {
+            transform: scaleX(1);
+            width: 120px;
+        }
+
+        .stage-summary-emoji {
+            width: 64px;
+            height: 64px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.2rem;
+            background: linear-gradient(135deg, 
+                rgba(var(--stage-color), 0.2) 0%, 
+                rgba(var(--stage-color), 0.3) 100%);
+            box-shadow: 
+                0 8px 25px rgba(var(--stage-color), 0.25),
+                0 0 0 1px rgba(255, 255, 255, 0.3);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .stage-summary-emoji::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.3) 50%, transparent 70%);
+            animation: emojiShimmer 4s infinite;
+        }
+
+        @keyframes emojiShimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .stage-summary-item:hover .stage-summary-emoji {
+            transform: scale(1.15) rotate(8deg);
+            box-shadow: 
+                0 12px 35px rgba(var(--stage-color), 0.4),
+                0 0 0 1px rgba(255, 255, 255, 0.4);
+        }
+
+        .stage-summary-info {
+            flex: 1;
+        }
+
+        .stage-summary-name {
+            font-size: 1.2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #1e293b 0%, #475569 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            position: relative;
+        }
+
+        .stage-summary-description {
+            font-size: 0.9rem;
+            color: #64748b;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stage-summary-status {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .stage-summary-status.completed {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+
+        .stage-summary-status.active {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        .stage-summary-status.running {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            animation: pulse 1.5s infinite;
+        }
+
+        .stage-summary-status.overdue {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            animation: shake 0.5s ease-in-out infinite alternate;
+        }
+
+        .stage-summary-status.pending {
+            background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+            color: white;
+        }
+
+        .stage-summary-completed {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px;
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+            border-radius: 10px;
+            color: #166534;
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        .stage-summary-completed i {
+            font-size: 1rem;
+        }
+
+        .stage-summary-item.completed {
+            --item-color: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            border-color: rgba(16, 185, 129, 0.3);
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+        }
+
+        .stage-summary-item.active {
+            --item-color: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            border-color: rgba(59, 130, 246, 0.3);
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+            animation: activeGlow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes activeGlow {
+            from { box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2); }
+            to { box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4); }
+        }
+
+        .stage-summary-item.running {
+            --item-color: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            border-color: rgba(245, 158, 11, 0.3);
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            animation: runningPulse 1.5s infinite;
+        }
+
+        @keyframes runningPulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.02); opacity: 0.9; }
+        }
+
+        .stage-summary-item.overdue {
+            --item-color: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            border-color: rgba(239, 68, 68, 0.3);
+            background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+            animation: overdueShake 0.8s ease-in-out infinite alternate;
+        }
+
+        @keyframes overdueShake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-1px); }
+            75% { transform: translateX(1px); }
+            100% { transform: translateX(0); }
+        }
+
+        .stage-summary-name {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stage-summary-details {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .stage-summary-metrics {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+            margin-bottom: 24px;
+        }
+
+        .stage-summary-metric {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.95) 100%);
+            padding: 20px;
+            border-radius: 18px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            box-shadow: 
+                0 6px 20px rgba(0, 0, 0, 0.04),
+                0 0 0 1px rgba(255, 255, 255, 0.6);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .stage-summary-metric::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--item-color);
+            opacity: 0.7;
+            transition: all 0.4s ease;
+            transform: scaleX(0);
+            transform-origin: left;
+        }
+
+        .stage-summary-metric:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 
+                0 12px 30px rgba(0, 0, 0, 0.08),
+                0 0 0 1px rgba(255, 255, 255, 0.8);
+        }
+
+        .stage-summary-metric:hover::before {
+            transform: scaleX(1);
+            opacity: 1;
+        }
+
+        .stage-summary-item:hover .stage-summary-metric {
+            transform: translateY(-3px);
+            box-shadow: 
+                0 10px 25px rgba(0, 0, 0, 0.06),
+                0 0 0 1px rgba(255, 255, 255, 0.8);
+        }
+
+        .stage-summary-metric-label {
+            font-size: 0.75rem;
+            color: #64748b;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-bottom: 6px;
+        }
+
+        .stage-summary-metric-value {
+            font-size: 1.2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #1e293b 0%, #475569 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stage-summary-progress-section {
+            margin-bottom: 20px;
+        }
+
+        .stage-summary-progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .stage-summary-progress-label {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #374151;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stage-summary-progress-percentage {
+            font-size: 0.85rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #1e293b 0%, #475569 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stage-summary-progress-bar {
+            height: 12px;
+            background: linear-gradient(90deg, #f1f5f9 0%, #e2e8f0 100%);
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 
+                inset 0 3px 6px rgba(0, 0, 0, 0.1),
+                0 0 0 1px rgba(255, 255, 255, 0.6);
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .stage-summary-progress-bar:hover {
+            box-shadow: 
+                inset 0 3px 6px rgba(0, 0, 0, 0.15),
+                0 0 0 1px rgba(255, 255, 255, 0.8);
+        }
+
+        .stage-summary-progress-fill {
+            height: 100%;
+            border-radius: 14px;
+            transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stage-summary-progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.5) 50%, transparent 70%);
+            animation: progressShimmer 2.5s infinite;
+        }
+
+        @keyframes progressShimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .stage-summary-progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.4) 50%, transparent 70%);
+            animation: miniShimmer 2s infinite;
+        }
+
+        .stage-summary-progress-fill.completed {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+
+        .stage-summary-progress-fill.active {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        }
+
+        .stage-summary-progress-fill.running {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        }
+
+        .stage-summary-progress-fill.overdue {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        }
+
+        .stage-summary-progress-fill.pending {
+            background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+        }
+
+        @keyframes miniShimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .stage-summary-actions {
+            display: flex;
+            gap: 14px;
+            margin-top: auto;
+        }
+
+        .stage-summary-btn {
+            flex: 1;
+            padding: 14px 20px;
+            border-radius: 14px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.7px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+        }
+
+        .stage-summary-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .stage-summary-btn:hover {
+            transform: translateY(-3px) scale(1.02);
+        }
+
+        .stage-summary-btn:hover::before {
+            left: 100%;
+        }
+
+        .stage-summary-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .stage-summary-btn:hover::before {
+            left: 100%;
+        }
+
+        .stage-summary-btn.start {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3);
+        }
+
+        .stage-summary-btn.start:hover {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            box-shadow: 0 12px 30px rgba(16, 185, 129, 0.4);
+        }
+
+        .stage-summary-btn.finish {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            box-shadow: 0 6px 20px rgba(245, 158, 11, 0.3);
+        }
+
+        .stage-summary-btn.finish:hover {
+            background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+            box-shadow: 0 12px 30px rgba(245, 158, 11, 0.4);
+        }
+
+        .stage-summary-btn:disabled {
+            background: linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%);
+            color: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .stage-summary-btn:disabled:hover {
+            transform: none;
+            box-shadow: none;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        @media (max-width: 768px) {
+            .ridec-list-header {
+                flex-direction: column;
+                gap: 12px;
+                text-align: center;
+            }
+
+            .create-occurrence-btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .ridec-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .ridec-header {
+                flex-direction: column;
+                gap: 8px;
+                align-items: flex-start;
+            }
+
+            .ridec-header-right {
+                width: 100%;
+                justify-content: space-between;
+                margin-top: 8px;
+            }
+
+            .ridec-header-right .action-btn.delete {
+                width: 32px;
+                height: 32px;
+                padding: 6px;
+            }
+
+            .ridec-header-right .action-btn.delete i {
+                font-size: 0.8rem;
+            }
+
+            .ridec-meta {
+                flex-wrap: wrap;
+            }
+
+            .ridec-actions {
+                flex-direction: column;
+            }
+
+            .action-btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .ridec-grid {
+                gap: 12px;
+                padding: 20px;
+            }
+
+            .ridec-item {
+                padding: 16px;
+            }
+
+            .ridec-item:hover {
+                transform: translateX(4px);
+            }
+
+            .ridec-list-header {
+                padding: 20px;
+                flex-direction: column;
+                gap: 16px;
+                text-align: center;
+            }
+
+            .ridec-list-title {
+                font-size: 1.2rem;
+            }
+
+            .create-occurrence-btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .stages-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 15px;
+                padding: 15px;
+            }
+
+            .stage-card {
+                min-height: 200px;
+            }
+
+            .stage-card-header {
+                padding: 15px;
+            }
+
+            .stage-emoji {
+                width: 40px;
+                height: 40px;
+                font-size: 1.8rem;
+            }
+
+            .stage-name {
+                font-size: 1rem;
+            }
+
+            .stage-description {
+                font-size: 0.8rem;
+            }
+
+            .ridec-stages-summary {
+                padding: 14px;
+                margin-top: 16px;
+            }
+
+            .stages-summary-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+
+            .stage-summary-item {
+                padding: 20px;
+                min-height: 180px;
+            }
+
+            .stage-summary-header {
+                flex-direction: column;
+                gap: 12px;
+                text-align: center;
+            }
+
+            .stage-summary-emoji {
+                width: 48px;
+                height: 48px;
+                font-size: 1.8rem;
+            }
+
+            .stage-summary-metrics {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+
+            .stage-summary-metric {
+                padding: 14px;
+            }
+
+            .stage-summary-actions {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .stage-summary-btn {
+                padding: 10px 16px;
+                font-size: 0.8rem;
+            }
+
+            .stage-summary-metrics {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+
+            .stage-summary-actions {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .stage-summary-btn {
+                padding: 8px 12px;
+                font-size: 0.75rem;
+            }
+
+            /* Responsividade do Modal de Confirmação */
+            .delete-confirm-content {
+                max-width: 90vw;
+                margin: 20px;
+            }
+
+            .delete-confirm-header {
+                padding: 20px;
+            }
+
+            .delete-confirm-header h3 {
+                font-size: 1.2rem;
+            }
+
+            .delete-confirm-body {
+                padding: 20px;
+            }
+
+            .delete-confirm-actions {
+                flex-direction: column;
+                gap: 8px;
+                padding: 20px;
+            }
+
+            .btn-cancel, .btn-confirm-delete {
+                padding: 10px 16px;
+                font-size: 0.85rem;
+            }
+
+            .stage-summary-name {
+                font-size: 0.75rem;
+                margin-bottom: 6px;
+            }
+
+            .stage-summary-time {
+                font-size: 0.7rem;
+                margin-bottom: 6px;
+                padding: 2px 6px;
+            }
+
+            .mini-progress-text {
+                font-size: 0.65rem;
+                min-width: 25px;
+            }
+
+            .mini-progress-bar {
+                height: 5px;
+            }
+
+            .status-badge {
+                padding: 6px 10px;
+                font-size: 0.75rem;
+            }
+
+            .action-btn {
+                padding: 6px 12px;
+                font-size: 0.8rem;
+            }
+
+            .ridec-meta {
+                gap: 12px;
+            }
+
+            .meta-item {
+                padding: 3px 6px;
+                font-size: 0.75rem;
+            }
+        }
+
+        /* Responsividade */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            .header-content {
+                flex-direction: column;
+                gap: 20px;
+                text-align: center;
+            }
+
+            .ridec-type-title {
+                font-size: 2rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .model-header {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .model-meta-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .default-stages-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stage-a-fields {
+                grid-template-columns: 1fr;
+            }
+
+            .config-actions {
+                flex-direction: column;
+            }
+
+            .ridec-list-header {
+                flex-direction: column;
+                gap: 20px;
+                text-align: center;
+            }
+
+            .ridec-item-header {
+                flex-direction: column;
+                gap: 15px;
+                align-items: flex-start;
+            }
+
+            .ridec-item-details {
+                grid-template-columns: 1fr;
+            }
+
+            .stages-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .ridec-item-actions {
+                justify-content: center;
+            }
+
+            .stage-a-header {
+                flex-direction: column;
+                gap: 15px;
+                align-items: flex-start;
+            }
+
+            .stage-a-actions {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        /* Animações */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .stat-card,
+        .config-section,
+        .ridec-list-section {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .stat-card:nth-child(1) { animation-delay: 0.1s; }
+        .stat-card:nth-child(2) { animation-delay: 0.2s; }
+        .stat-card:nth-child(3) { animation-delay: 0.3s; }
+        .stat-card:nth-child(4) { animation-delay: 0.4s; }
+
+        /* Estados vazios */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #718096;
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            color: #cbd5e0;
+        }
+
+        .empty-state h3 {
+            margin: 0 0 10px 0;
+            color: #4a5568;
+            font-size: 1.5rem;
+        }
+
+        .empty-state p {
+            margin: 0;
+            font-size: 1rem;
+        }
+
+        /* Elementos de RIDEC */
+        .ridec-item {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            border: 2px solid #e2e8f0;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            margin-bottom: 20px;
+        }
+
+        .ridec-item:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .title-main {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+
+        .title-content {
+            flex: 1;
+        }
+
+        .ridec-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1a202c;
+            margin: 0 0 8px 0;
+        }
+
+        .title-badges {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .occurrence-badge {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .area-badge {
+            background: rgba(100, 116, 139, 0.1);
+            color: #64748b;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .area-badge i {
+            font-size: 0.9rem;
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 25px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-left: 15px;
+        }
+
+        .status-badge.active {
+            background: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+        }
+
+        .status-badge.completed {
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+        }
+
+        .status-badge.overdue {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .status-badge.active .status-dot {
+            background: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        .status-badge.completed .status-dot {
+            background: #10b981;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+        }
+
+        .status-badge.overdue .status-dot {
+            background: #ef4444;
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+        }
+
+        .title-meta {
+            display: flex;
+            gap: 20px;
+            margin-top: 10px;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+
+        .meta-item i {
+            color: #94a3b8;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .info-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            background: #f1f5f9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #3b82f6;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        .info-content {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .info-label {
+            font-size: 0.85rem;
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .info-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1a202c;
+        }
+
+        .stage-highlight {
+            color: #3b82f6;
+        }
+
+        .progress-highlight {
+            color: #10b981;
+        }
+
+        .progress-section {
+            margin-bottom: 20px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: #e2e8f0;
+            border-radius: 5px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 5px;
+            position: relative;
+            transition: width 0.3s ease;
+        }
+
+        .progress-fill.active {
+            background: linear-gradient(90deg, #3b82f6 0%, #1d4ed8 100%);
+        }
+
+        .progress-fill.completed {
+            background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+        }
+
+        .progress-fill.overdue {
+            background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%);
+        }
+
+        .progress-glow {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.3) 50%, transparent 100%);
+            animation: progressGlow 2s linear infinite;
+        }
+
+        .progress-marker {
+            position: absolute;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            transition: left 0.3s ease;
+        }
+
+        .marker-dot {
+            width: 16px;
+            height: 16px;
+            background: white;
+            border: 3px solid #3b82f6;
+            border-radius: 50%;
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+        }
+
+        @keyframes progressGlow {
+            0% {
+                transform: translateX(-100%);
+            }
+            100% {
+                transform: translateX(100%);
+            }
+        }
+
+        .ridec-card-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: space-between;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .action-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .action-group.primary {
+            flex: 1;
+        }
+
+        .action-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 120px;
+            justify-content: center;
+        }
+
+        .action-btn.view {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+            width: 100%;
+        }
+
+        .action-btn.edit {
+            background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+            color: white;
+        }
+
+        .action-btn.delete {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .action-btn.view:hover {
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.25);
+        }
+
+        .action-btn.edit:hover {
+            box-shadow: 0 8px 25px rgba(100, 116, 139, 0.25);
+        }
+
+        .action-btn.delete:hover {
+            box-shadow: 0 8px 25px rgba(239, 68, 68, 0.25);
+        }
+
+        .action-btn i {
+            font-size: 1rem;
+        }
+
+        .action-btn span {
+            font-weight: 500;
+        }
+
+        /* Responsividade */
+        @media (max-width: 768px) {
+            .ridec-item {
+                padding: 20px;
+            }
+
+            .title-main {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .status-badge {
+                margin-left: 0;
+                justify-content: center;
+            }
+
+            .title-meta {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .action-group {
+                flex-direction: column;
+                width: 100%;
+            }
+
+            .action-btn {
+                width: 100%;
+                min-width: auto;
+            }
+        }
+
+        /* Seção de Integrações */
+        .integrations-section {
+            margin-top: 30px;
+            padding: 25px;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.8);
+        }
+
+        .integrations-info {
+            margin-bottom: 25px;
+        }
+
+        .integration-mode-info {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .mode-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+        }
+
+        .mode-badge.simple {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+
+        .mode-badge i {
+            font-size: 1rem;
+        }
+
+        .mode-description {
+            margin: 0;
+            color: #64748b;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .integrations-content {
+            margin-bottom: 25px;
+        }
+
+        .integration-stages-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .integration-stage-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s ease;
+        }
+
+        .integration-stage-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .integration-stage-card .stage-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .integration-stage-card .stage-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .integration-stage-card .stage-info h4 {
+            margin: 0 0 5px 0;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1a202c;
+        }
+
+        .integration-stage-card .stage-info p {
+            margin: 0;
+            color: #718096;
+            font-size: 0.85rem;
+        }
+
+        .integration-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .integration-option {
+            margin: 0;
+        }
+
+        .integration-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            padding: 10px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .integration-checkbox:hover {
+            background: #f7fafc;
+        }
+
+        .integration-checkbox input[type="checkbox"] {
+            display: none;
+        }
+
+        .checkmark {
+            width: 18px;
+            height: 18px;
+            border: 2px solid #cbd5e0;
+            border-radius: 4px;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .integration-checkbox input[type="checkbox"]:checked + .checkmark {
+            background: #667eea;
+            border-color: #667eea;
+        }
+
+        .integration-checkbox input[type="checkbox"]:checked + .checkmark::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .option-text {
+            font-size: 0.85rem;
+            color: #4a5568;
+            font-weight: 500;
+        }
+
+        .integration-process-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            border: 2px solid #10b981;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(5, 150, 105, 0.05) 100%);
+        }
+
+        .process-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .process-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+        }
+
+        .process-info h4 {
+            margin: 0 0 5px 0;
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #059669;
+        }
+
+        .process-info p {
+            margin: 0;
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+
+        .integration-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .test-integrations-btn,
+        .save-integrations-btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .test-integrations-btn {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+        }
+
+        .test-integrations-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(245, 158, 11, 0.3);
+        }
+
+        .save-integrations-btn {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+
+        .save-integrations-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
+        }
+
+        /* Cards Modernos de RIDEC */
+        .modern-card {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .modern-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .ridec-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .ridec-card-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .ridec-name {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #1a202c;
+        }
+
+        .occurrence-badge {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .ridec-card-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .ridec-card-status.completed {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+
+        .ridec-card-status.active {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+        }
+
+        .ridec-card-status.overdue {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        .ridec-card-body {
+            margin-bottom: 20px;
+        }
+
+        .ridec-card-info {
+            margin-bottom: 20px;
+        }
+
+        .info-row {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 15px;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+
+        .info-item i {
+            color: #667eea;
+            font-size: 1rem;
+        }
+
+        .progress-section {
+            margin-bottom: 15px;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .progress-label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .progress-percentage {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .current-stage {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #667eea;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .current-stage i {
+            font-size: 1.1rem;
+        }
+
+        .ridec-card-stages {
+            margin-bottom: 20px;
+        }
+
+        /* Design Moderno para Progresso das Etapas */
+        .simple-stages-view.modern {
+            padding: 20px;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.8);
+        }
+
+        .simple-progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .progress-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            color: #1a202c;
+        }
+
+        .progress-title i {
+            color: #10b981;
+            font-size: 1.2rem;
+        }
+
+        .progress-percentage {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #10b981;
+            background: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+        }
+
+        .progress-percentage.overdue {
+            color: #ef4444;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+        }
+
+        .simple-progress-container {
+            margin-bottom: 20px;
+        }
+
+        .simple-progress-bar.modern {
+            width: 100%;
+            height: 16px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 15px;
+        }
+
+        .simple-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+            border-radius: 8px;
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .simple-progress-fill.overdue {
+            background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%);
+        }
+
+        .progress-glow {
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            animation: progressGlow 2s infinite;
+        }
+
+        @keyframes progressGlow {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        .progress-marker {
+            position: absolute;
+            top: -2px;
+            transform: translateX(-50%);
+            transition: left 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .marker-dot {
+            width: 20px;
+            height: 20px;
+            background: white;
+            border: 3px solid #10b981;
+            border-radius: 50%;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        .time-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .time-elapsed,
+        .time-total {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .time-elapsed i,
+        .time-total i {
+            color: #667eea;
+            font-size: 1rem;
+        }
+
+        .stage-flow-indicator {
+            margin-top: 20px;
+        }
+
+        .flow-line {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .flow-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            position: relative;
+        }
+
+        .flow-dot {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: 3px solid #e2e8f0;
+            background: white;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .flow-step.pending .flow-dot {
+            border-color: #cbd5e0;
+            background: #f1f5f9;
+        }
+
+        .flow-step.active .flow-dot {
+            border-color: #3b82f6;
+            background: #3b82f6;
+            box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.2);
+        }
+
+        .flow-step.completed .flow-dot {
+            border-color: #10b981;
+            background: #10b981;
+        }
+
+        .flow-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #64748b;
+            text-align: center;
+        }
+
+        .flow-step.active .flow-label {
+            color: #3b82f6;
+        }
+
+        .flow-step.completed .flow-label {
+            color: #10b981;
+        }
+
+        .flow-connector {
+            flex: 1;
+            height: 2px;
+            background: linear-gradient(90deg, #e2e8f0 0%, #cbd5e0 100%);
+            margin: 0 10px;
+            position: relative;
+        }
+
+        .flow-step.completed + .flow-connector {
+            background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+        }
+
+        .active-pulse {
+            position: absolute;
+            top: -4px;
+            left: -4px;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: rgba(59, 130, 246, 0.3);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(1.5);
+                opacity: 0;
+            }
+        }
+
+        /* Design Detalhado Moderno */
+        .detailed-stages-view.modern {
+            padding: 20px;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.8);
+        }
+
+        .stages-timeline {
+            position: relative;
+        }
+
+        .stage-timeline-item {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 25px;
+            position: relative;
+        }
+
+        .stage-timeline-marker {
+            position: relative;
+            margin-right: 20px;
+            flex-shrink: 0;
+        }
+
+        .timeline-dot {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 3px solid #e2e8f0;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .stage-timeline-item.pending .timeline-dot {
+            border-color: #cbd5e0;
+            background: #f1f5f9;
+        }
+
+        .stage-timeline-item.active .timeline-dot {
+            border-color: #3b82f6;
+            background: #3b82f6;
+            color: white;
+        }
+
+        .stage-timeline-item.completed .timeline-dot {
+            border-color: #10b981;
+            background: #10b981;
+            color: white;
+        }
+
+        .stage-timeline-item.overdue .timeline-dot {
+            border-color: #ef4444;
+            background: #ef4444;
+            color: white;
+        }
+
+        .active-ring {
+            position: absolute;
+            top: -8px;
+            left: -8px;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            border: 2px solid rgba(59, 130, 246, 0.3);
+            animation: activeRing 2s infinite;
+        }
+
+        @keyframes activeRing {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(1.2);
+                opacity: 0;
+            }
+        }
+
+        .timeline-dot i {
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .stage-timeline-content {
+            flex: 1;
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .stage-timeline-content:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .stage-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .stage-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            color: #1a202c;
+        }
+
+        .stage-title i {
+            color: #667eea;
+            font-size: 1.1rem;
+        }
+
+        .stage-status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .stage-status.pending {
+            background: #f1f5f9;
+            color: #64748b;
+        }
+
+        .stage-status.active {
+            background: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+        }
+
+        .stage-status.completed {
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+        }
+
+        .stage-status.overdue {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+        }
+
+        .stage-progress-info {
+            margin-top: 12px;
+        }
+
+        .stage-progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+
+        .stage-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .stage-progress-fill.overdue {
+            background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%);
+        }
+
+        .stage-time-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .time-elapsed,
+        .time-deadline {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.8rem;
+            color: #64748b;
+        }
+
+        .time-elapsed i,
+        .time-deadline i {
+            color: #667eea;
+            font-size: 0.9rem;
+        }
+
+        .timeline-connector {
+            position: absolute;
+            left: 15px;
+            top: 32px;
+            width: 2px;
+            height: 25px;
+            background: #e2e8f0;
+        }
+
+        .stage-timeline-item.completed + .stage-timeline-item .timeline-connector {
+            background: #10b981;
+        }
+
+        /* Cards Horizontais das Etapas */
+        .stages-cards-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .stage-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            border: 2px solid #e2e8f0;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stage-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .stage-card.pending {
+            border-color: #cbd5e0;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        }
+
+        .stage-card.active {
+            border-color: #3b82f6;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(37, 99, 235, 0.05) 100%);
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.15);
+        }
+
+        .stage-card.completed {
+            border-color: #10b981;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(5, 150, 105, 0.05) 100%);
+        }
+
+        .stage-card.overdue {
+            border-color: #ef4444;
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.05) 0%, rgba(220, 38, 38, 0.05) 100%);
+            box-shadow: 0 8px 25px rgba(239, 68, 68, 0.15);
+        }
+
+        .stage-card-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stage-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .stage-card.pending .stage-icon {
+            background: linear-gradient(135deg, #cbd5e0 0%, #a0aec0 100%);
+        }
+
+        .stage-card.active .stage-icon {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            animation: pulse 2s infinite;
+        }
+
+        .stage-card.completed .stage-icon {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+
+        .stage-card.overdue .stage-icon {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        }
+
+        .stage-title {
+            flex: 1;
+        }
+
+        .stage-title h4 {
+            margin: 0 0 4px 0;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #1a202c;
+        }
+
+        .stage-subtitle {
+            font-size: 0.85rem;
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .stage-status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stage-status-badge.pending {
+            background: #f1f5f9;
+            color: #64748b;
+        }
+
+        .stage-status-badge.active {
+            background: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+        }
+
+        .stage-status-badge.completed {
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+        }
+
+        .stage-status-badge.overdue {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+        }
+
+        .stage-card-body {
+            padding: 15px;
+        }
+
+        .stage-progress-section {
+            margin-bottom: 15px;
+        }
+
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .progress-label {
+            font-size: 0.85rem;
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .progress-value {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #1a202c;
+        }
+
+        .stage-progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .stage-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .stage-progress-fill.overdue {
+            background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%);
+        }
+
+        .stage-time-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .time-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.85rem;
+            color: #64748b;
+        }
+
+        .time-item i {
+            color: #667eea;
+            font-size: 0.9rem;
+        }
+
+        .stage-card-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .stage-action-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 100px;
+            justify-content: center;
+        }
+
+        .stage-action-btn.start {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+
+        .stage-action-btn.start:hover:not(.disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
+        }
+
+        .stage-action-btn.start.disabled {
+            background: #cbd5e0;
+            color: #64748b;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .stage-action-btn.finish {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+        }
+
+        .stage-action-btn.finish:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(239, 68, 68, 0.3);
+        }
+
+        .stage-completed,
+        .stage-running,
+        .stage-waiting {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            min-width: 120px;
+            justify-content: center;
+        }
+
+        .stage-completed {
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+        }
+
+        .stage-running {
+            background: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+        }
+
+        .stage-waiting {
+            background: rgba(107, 114, 128, 0.1);
+            color: #6b7280;
+        }
+
+        .stage-completed i,
+        .stage-running i,
+        .stage-waiting i {
+            font-size: 1rem;
+        }
+
+        .ridec-card-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .action-btn {
+            width: 40px;
+            height: 40px;
+            border: none;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+        }
+
+        .action-btn.primary {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+        }
+
+        .action-btn.primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+        }
+
+        .action-btn.secondary {
+            background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+            color: white;
+        }
+
+        .action-btn.secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(107, 114, 128, 0.3);
+        }
+
+        .action-btn.danger {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+        }
+
+        .action-btn.danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(239, 68, 68, 0.3);
+        }
+
+        /* Seletor de Modo de Controle */
+        .mode-selector-section {
+            margin-bottom: 30px;
+            padding: 25px;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.8);
+        }
+
+        .mode-selector-content {
+            margin-top: 20px;
+        }
+
+        .mode-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .mode-option {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .mode-option input[type="radio"] {
+            display: none;
+        }
+
+        .mode-option-content {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 15px;
+            padding: 20px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .mode-option input[type="radio"]:checked + .mode-option-content {
+            border-color: #667eea;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
+        }
+
+        .mode-option:hover .mode-option-content {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .mode-option-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .mode-option input[type="radio"]:checked + .mode-option-content .mode-option-icon {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .mode-option:not(:has(input[type="radio"]:checked)) .mode-option-icon {
+            background: linear-gradient(135deg, #cbd5e0 0%, #a0aec0 100%);
+        }
+
+        .mode-option-text h4 {
+            margin: 0 0 5px 0;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1a202c;
+        }
+
+        .mode-option-text p {
+            margin: 0;
+            color: #718096;
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
+
+        .mode-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .mode-info-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s ease;
+        }
+
+        .mode-info-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .mode-info-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .mode-info-header i {
+            color: #667eea;
+            font-size: 1.2rem;
+        }
+
+        .mode-info-header h4 {
+            margin: 0;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #1a202c;
+        }
+
+        .mode-info-card p {
+            margin: 0 0 15px 0;
+            color: #64748b;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .mode-info-card ul {
+            margin: 0;
+            padding-left: 20px;
+            color: #64748b;
+            font-size: 0.85rem;
+        }
+
+        .mode-info-card li {
+            margin-bottom: 5px;
+        }
+
+        /* Transições para seções */
+        .stages-section {
+            transition: all 0.3s ease;
+        }
+
+        .stages-section.hidden {
+            opacity: 0;
+            transform: translateY(-20px);
+            pointer-events: none;
+        }
+
+        /* Responsividade para o seletor de modo */
+        @media (max-width: 768px) {
+            .mode-options {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .mode-info {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .mode-option-content {
+                padding: 15px;
+            }
+            
+            .mode-option-icon {
+                width: 40px;
+                height: 40px;
+                font-size: 1.2rem;
+            }
+        }
+
+        /* Responsividade para o design de progresso */
+        @media (max-width: 768px) {
+            .simple-stages-view.modern,
+            .detailed-stages-view.modern {
+                padding: 15px;
+            }
+            
+            .simple-progress-header {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
+            
+            .progress-percentage {
+                font-size: 1.2rem;
+                padding: 6px 12px;
+            }
+            
+            .time-info {
+                flex-direction: column;
+                gap: 8px;
+                text-align: center;
+            }
+            
+            .flow-line {
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+            
+            .flow-step {
+                flex: 1;
+                min-width: 60px;
+            }
+            
+            .flow-connector {
+                display: none;
+            }
+            
+            .stage-timeline-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .stage-timeline-marker {
+                margin-right: 0;
+                margin-bottom: 15px;
+                align-self: center;
+            }
+            
+            .stage-header {
+                flex-direction: column;
+                gap: 8px;
+                text-align: center;
+            }
+            
+            .stage-time-info {
+                flex-direction: column;
+                gap: 6px;
+                text-align: center;
+            }
+            
+            .timeline-connector {
+                display: none;
+            }
+        }
+
+        /* Responsividade para cards das etapas */
+        @media (max-width: 768px) {
+            .stages-cards-container {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .stage-card {
+                padding: 15px;
+            }
+            
+            .stage-card-header {
+                flex-direction: column;
+                text-align: center;
+                gap: 10px;
+            }
+            
+            .stage-icon {
+                width: 40px;
+                height: 40px;
+                font-size: 1.1rem;
+            }
+            
+            .stage-title h4 {
+                font-size: 1.1rem;
+            }
+            
+            .stage-time-section {
+                flex-direction: column;
+                gap: 8px;
+                text-align: center;
+            }
+            
+            .stage-card-actions {
+                flex-direction: column;
+                gap: 8px;
+            }
+            
+            .stage-action-btn {
+                width: 100%;
+                min-width: auto;
+            }
+            
+            .stage-completed,
+            .stage-running,
+            .stage-waiting {
+                width: 100%;
+                min-width: auto;
+            }
+        }
+
+        /* Estilos para o timer e ações das etapas */
+        .stage-timer-section {
+            padding: 20px;
+            background: #f8fafc;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .timer-display {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .timer-ring {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            flex-shrink: 0;
+        }
+
+        .timer-ring svg {
+            transform: rotate(-90deg);
+            overflow: visible;
+        }
+
+        .timer-ring-bg {
+            fill: none;
+            stroke: #e2e8f0;
+            stroke-width: 8;
+        }
+
+        .timer-ring-progress {
+            fill: none;
+            stroke-width: 8;
+            stroke-linecap: round;
+            transition: stroke-dasharray 0.3s ease;
+        }
+
+        .timer-ring-progress.pending {
+            stroke: #94a3b8;
+        }
+
+        .timer-ring-progress.active {
+            stroke: #3b82f6;
+        }
+
+        .timer-ring-progress.running {
+            stroke: #10b981;
+            filter: drop-shadow(0 0 4px rgba(16, 185, 129, 0.4));
+        }
+
+        .timer-ring-progress.completed {
+            stroke: #10b981;
+        }
+
+        .timer-ring-progress.overdue {
+            stroke: #ef4444;
+        }
+
+        .timer-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            width: 100%;
+        }
+
+        .timer-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #1a202c;
+            margin-bottom: 2px;
+        }
+
+        .timer-label {
+            font-size: 0.8rem;
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .timer-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .timer-deadline,
+        .timer-progress {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            color: #64748b;
+        }
+
+        .timer-deadline i,
+        .timer-progress i {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            border-radius: 6px;
+            color: #3b82f6;
+            font-size: 0.9rem;
+        }
+
+        .stage-actions {
+            display: flex;
+            justify-content: center;
+            padding-top: 15px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .stage-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            min-width: 120px;
+            justify-content: center;
+            background: var(--btn-color);
+            color: white;
+        }
+
+        .stage-btn:hover:not(.disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(var(--btn-color), 0.2);
+        }
+
+        .stage-btn.disabled {
+            background: #e2e8f0;
+            color: #94a3b8;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .stage-btn i {
+            font-size: 0.9rem;
+        }
+
+        .completion-info {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            color: #10b981;
+        }
+
+        .completion-info i {
+            font-size: 1.4rem;
+        }
+
+        .completion-time {
+            font-size: 0.8rem;
+            color: #64748b;
+            text-align: center;
+        }
+
+        /* Animação de pulso para etapas em execução */
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+            }
+        }
+
+        .stage-card.running .timer-ring {
+            animation: pulse 2s infinite;
+        }
+
+        /* Responsividade */
+        @media (max-width: 768px) {
+            .timer-display {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+            }
+
+            .timer-info {
+                width: 100%;
+            }
+
+            .stage-btn {
+                width: 100%;
+                min-width: auto;
+            }
+        }
+
+        /* Estilos para o fluxo de etapas moderno */
+        .stages-flow {
+            padding: 20px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        .stages-timeline {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .stage-flow-item {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            position: relative;
+        }
+
+        .stage-flow-content {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 20px;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .stage-flow-item:hover .stage-flow-content {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .stage-flow-item.pending .stage-flow-content {
+            border-color: #e2e8f0;
+        }
+
+        .stage-flow-item.active .stage-flow-content {
+            border-color: #3b82f6;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(37, 99, 235, 0.05) 100%);
+        }
+
+        .stage-flow-item.running .stage-flow-content {
+            border-color: #10b981;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(5, 150, 105, 0.05) 100%);
+            animation: pulse 2s infinite;
+        }
+
+        .stage-flow-item.completed .stage-flow-content {
+            border-color: #10b981;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.02) 0%, rgba(5, 150, 105, 0.02) 100%);
+        }
+
+        .stage-flow-item.overdue .stage-flow-content {
+            border-color: #ef4444;
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.05) 0%, rgba(220, 38, 38, 0.05) 100%);
+        }
+
+        .stage-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stage-emoji {
+            font-size: 2rem;
+            line-height: 1;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+        }
+
+        .stage-info {
+            flex: 1;
+        }
+
+        .stage-name {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #1a202c;
+            margin-bottom: 4px;
+        }
+
+        .stage-description {
+            font-size: 0.9rem;
+            color: #64748b;
+        }
+
+        .stage-status {
+            margin-left: auto;
+        }
+
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-badge.pending {
+            background: #f1f5f9;
+            color: #64748b;
+        }
+
+        .status-badge.active {
+            background: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+        }
+
+        .status-badge.running {
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+        }
+
+        .status-badge.completed {
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+        }
+
+        .status-badge.overdue {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+        }
+
+        .stage-progress {
+            margin-bottom: 20px;
+        }
+
+        .progress-bar {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .progress-track {
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s ease;
+            position: relative;
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        .progress-fill.pending {
+            background: linear-gradient(90deg, #94a3b8 0%, #64748b 100%);
+        }
+
+        .progress-fill.active {
+            background: linear-gradient(90deg, #3b82f6 0%, #1d4ed8 100%);
+        }
+
+        .progress-fill.running {
+            background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+        }
+
+        .progress-fill.completed {
+            background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+        }
+
+        .progress-fill.overdue {
+            background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%);
+        }
+
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+        }
+
+        .progress-text {
+            font-weight: 600;
+            color: #1a202c;
+        }
+
+        .time-info {
+            color: #64748b;
+        }
+
+        .stage-actions {
+            display: flex;
+            justify-content: center;
+        }
+
+        .flow-btn {
+            padding: 0;
+            border: none;
+            background: none;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .flow-btn:hover:not(.disabled) {
+            transform: translateY(-2px);
+        }
+
+        .flow-btn.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-icon {
+            font-size: 2rem;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+        }
+
+        .btn-text {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #1a202c;
+        }
+
+        .completion-info {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .completion-icon {
+            font-size: 2rem;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+        }
+
+        .completion-time {
+            font-size: 0.8rem;
+            color: #64748b;
+            text-align: center;
+        }
+
+        .stage-connector {
+            position: relative;
+            height: 20px;
+            margin: 0 auto;
+            width: 2px;
+            background: #e2e8f0;
+        }
+
+        .stage-connector.completed {
+            background: #10b981;
+        }
+
+        .stage-connector::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
+            border-top: 6px solid #e2e8f0;
+        }
+
+        .stage-connector.completed::after {
+            border-top-color: #10b981;
+        }
+
+        @keyframes shimmer {
+            0% {
+                transform: translateX(-100%);
+            }
+            100% {
+                transform: translateX(100%);
+            }
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+            }
+        }
+
+        /* Responsividade */
+        @media (max-width: 768px) {
+            .stages-flow {
+                padding: 15px;
+            }
+
+            .stage-flow-content {
+                padding: 15px;
+            }
+
+            .stage-header {
+                flex-direction: column;
+                text-align: center;
+                gap: 10px;
+            }
+
+            .stage-status {
+                margin-left: 0;
+            }
+
+            .progress-info {
+                flex-direction: column;
+                align-items: center;
+                gap: 5px;
+            }
+
+            .stage-connector {
+                height: 30px;
+            }
+        }
+
+        /* Estilos para os cards modernos das etapas - Design elegante */
+        .stages-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin: 30px 0;
+            padding: 0 20px;
+        }
+
+        .stage-card {
+            background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+            border-radius: 24px;
+            padding: 0;
+            border: 2px solid #e2e8f0;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            min-height: 280px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 
+                0 4px 20px rgba(0, 0, 0, 0.08),
+                0 0 0 1px rgba(255, 255, 255, 0.8);
+        }
+
+        .stage-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: linear-gradient(90deg, 
+                var(--stage-color, #667eea) 0%, 
+                rgba(var(--stage-color-rgb, 102, 126, 234), 0.7) 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .stage-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 
+                0 25px 60px rgba(0, 0, 0, 0.15),
+                0 0 0 1px rgba(var(--stage-color-rgb, 102, 126, 234), 0.2);
+            border-color: rgba(var(--stage-color-rgb, 102, 126, 234), 0.3);
+        }
+
+        .stage-card:hover::before {
+            opacity: 1;
+        }
+
+        /* Estados dos cards */
+        .stage-card.pending {
+            --stage-color: #94a3b8;
+            --stage-color-rgb: 148, 163, 184;
+            border-color: #e2e8f0;
+            background: linear-gradient(145deg, #f8fafc 0%, #f1f5f9 100%);
+        }
+
+        .stage-card.active {
+            --stage-color: #3b82f6;
+            --stage-color-rgb: 59, 130, 246;
+            border-color: #3b82f6;
+            background: linear-gradient(145deg, rgba(59, 130, 246, 0.05) 0%, rgba(37, 99, 235, 0.05) 100%);
+            box-shadow: 
+                0 8px 32px rgba(59, 130, 246, 0.15),
+                0 0 0 1px rgba(59, 130, 246, 0.2);
+        }
+
+        .stage-card.running {
+            --stage-color: #f59e0b;
+            --stage-color-rgb: 245, 158, 11;
+            border-color: #f59e0b;
+            background: linear-gradient(145deg, rgba(245, 158, 11, 0.05) 0%, rgba(217, 119, 6, 0.05) 100%);
+            box-shadow: 
+                0 8px 32px rgba(245, 158, 11, 0.15),
+                0 0 0 1px rgba(245, 158, 11, 0.2);
+            animation: pulse-glow 2s ease-in-out infinite alternate;
+        }
+
+        .stage-card.completed {
+            --stage-color: #10b981;
+            --stage-color-rgb: 16, 185, 129;
+            border-color: #10b981;
+            background: linear-gradient(145deg, rgba(16, 185, 129, 0.05) 0%, rgba(5, 150, 105, 0.05) 100%);
+        }
+
+        .stage-card.overdue {
+            --stage-color: #ef4444;
+            --stage-color-rgb: 239, 68, 68;
+            border-color: #ef4444;
+            background: linear-gradient(145deg, rgba(239, 68, 68, 0.05) 0%, rgba(220, 38, 38, 0.05) 100%);
+            box-shadow: 
+                0 8px 32px rgba(239, 68, 68, 0.15),
+                0 0 0 1px rgba(239, 68, 68, 0.2);
+            animation: shake-warning 0.5s ease-in-out infinite alternate;
+        }
+
+        @keyframes pulse-glow {
+            0% { box-shadow: 0 8px 32px rgba(245, 158, 11, 0.15), 0 0 0 1px rgba(245, 158, 11, 0.2); }
+            100% { box-shadow: 0 12px 40px rgba(245, 158, 11, 0.25), 0 0 0 1px rgba(245, 158, 11, 0.3); }
+        }
+
+        @keyframes shake-warning {
+            0% { transform: translateY(-8px) scale(1.02) translateX(0px); }
+            25% { transform: translateY(-8px) scale(1.02) translateX(-2px); }
+            50% { transform: translateY(-8px) scale(1.02) translateX(2px); }
+            75% { transform: translateY(-8px) scale(1.02) translateX(-1px); }
+            100% { transform: translateY(-8px) scale(1.02) translateX(0px); }
+        }
+
+        .stage-card-header {
+            padding: 24px 24px 16px 24px;
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            position: relative;
+            background: linear-gradient(135deg, 
+                rgba(var(--stage-color-rgb, 102, 126, 234), 0.03) 0%, 
+                rgba(var(--stage-color-rgb, 102, 126, 234), 0.08) 100%);
+        }
+
+        .stage-emoji {
+            width: 60px;
+            height: 60px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.4rem;
+            background: linear-gradient(135deg, 
+                rgba(var(--stage-color-rgb, 102, 126, 234), 0.15) 0%, 
+                rgba(var(--stage-color-rgb, 102, 126, 234), 0.25) 100%);
+            box-shadow: 
+                0 8px 24px rgba(var(--stage-color-rgb, 102, 126, 234), 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
+            transition: all 0.3s ease;
+        }
+
+        .stage-card:hover .stage-emoji {
+            transform: scale(1.1) rotate(5deg);
+            box-shadow: 
+                0 12px 32px rgba(var(--stage-color-rgb, 102, 126, 234), 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.4);
+        }
+
+        .stage-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .stage-name {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: #1e293b;
+            margin-bottom: 6px;
+            letter-spacing: -0.02em;
+            line-height: 1.2;
+        }
+
+        .stage-description {
+            font-size: 0.9rem;
+            color: #64748b;
+            font-weight: 500;
+            line-height: 1.4;
+            text-transform: none;
+            letter-spacing: 0;
+        }
+
+        .stage-status {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+
+        .status-badge {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .status-badge.pending {
+            background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%);
+            color: white;
+        }
+
+        .status-badge.active {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            animation: glow-blue 2s ease-in-out infinite alternate;
+        }
+
+        .status-badge.running {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            animation: pulse-orange 1.5s infinite;
+        }
+
+        .status-badge.completed {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+
+        .status-badge.overdue {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            animation: shake-red 0.5s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow-blue {
+            from { box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); }
+            to { box-shadow: 0 8px 24px rgba(59, 130, 246, 0.6); }
+        }
+
+        @keyframes pulse-orange {
+            0% { box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3); }
+            50% { box-shadow: 0 8px 24px rgba(245, 158, 11, 0.6); }
+            100% { box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3); }
+        }
+
+        @keyframes shake-red {
+            0% { transform: translateX(0px); }
+            25% { transform: translateX(-2px); }
+            50% { transform: translateX(2px); }
+            75% { transform: translateX(-1px); }
+            100% { transform: translateX(0px); }
+        }
+
+        .stage-card-body {
+            padding: 0 24px 24px 24px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stage-metrics {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 20px;
+            padding: 16px;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border-radius: 16px;
+            border: 1px solid rgba(var(--stage-color-rgb, 102, 126, 234), 0.1);
+        }
+
+        .metric-item {
+            text-align: center;
+            flex: 1;
+        }
+
+        .metric-ring {
+            width: 80px;
+            height: 80px;
+            position: relative;
+            margin: 0 auto 8px;
+        }
+
+        .metric-ring svg {
+            transform: rotate(-90deg);
+            width: 100%;
+            height: 100%;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+        }
+
+        .metric-ring path {
+            transition: stroke-dasharray 0.5s ease;
+        }
+
+        .metric-value {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: #1e293b;
+            text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+        }
+
+        .metric-label {
+            font-size: 0.8rem;
+            color: #64748b;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .metric-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .time-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            color: #475569;
+            font-weight: 500;
+        }
+
+        .time-row i {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, rgba(var(--stage-color-rgb, 102, 126, 234), 0.1) 0%, rgba(var(--stage-color-rgb, 102, 126, 234), 0.2) 100%);
+            border-radius: 6px;
+            color: var(--stage-color, #667eea);
+            font-size: 0.8rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .stage-actions {
+            margin-top: auto;
+            padding-top: 16px;
+            border-top: 1px solid rgba(var(--stage-color-rgb, 102, 126, 234), 0.1);
+        }
+
+        .stage-btn {
+            width: 100%;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: linear-gradient(135deg, var(--stage-color, #667eea) 0%, rgba(var(--stage-color-rgb, 102, 126, 234), 0.8) 100%);
+            color: white;
+            box-shadow: 
+                0 4px 12px rgba(var(--stage-color-rgb, 102, 126, 234), 0.3),
+                0 0 0 1px rgba(var(--stage-color-rgb, 102, 126, 234), 0.1);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stage-btn:hover:not(.disabled) {
+            transform: translateY(-2px);
+            box-shadow: 
+                0 8px 24px rgba(var(--stage-color-rgb, 102, 126, 234), 0.4),
+                0 0 0 1px rgba(var(--stage-color-rgb, 102, 126, 234), 0.2);
+        }
+
+        .stage-btn:active:not(.disabled) {
+            transform: translateY(0);
+        }
+
+        .stage-btn.disabled {
+            background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e0 100%);
+            color: #94a3b8;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .stage-btn i {
+            font-size: 1rem;
+        }
+
+        .completion-info {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            padding: 16px;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.1) 100%);
+            border-radius: 12px;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .completion-info i {
+            font-size: 1.6rem;
+            color: #10b981;
+            filter: drop-shadow(0 2px 4px rgba(16, 185, 129, 0.3));
+        }
+
+        .completion-time {
+            font-size: 0.85rem;
+            color: #059669;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        /* Responsividade para cards */
+        @media (max-width: 1200px) {
+            .stages-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 16px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .stages-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+                padding: 0 16px;
+            }
+
+            .stage-card {
+                min-height: 260px;
+            }
+
+            .stage-card-header {
+                padding: 20px 20px 12px 20px;
+            }
+
+            .stage-card-body {
+                padding: 0 20px 20px 20px;
+            }
+
+            .stage-emoji {
+                width: 50px;
+                height: 50px;
+                font-size: 2rem;
+            }
+
+            .stage-name {
+                font-size: 1.2rem;
+            }
+
+            .stage-metrics {
+                flex-direction: column;
+                gap: 16px;
+                text-align: center;
+            }
+
+            .metric-info {
+                width: 100%;
+                align-items: center;
+            }
+
+            .time-row {
+                justify-content: center;
+            }
+        }
+
+        .time-row.overdue-warning {
+            color: #ef4444;
+            font-weight: 600;
+            animation: pulse-warning 1.5s ease-in-out infinite alternate;
+        }
+
+        .time-row.overdue-warning i {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(220, 38, 38, 0.2) 100%);
+            color: #ef4444;
+        }
+
+        @keyframes pulse-warning {
+            0% { opacity: 1; }
+            100% { opacity: 0.7; }
+        }
+
+        /* Melhorias na responsividade */
+        @media (max-width: 1400px) {
+            .stages-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 18px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .stages-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+                padding: 0 16px;
+            }
+
+            .stage-card {
+                min-height: 260px;
+            }
+
+            .stage-card-header {
+                padding: 20px 20px 12px 20px;
+            }
+
+            .stage-card-body {
+                padding: 0 20px 20px 20px;
+            }
+
+            .stage-emoji {
+                width: 50px;
+                height: 50px;
+                font-size: 2rem;
+            }
+
+            .stage-name {
+                font-size: 1.2rem;
+            }
+
+            .stage-metrics {
+                flex-direction: column;
+                gap: 16px;
+                text-align: center;
+            }
+
+            .metric-info {
+                width: 100%;
+                align-items: center;
+            }
+
+            .time-row {
+                justify-content: center;
+            }
+
+            .stage-actions {
+                margin-top: 16px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stages-grid {
+                padding: 0 12px;
+                gap: 12px;
+            }
+
+            .stage-card {
+                min-height: 240px;
+            }
+
+            .stage-card-header {
+                padding: 16px 16px 12px 16px;
+            }
+
+            .stage-card-body {
+                padding: 0 16px 16px 16px;
+            }
+
+            .stage-emoji {
+                width: 45px;
+                height: 45px;
+                font-size: 1.8rem;
+            }
+
+            .stage-name {
+                font-size: 1.1rem;
+            }
+
+            .stage-description {
+                font-size: 0.85rem;
+            }
+
+            .metric-ring {
+                width: 70px;
+                height: 70px;
+            }
+
+            .metric-value {
+                font-size: 1rem;
+            }
+
+            .stage-btn {
+                padding: 10px 16px;
+                font-size: 0.85rem;
+            }
+        }
+
+        /* Estilos para Premiação da Área */
+        .area-award-container {
+            margin-bottom: 2rem;
+            padding: 0;
+        }
+
+        .area-award {
+            position: relative;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 20px;
+            padding: 2rem;
+            color: white;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+            animation: award-glow 2s ease-in-out infinite alternate;
+        }
+
+        .award-content {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            position: relative;
+            z-index: 2;
+        }
+
+        .award-icon {
+            font-size: 4rem;
+            color: #ffd700;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+            animation: trophy-bounce 2s ease-in-out infinite;
+        }
+
+        .award-text h3 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 0 0 0.5rem 0;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .award-text p {
+            font-size: 1.1rem;
+            margin: 0 0 1.5rem 0;
+            opacity: 0.9;
+        }
+
+        .award-stats {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .award-stat {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .award-stat i {
+            color: #4ade80;
+            font-size: 1.1rem;
+        }
+
+        .award-particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .award-particles .particle {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background: #ffd700;
+            border-radius: 50%;
+            animation: particle-float 3s ease-in-out infinite;
+        }
+
+        .award-particles .particle:nth-child(1) {
+            top: 20%;
+            left: 10%;
+            animation-delay: 0s;
+        }
+
+        .award-particles .particle:nth-child(2) {
+            top: 60%;
+            left: 80%;
+            animation-delay: 0.5s;
+        }
+
+        .award-particles .particle:nth-child(3) {
+            top: 80%;
+            left: 20%;
+            animation-delay: 1s;
+        }
+
+        .award-particles .particle:nth-child(4) {
+            top: 30%;
+            left: 70%;
+            animation-delay: 1.5s;
+        }
+
+        .award-particles .particle:nth-child(5) {
+            top: 70%;
+            left: 40%;
+            animation-delay: 2s;
+        }
+
+        /* Animações */
+        @keyframes award-glow {
+            0% {
+                box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+            }
+            100% {
+                box-shadow: 0 15px 40px rgba(102, 126, 234, 0.5);
+            }
+        }
+
+        @keyframes trophy-bounce {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        @keyframes particle-float {
+            0%, 100% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 0.7;
+            }
+            50% {
+                transform: translateY(-20px) rotate(180deg);
+                opacity: 1;
+            }
+        }
+
+        @keyframes confetti-fall {
+            0% {
+                transform: translateY(-10px) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+
+        /* Responsividade */
+        @media (max-width: 768px) {
+            .award-content {
+                flex-direction: column;
+                text-align: center;
+                gap: 1rem;
+            }
+
+            .award-icon {
+                font-size: 3rem;
+            }
+
+            .award-text h3 {
+                font-size: 1.5rem;
+            }
+
+            .award-stats {
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+        }
+
+        /* Animações para notificação de premiação */
+        @keyframes award-notification-slide {
+            0% {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            100% {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes award-notification-slide-out {
+            0% {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            100% {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+
+        .award-notification-content {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .award-notification-icon {
+            font-size: 2rem;
+            color: #ffd700;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+
+        .award-notification-text h4 {
+            margin: 0 0 0.5rem 0;
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+
+        .award-notification-text p {
+            margin: 0 0 0.25rem 0;
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .award-notification-text p:last-child {
+            margin-bottom: 0;
+            font-weight: 600;
+            color: #4ade80;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header Moderno -->
+        <div class="modern-header">
+            <div class="header-content">
+                <a href="index.html" class="back-btn">
+                    <i class="fas fa-arrow-left"></i>
+                    Voltar ao Sistema
+                </a>
+                <div class="header-title">
+                    <h1 class="ridec-type-title" id="ridecTypeTitle">Carregando...</h1>
+                    <p class="ridec-type-subtitle">Configuração e Gerenciamento do Modelo</p>
+                </div>
+                <div class="header-actions">
+                    <button class="floating-btn" id="editModelBtn">
+                        <i class="fas fa-edit"></i>
+                        Editar
+                    </button>
+                    <button class="floating-btn" id="exportBtn">
+                        <i class="fas fa-download"></i>
+                        Exportar
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Estatísticas -->
+        <div class="stats-grid">
+            <div class="stat-card total">
+                <div class="stat-icon">
+                    <i class="fas fa-layer-group"></i>
+                </div>
+                <div class="stat-number" id="totalRidecs">0</div>
+                <div class="stat-label">Total de RIDECs</div>
+            </div>
+            <div class="stat-card active">
+                <div class="stat-icon">
+                    <i class="fas fa-play-circle"></i>
+                </div>
+                <div class="stat-number" id="activeRidecs">0</div>
+                <div class="stat-label">Em Andamento</div>
+            </div>
+            <div class="stat-card overdue">
+                <div class="stat-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div class="stat-number" id="overdueRidecs">0</div>
+                <div class="stat-label">Atrasados</div>
+            </div>
+            <div class="stat-card completed">
+                <div class="stat-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stat-number" id="completedRidecs">0</div>
+                <div class="stat-label">Concluídos</div>
+            </div>
+        </div>
+
+        <!-- Configuração do Modelo -->
+        <div class="config-section">
+            <div class="config-header">
+                <div class="config-header-content">
+                    <h2 class="config-title">
+                        <i class="fas fa-cogs"></i>
+                        Configuração do Modelo
+                    </h2>
+                    <button class="edit-btn" id="editConfigBtn">
+                        <i class="fas fa-edit"></i>
+                        Editar Configuração
+                    </button>
+                </div>
+            </div>
+            
+            <div class="config-content">
+                <!-- Informações do Modelo -->
+                <div class="model-info-card">
+                    <div class="model-header">
+                        <div class="model-icon">
+                            <i class="fas fa-cube"></i>
+                        </div>
+                        <div class="model-details">
+                            <h3 id="modelTitle">Nome do Modelo</h3>
+                            <span class="model-badge">Modelo RIDEC</span>
+                        </div>
+                    </div>
+                    <p class="model-description" id="modelDescription">
+                        Descrição detalhada do modelo RIDEC e suas características principais.
+                    </p>
+                    <div class="model-meta-grid">
+                        <div class="meta-item">
+                            <div class="meta-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="meta-content">
+                                <h4>Tempo Máximo</h4>
+                                <p id="modelMaxTime">0 horas</p>
+                            </div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="meta-icon">
+                                <i class="fas fa-map-marker-alt"></i>
+                            </div>
+                            <div class="meta-content">
+                                <h4>Área</h4>
+                                <p id="modelArea">Sem Área</p>
+                            </div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="meta-icon">
+                                <i class="fas fa-layer-group"></i>
+                            </div>
+                            <div class="meta-content">
+                                <h4>Etapas</h4>
+                                <p id="modelStages">4 padrão</p>
+                            </div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="meta-icon">
+                                <i class="fas fa-calendar-alt"></i>
+                            </div>
+                            <div class="meta-content">
+                                <h4>Criado em</h4>
+                                <p id="modelCreated">Hoje</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Seletor de Modo de Controle -->
+                <div class="mode-selector-section">
+                    <h3 class="section-title">
+                        <i class="fas fa-sliders-h"></i>
+                        Modo de Controle de Tempo
+                    </h3>
+                    
+                    <div class="mode-selector-content">
+                        <div class="mode-options">
+                            <label class="mode-option" id="simpleModeOption">
+                                <input type="radio" name="timeControlMode" value="simple" id="simpleModeRadio">
+                                <div class="mode-option-content">
+                                    <div class="mode-option-icon">
+                                        <i class="fas fa-play-circle"></i>
+                                    </div>
+                                    <div class="mode-option-text">
+                                        <h4>Modo Simples</h4>
+                                        <p>Controle apenas do tempo total do RIDEC</p>
+                                    </div>
+                                </div>
+                            </label>
+                            
+                            <label class="mode-option" id="detailedModeOption">
+                                <input type="radio" name="timeControlMode" value="detailed" id="detailedModeRadio">
+                                <div class="mode-option-content">
+                                    <div class="mode-option-icon">
+                                        <i class="fas fa-clock"></i>
+                                    </div>
+                                    <div class="mode-option-text">
+                                        <h4>Modo Detalhado</h4>
+                                        <p>Controle individual de cada etapa (RI, D, E, C)</p>
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+                        
+                        <div class="mode-info">
+                            <div class="mode-info-card" id="simpleModeInfo">
+                                <div class="mode-info-header">
+                                    <i class="fas fa-info-circle"></i>
+                                    <h4>Modo Simples</h4>
+                                </div>
+                                <p>Configure apenas o tempo total do RIDEC. As ocorrências serão controladas pelo tempo total, sem controle individual das etapas.</p>
+                                <ul>
+                                    <li>Configuração rápida e simples</li>
+                                    <li>Controle apenas do tempo total</li>
+                                    <li>Ideal para processos padronizados</li>
+                                </ul>
+                            </div>
+                            
+                            <div class="mode-info-card" id="detailedModeInfo">
+                                <div class="mode-info-header">
+                                    <i class="fas fa-info-circle"></i>
+                                    <h4>Modo Detalhado</h4>
+                                </div>
+                                <p>Configure prazos individuais para cada etapa do RIDEC. Permite controle granular e acompanhamento detalhado do progresso.</p>
+                                <ul>
+                                    <li>Controle individual por etapa</li>
+                                    <li>Configuração de prazos específicos</li>
+                                    <li>Acompanhamento detalhado</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Configuração das Etapas -->
+                <div class="stages-section" id="stagesSection">
+                    <h3 class="section-title">
+                        <i class="fas fa-layer-group"></i>
+                        Configuração das Etapas
+                    </h3>
+                    
+                    <!-- Etapas Padrão -->
+                    <div class="default-stages-grid">
+                        <div class="stage-card ri">
+                            <div class="stage-header">
+                                <div class="stage-icon">
+                                    <i class="fas fa-search"></i>
+                                </div>
+                                <div class="stage-info">
+                                    <h4>RI - Requisitos e Integração</h4>
+                                    <p>Definição de requisitos e integração inicial</p>
+                                </div>
+                            </div>
+                            <div class="stage-input-group">
+                                <input type="number" id="deadlineRI" class="stage-input" min="1" placeholder="0">
+                                <span class="stage-unit">horas</span>
+                            </div>
+                        </div>
+                        
+                        <div class="stage-card d">
+                            <div class="stage-header">
+                                <div class="stage-icon">
+                                    <i class="fas fa-lightbulb"></i>
+                                </div>
+                                <div class="stage-info">
+                                    <h4>D - Desenvolvimento</h4>
+                                    <p>Desenvolvimento da solução</p>
+                                </div>
+                            </div>
+                            <div class="stage-input-group">
+                                <input type="number" id="deadlineD" class="stage-input" min="1" placeholder="0">
+                                <span class="stage-unit">horas</span>
+                            </div>
+                        </div>
+                        
+                        <div class="stage-card e">
+                            <div class="stage-header">
+                                <div class="stage-icon">
+                                    <i class="fas fa-cogs"></i>
+                                </div>
+                                <div class="stage-info">
+                                    <h4>E - Execução</h4>
+                                    <p>Execução e implementação</p>
+                                </div>
+                            </div>
+                            <div class="stage-input-group">
+                                <input type="number" id="deadlineE" class="stage-input" min="1" placeholder="0">
+                                <span class="stage-unit">horas</span>
+                            </div>
+                        </div>
+                        
+                        <div class="stage-card c">
+                            <div class="stage-header">
+                                <div class="stage-icon">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                                <div class="stage-info">
+                                    <h4>C - Conclusão</h4>
+                                    <p>Finalização e entrega</p>
+                                </div>
+                            </div>
+                            <div class="stage-input-group">
+                                <input type="number" id="deadlineC" class="stage-input" min="1" placeholder="0">
+                                <span class="stage-unit">horas</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Etapas A -->
+                    <div class="custom-stages-header">
+                        <h4 class="section-title">
+                            <i class="fas fa-plus-circle"></i>
+                            Etapas A (Personalizadas)
+                        </h4>
+                        <button class="add-stage-btn" id="addStageABtn">
+                            <i class="fas fa-plus"></i>
+                            Adicionar Etapa A
+                        </button>
+                    </div>
+                    <div id="stagesAList" class="stages-a-container">
+                        <!-- Etapas A serão renderizadas aqui -->
+                    </div>
+                    
+                    <!-- Botões de Ação -->
+                    <div class="config-actions">
+                        <button class="reset-btn" id="resetConfigBtn">
+                            <i class="fas fa-undo"></i>
+                            Restaurar Padrão
+                        </button>
+                        <button class="save-btn" id="saveConfigBtn">
+                            <i class="fas fa-save"></i>
+                            Salvar Configuração
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Configuração de Integrações -->
+                <div class="integrations-section">
+                    <h3 class="section-title">
+                        <i class="fas fa-plug"></i>
+                        Configuração de Integrações
+                    </h3>
+                    
+                    <div class="integrations-info">
+                        <div class="integration-mode-info">
+                            <div class="mode-badge" id="integrationModeBadge">
+                                <i class="fas fa-clock"></i>
+                                <span>Modo Detalhado</span>
+                            </div>
+                            <p class="mode-description" id="integrationModeDescription">
+                                Configure integrações específicas para cada etapa do processo.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <!-- Integrações por Modo -->
+                    <div class="integrations-content">
+                        <!-- Modo Detalhado -->
+                        <div class="detailed-integrations" id="detailedIntegrations">
+                            <div class="integration-stages-grid">
+                                <div class="integration-stage-card" data-stage="RI">
+                                    <div class="stage-header">
+                                        <div class="stage-icon">
+                                            <i class="fas fa-search"></i>
+                                        </div>
+                                        <div class="stage-info">
+                                            <h4>RI - Requisitos</h4>
+                                            <p>Integrações para etapa de requisitos</p>
+                                        </div>
+                                    </div>
+                                    <div class="integration-options">
+                                        <div class="integration-option">
+                                            <label class="integration-checkbox">
+                                                <input type="checkbox" data-stage="RI" data-trigger="start" data-system="slack">
+                                                <span class="checkmark"></span>
+                                                <span class="option-text">Slack - Iniciar</span>
+                                            </label>
+                                        </div>
+                                        <div class="integration-option">
+                                            <label class="integration-checkbox">
+                                                <input type="checkbox" data-stage="RI" data-trigger="finish" data-system="slack">
+                                                <span class="checkmark"></span>
+                                                <span class="option-text">Slack - Finalizar</span>
+                                            </label>
+                                        </div>
+                                        <div class="integration-option">
+                                            <label class="integration-checkbox">
+                                                <input type="checkbox" data-stage="RI" data-trigger="start" data-system="jira">
+                                                <span class="checkmark"></span>
+                                                <span class="option-text">Jira - Iniciar</span>
+                                            </label>
+                                        </div>
+                                        <div class="integration-option">
+                                            <label class="integration-checkbox">
+                                                <input type="checkbox" data-stage="RI" data-trigger="finish" data-system="jira">
+                                                <span class="checkmark"></span>
+                                                <span class="option-text">Jira - Finalizar</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="integration-stage-card" data-stage="D">
+                                    <div class="stage-header">
+                                        <div class="stage-icon">
+                                            <i class="fas fa-lightbulb"></i>
+                                        </div>
+                                        <div class="stage-info">
+                                            <h4>D - Desenvolvimento</h4>
+                                            <p>Integrações para etapa de desenvolvimento</p>
+                                        </div>
+                                    </div>
+                                    <div class="integration-options">
+                                        <div class="integration-option">
+                                            <label class="integration-checkbox">
+                                                <input type="checkbox" data-stage="D" data-trigger="start" data-system="slack">
+                                                <span class="checkmark"></span>
+                                                <span class="option-text">Slack - Iniciar</span>
+                                            </label>
+                                        </div>
+                                        <div class="integration-option">
+                                            <label class="integration-checkbox">
+                                                <input type="checkbox" data-stage="D" data-trigger="finish" data-system="slack">
+                                                <span class="checkmark"></span>
+                                                <span class="option-text">Slack - Finalizar</span>
+                                            </label>
+                                        </div>
+                                        <div class="integration-option">
+                                            <label class="integration-checkbox">
+                                                <input type="checkbox" data-stage="D" data-trigger="start" data-system="jira">
+                                                <span class="checkmark"></span>
+                                                <span class="option-text">Jira - Iniciar</span>
+                                            </label>
+                                        </div>
+                                        <div class="integration-option">
+                                            <label class="integration-checkbox">
+                                                <input type="checkbox" data-stage="D" data-trigger="finish" data-system="jira">
+                                                <span class="checkmark"></span>
+                                                <span class="option-text">Jira - Finalizar</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="integration-stage-card" data-stage="E">
+                                    <div class="stage-header">
+                                        <div class="stage-icon">
+                                            <i class="fas fa-cogs"></i>
+                                        </div>
+                                        <div class="stage-info">
+                                            <h4>E - Execução</h4>
+                                            <p>Integrações para etapa de execução</p>
+                                        </div>
+                                    </div>
+                                    <div class="integration-options">
+                                        <div class="integration-option">
+                                            <label class="integration-checkbox">
+                                                <input type="checkbox" data-stage="E" data-trigger="start" data-system="slack">
+                                                <span class="checkmark"></span>
+                                                <span class="option-text">Slack - Iniciar</span>
+                                            </label>
+                                        </div>
+                                        <div class="integration-option">
+                                            <label class="integration-checkbox">
+                                                <input type="checkbox" data-stage="E" data-trigger="finish" data-system="slack">
+                                                <span class="checkmark"></span>
+                                                <span class="option-text">Slack - Finalizar</span>
+                                            </label>
+                                        </div>
+                                        <div class="integration-option">
+                                            <label class="integration-checkbox">
+                                                <input type="checkbox" data-stage="E" data-trigger="start" data-system="jira">
+                                                <span class="checkmark"></span>
+                                                <span class="option-text">Jira - Iniciar</span>
+                                            </label>
+                                        </div>
+                                        <div class="integration-option">
+                                            <label class="integration-checkbox">
+                                                <input type="checkbox" data-stage="E" data-trigger="finish" data-system="jira">
+                                                <span class="checkmark"></span>
+                                                <span class="option-text">Jira - Finalizar</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="integration-stage-card" data-stage="C">
+                                    <div class="stage-header">
+                                        <div class="stage-icon">
+                                            <i class="fas fa-check-circle"></i>
+                                        </div>
+                                        <div class="stage-info">
+                                            <h4>C - Conclusão</h4>
+                                            <p>Integrações para etapa de conclusão</p>
+                                        </div>
+                                    </div>
+                                    <div class="integration-options">
+                                        <div class="integration-option">
+                                            <label class="integration-checkbox">
+                                                <input type="checkbox" data-stage="C" data-trigger="start" data-system="slack">
+                                                <span class="checkmark"></span>
+                                                <span class="option-text">Slack - Iniciar</span>
+                                            </label>
+                                        </div>
+                                        <div class="integration-option">
+                                            <label class="integration-checkbox">
+                                                <input type="checkbox" data-stage="C" data-trigger="finish" data-system="slack">
+                                                <span class="checkmark"></span>
+                                                <span class="option-text">Slack - Finalizar</span>
+                                            </label>
+                                        </div>
+                                        <div class="integration-option">
+                                            <label class="integration-checkbox">
+                                                <input type="checkbox" data-stage="C" data-trigger="start" data-system="jira">
+                                                <span class="checkmark"></span>
+                                                <span class="option-text">Jira - Iniciar</span>
+                                            </label>
+                                        </div>
+                                        <div class="integration-option">
+                                            <label class="integration-checkbox">
+                                                <input type="checkbox" data-stage="C" data-trigger="finish" data-system="jira">
+                                                <span class="checkmark"></span>
+                                                <span class="option-text">Jira - Finalizar</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Modo Simples -->
+                        <div class="simple-integrations" id="simpleIntegrations" style="display: none;">
+                            <div class="integration-process-card">
+                                <div class="process-header">
+                                    <div class="process-icon">
+                                        <i class="fas fa-play-circle"></i>
+                                    </div>
+                                    <div class="process-info">
+                                        <h4>Processo RIDEC Completo</h4>
+                                        <p>Integrações para o processo completo</p>
+                                    </div>
+                                </div>
+                                <div class="integration-options">
+                                    <div class="integration-option">
+                                        <label class="integration-checkbox">
+                                            <input type="checkbox" data-stage="complete" data-trigger="start" data-system="slack">
+                                            <span class="checkmark"></span>
+                                            <span class="option-text">Slack - Iniciar Processo</span>
+                                        </label>
+                                    </div>
+                                    <div class="integration-option">
+                                        <label class="integration-checkbox">
+                                            <input type="checkbox" data-stage="complete" data-trigger="finish" data-system="slack">
+                                            <span class="checkmark"></span>
+                                            <span class="option-text">Slack - Finalizar Processo</span>
+                                        </label>
+                                    </div>
+                                    <div class="integration-option">
+                                        <label class="integration-checkbox">
+                                            <input type="checkbox" data-stage="complete" data-trigger="warning" data-system="slack">
+                                            <span class="checkmark"></span>
+                                            <span class="option-text">Slack - Alerta de Prazo</span>
+                                        </label>
+                                    </div>
+                                    <div class="integration-option">
+                                        <label class="integration-checkbox">
+                                            <input type="checkbox" data-stage="complete" data-trigger="start" data-system="jira">
+                                            <span class="checkmark"></span>
+                                            <span class="option-text">Jira - Iniciar Processo</span>
+                                        </label>
+                                    </div>
+                                    <div class="integration-option">
+                                        <label class="integration-checkbox">
+                                            <input type="checkbox" data-stage="complete" data-trigger="finish" data-system="jira">
+                                            <span class="checkmark"></span>
+                                            <span class="option-text">Jira - Finalizar Processo</span>
+                                        </label>
+                                    </div>
+                                    <div class="integration-option">
+                                        <label class="integration-checkbox">
+                                            <input type="checkbox" data-stage="complete" data-trigger="warning" data-system="email">
+                                            <span class="checkmark"></span>
+                                            <span class="option-text">Email - Alerta de Prazo</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Botões de Ação das Integrações -->
+                    <div class="integration-actions">
+                        <button class="test-integrations-btn" id="testIntegrationsBtn">
+                            <i class="fas fa-play"></i>
+                            Testar Integrações
+                        </button>
+                        <button class="save-integrations-btn" id="saveIntegrationsBtn">
+                            <i class="fas fa-save"></i>
+                            Salvar Integrações
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lista de RIDECs -->
+        <div class="ridec-list-section">
+
+            
+            <div class="ridec-list-header">
+                <h2 class="ridec-list-title">
+                    <i class="fas fa-list"></i>
+                    Ocorrências do RIDEC
+                </h2>
+                <a href="#" class="create-occurrence-btn" id="createOccurrenceBtn">
+                    <i class="fas fa-plus"></i>
+                    Criar Nova Ocorrência
+                </a>
+
+            </div>
+            <div class="ridec-list-content">
+                <div id="ridecList" class="ridec-list">
+                    <!-- RIDECs serão carregados aqui -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="ridec-type-details.js"></script>
+</body>
+</html> 

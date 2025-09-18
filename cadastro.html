@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastros - Sistema RIDEC</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <button id="voltarBtn" class="btn btn-secondary" title="Voltar ao Sistema">
+                    <i class="fas fa-arrow-left"></i> Voltar
+                </button>
+                <h1><i class="fas fa-user-plus"></i> Sistema de Cadastros</h1>
+            </div>
+            <div class="header-actions">
+                <button id="refreshBtn" class="btn btn-info" title="Atualizar Dados">
+                    <i class="fas fa-sync-alt"></i> Atualizar
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Tab Navigation -->
+            <div class="tab-navigation">
+                <button class="tab-btn active" data-tab="usuarios">
+                    <i class="fas fa-users"></i> Usuários
+                </button>
+                <button class="tab-btn" data-tab="areas">
+                    <i class="fas fa-building"></i> Áreas
+                </button>
+                <button class="tab-btn" data-tab="empresas">
+                    <i class="fas fa-industry"></i> Empresas
+                </button>
+                <button class="tab-btn" data-tab="tipos-usuario">
+                    <i class="fas fa-user-tag"></i> Tipos de Usuário
+                </button>
+            </div>
+
+            <!-- Usuários Tab -->
+            <div id="usuarios" class="tab-content active">
+                <div class="tab-header">
+                    <h2><i class="fas fa-users"></i> Gerenciamento de Usuários</h2>
+                    <button id="novoUsuarioBtn" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Novo Usuário
+                    </button>
+                </div>
+
+                <!-- Search Bar -->
+                <div class="search-container">
+                    <div class="search-box">
+                        <i class="fas fa-search search-icon"></i>
+                        <input type="text" id="searchUsuario" placeholder="Buscar usuários por nome ou email..." class="search-input">
+                        <button id="clearSearchUsuarioBtn" class="clear-search-btn" style="display: none;">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Usuários List -->
+                <div id="usuariosList" class="data-list">
+                    <!-- Usuários serão carregados aqui -->
+                </div>
+            </div>
+
+            <!-- Áreas Tab -->
+            <div id="areas" class="tab-content">
+                <div class="tab-header">
+                    <h2><i class="fas fa-building"></i> Gerenciamento de Áreas</h2>
+                    <button id="novaAreaBtn" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Nova Área
+                    </button>
+                </div>
+
+                <!-- Search Bar -->
+                <div class="search-container">
+                    <div class="search-box">
+                        <i class="fas fa-search search-icon"></i>
+                        <input type="text" id="searchArea" placeholder="Buscar áreas por nome..." class="search-input">
+                        <button id="clearSearchAreaBtn" class="clear-search-btn" style="display: none;">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Áreas List -->
+                <div id="areasList" class="data-list">
+                    <!-- Áreas serão carregadas aqui -->
+                </div>
+            </div>
+
+            <!-- Empresas Tab -->
+            <div id="empresas" class="tab-content">
+                <div class="tab-header">
+                    <h2><i class="fas fa-industry"></i> Gerenciamento de Empresas</h2>
+                    <button id="novaEmpresaBtn" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Nova Empresa
+                    </button>
+                </div>
+
+                <!-- Search Bar -->
+                <div class="search-container">
+                    <div class="search-box">
+                        <i class="fas fa-search search-icon"></i>
+                        <input type="text" id="searchEmpresa" placeholder="Buscar empresas por nome..." class="search-input">
+                        <button id="clearSearchEmpresaBtn" class="clear-search-btn" style="display: none;">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Empresas List -->
+                <div id="empresasList" class="data-list">
+                    <!-- Empresas serão carregadas aqui -->
+                </div>
+            </div>
+
+            <!-- Tipos de Usuário Tab -->
+            <div id="tipos-usuario" class="tab-content">
+                <div class="tab-header">
+                    <h2><i class="fas fa-user-tag"></i> Gerenciamento de Tipos de Usuário</h2>
+                    <button id="novoTipoUsuarioBtn" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Novo Tipo
+                    </button>
+                </div>
+
+                <!-- Search Bar -->
+                <div class="search-container">
+                    <div class="search-box">
+                        <i class="fas fa-search search-icon"></i>
+                        <input type="text" id="searchTipoUsuario" placeholder="Buscar tipos por nome..." class="search-input">
+                        <button id="clearSearchTipoUsuarioBtn" class="clear-search-btn" style="display: none;">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tipos de Usuário List -->
+                <div id="tiposUsuarioList" class="data-list">
+                    <!-- Tipos de usuário serão carregados aqui -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal Novo Usuário -->
+    <div id="modalUsuario" class="modal modern-modal">
+        <div class="modal-content modern-modal-content">
+            <div class="modern-header">
+                <div class="modal-title-section">
+                    <div class="modal-icon">
+                        <i class="fas fa-user-plus"></i>
+                    </div>
+                    <div class="modal-title-content">
+                        <h2>Novo Usuário</h2>
+                        <p class="modal-subtitle">Cadastre um novo usuário no sistema</p>
+                    </div>
+                </div>
+                <span class="modern-close" id="closeModalUsuario">&times;</span>
+            </div>
+            <div class="modern-body">
+                <form id="formUsuario" class="form-container">
+                    <div class="form-group">
+                        <label for="nomeUsuario">Nome Completo *</label>
+                        <input type="text" id="nomeUsuario" name="nomeUsuario" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="emailUsuario">Email *</label>
+                        <input type="email" id="emailUsuario" name="emailUsuario" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="senhaUsuario">Senha *</label>
+                        <div class="password-input">
+                            <input type="password" id="senhaUsuario" name="senhaUsuario" required>
+                            <button type="button" class="toggle-password" id="toggleSenha">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="tipoUsuario">Tipo de Usuário *</label>
+                        <select id="tipoUsuario" name="tipoUsuario" required>
+                            <option value="">Selecione o tipo</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="empresaUsuario">Empresa *</label>
+                        <select id="empresaUsuario" name="empresaUsuario" required>
+                            <option value="">Selecione a empresa</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="statusUsuario">Status</label>
+                        <select id="statusUsuario" name="statusUsuario">
+                            <option value="S">Ativo</option>
+                            <option value="N">Inativo</option>
+                        </select>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" id="cancelarUsuarioBtn" class="btn btn-secondary">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Salvar Usuário</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Nova Área -->
+    <div id="modalArea" class="modal modern-modal">
+        <div class="modal-content modern-modal-content">
+            <div class="modern-header">
+                <div class="modal-title-section">
+                    <div class="modal-icon">
+                        <i class="fas fa-building"></i>
+                    </div>
+                    <div class="modal-title-content">
+                        <h2>Nova Área</h2>
+                        <p class="modal-subtitle">Cadastre uma nova área na empresa</p>
+                    </div>
+                </div>
+                <span class="modern-close" id="closeModalArea">&times;</span>
+            </div>
+            <div class="modern-body">
+                <form id="formArea" class="form-container">
+                    <div class="form-group">
+                        <label for="nomeArea">Nome da Área *</label>
+                        <input type="text" id="nomeArea" name="nomeArea" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="empresaArea">Empresa *</label>
+                        <select id="empresaArea" name="empresaArea" required>
+                            <option value="">Selecione a empresa</option>
+                        </select>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" id="cancelarAreaBtn" class="btn btn-secondary">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Salvar Área</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Editar Usuário -->
+    <div id="modalEditarUsuario" class="modal modern-modal">
+        <div class="modal-content modern-modal-content">
+            <div class="modern-header">
+                <div class="modal-title-section">
+                    <div class="modal-icon">
+                        <i class="fas fa-user-edit"></i>
+                    </div>
+                    <div class="modal-title-content">
+                        <h2>Editar Usuário</h2>
+                        <p class="modal-subtitle">Modifique os dados do usuário</p>
+                    </div>
+                </div>
+                <span class="modern-close" id="closeModalEditarUsuario">&times;</span>
+            </div>
+            <div class="modern-body">
+                <form id="formEditarUsuario" class="form-container">
+                    <input type="hidden" id="editCodUsuario" name="codUsuario">
+                    <div class="form-group">
+                        <label for="editNomeUsuario">Nome Completo *</label>
+                        <input type="text" id="editNomeUsuario" name="nomeUsuario" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editEmailUsuario">Email *</label>
+                        <input type="email" id="editEmailUsuario" name="emailUsuario" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editTipoUsuario">Tipo de Usuário *</label>
+                        <select id="editTipoUsuario" name="tipoUsuario" required>
+                            <option value="">Selecione o tipo</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="editEmpresaUsuario">Empresa *</label>
+                        <select id="editEmpresaUsuario" name="empresaUsuario" required>
+                            <option value="">Selecione a empresa</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="editStatusUsuario">Status</label>
+                        <select id="editStatusUsuario" name="statusUsuario">
+                            <option value="S">Ativo</option>
+                            <option value="N">Inativo</option>
+                        </select>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" id="cancelarEditarUsuarioBtn" class="btn btn-secondary">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Atualizar Usuário</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Editar Área -->
+    <div id="modalEditarArea" class="modal modern-modal">
+        <div class="modal-content modern-modal-content">
+            <div class="modern-header">
+                <div class="modal-title-section">
+                    <div class="modal-icon">
+                        <i class="fas fa-building"></i>
+                    </div>
+                    <div class="modal-title-content">
+                        <h2>Editar Área</h2>
+                        <p class="modal-subtitle">Modifique os dados da área</p>
+                    </div>
+                </div>
+                <span class="modern-close" id="closeModalEditarArea">&times;</span>
+            </div>
+            <div class="modern-body">
+                <form id="formEditarArea" class="form-container">
+                    <input type="hidden" id="editCodArea" name="codArea">
+                    <div class="form-group">
+                        <label for="editNomeArea">Nome da Área *</label>
+                        <input type="text" id="editNomeArea" name="nomeArea" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editEmpresaArea">Empresa *</label>
+                        <select id="editEmpresaArea" name="empresaArea" required>
+                            <option value="">Selecione a empresa</option>
+                        </select>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" id="cancelarEditarAreaBtn" class="btn btn-secondary">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Atualizar Área</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Nova Empresa -->
+    <div id="modalEmpresa" class="modal modern-modal">
+        <div class="modal-content modern-modal-content">
+            <div class="modern-header">
+                <div class="modal-title-section">
+                    <div class="modal-icon">
+                        <i class="fas fa-industry"></i>
+                    </div>
+                    <div class="modal-title-content">
+                        <h2>Nova Empresa</h2>
+                        <p class="modal-subtitle">Cadastre uma nova empresa no sistema</p>
+                    </div>
+                </div>
+                <span class="modern-close" id="closeModalEmpresa">&times;</span>
+            </div>
+            <div class="modern-body">
+                <form id="formEmpresa" class="form-container">
+                    <div class="form-group">
+                        <label for="nomeEmpresa">Nome da Empresa *</label>
+                        <input type="text" id="nomeEmpresa" name="nomeEmpresa" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="statusEmpresa">Status</label>
+                        <select id="statusEmpresa" name="statusEmpresa">
+                            <option value="S">Ativo</option>
+                            <option value="N">Inativo</option>
+                        </select>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" id="cancelarEmpresaBtn" class="btn btn-secondary">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Salvar Empresa</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Editar Empresa -->
+    <div id="modalEditarEmpresa" class="modal modern-modal">
+        <div class="modal-content modern-modal-content">
+            <div class="modern-header">
+                <div class="modal-title-section">
+                    <div class="modal-icon">
+                        <i class="fas fa-industry"></i>
+                    </div>
+                    <div class="modal-title-content">
+                        <h2>Editar Empresa</h2>
+                        <p class="modal-subtitle">Modifique os dados da empresa</p>
+                    </div>
+                </div>
+                <span class="modern-close" id="closeModalEditarEmpresa">&times;</span>
+            </div>
+            <div class="modern-body">
+                <form id="formEditarEmpresa" class="form-container">
+                    <input type="hidden" id="editCodEmpresa" name="codEmpresa">
+                    <div class="form-group">
+                        <label for="editNomeEmpresa">Nome da Empresa *</label>
+                        <input type="text" id="editNomeEmpresa" name="nomeEmpresa" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editStatusEmpresa">Status</label>
+                        <select id="editStatusEmpresa" name="statusEmpresa">
+                            <option value="S">Ativo</option>
+                            <option value="N">Inativo</option>
+                        </select>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" id="cancelarEditarEmpresaBtn" class="btn btn-secondary">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Atualizar Empresa</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Novo Tipo de Usuário -->
+    <div id="modalTipoUsuario" class="modal modern-modal">
+        <div class="modal-content modern-modal-content">
+            <div class="modern-header">
+                <div class="modal-title-section">
+                    <div class="modal-icon">
+                        <i class="fas fa-user-tag"></i>
+                    </div>
+                    <div class="modal-title-content">
+                        <h2>Novo Tipo de Usuário</h2>
+                        <p class="modal-subtitle">Cadastre um novo tipo de usuário no sistema</p>
+                    </div>
+                </div>
+                <span class="modern-close" id="closeModalTipoUsuario">&times;</span>
+            </div>
+            <div class="modern-body">
+                <form id="formTipoUsuario" class="form-container">
+                    <div class="form-group">
+                        <label for="nomeTipoUsuario">Nome do Tipo *</label>
+                        <input type="text" id="nomeTipoUsuario" name="nomeTipoUsuario" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="descricaoTipoUsuario">Descrição</label>
+                        <textarea id="descricaoTipoUsuario" name="descricaoTipoUsuario" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="nivelAcessoTipoUsuario">Nível de Acesso *</label>
+                        <input type="number" id="nivelAcessoTipoUsuario" name="nivelAcessoTipoUsuario" min="0" max="10" required>
+                        <small class="form-help">0 = Sistema, 1 = Admin, 2 = Gestor, 3 = Board, 4 = Membro</small>
+                    </div>
+                    <div class="form-group">
+                        <label>Permissões</label>
+                        <div class="permissions-container">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="podeAdicionarUsuarios" name="podeAdicionarUsuarios">
+                                <span class="checkmark"></span>
+                                Pode adicionar usuários
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="podeGerenciarAreas" name="podeGerenciarAreas">
+                                <span class="checkmark"></span>
+                                Pode gerenciar áreas
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="podeAcessoSistema" name="podeAcessoSistema">
+                                <span class="checkmark"></span>
+                                Tem acesso total ao sistema
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="statusTipoUsuario">Status</label>
+                        <select id="statusTipoUsuario" name="statusTipoUsuario">
+                            <option value="S">Ativo</option>
+                            <option value="N">Inativo</option>
+                        </select>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" id="cancelarTipoUsuarioBtn" class="btn btn-secondary">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Salvar Tipo</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Editar Tipo de Usuário -->
+    <div id="modalEditarTipoUsuario" class="modal modern-modal">
+        <div class="modal-content modern-modal-content">
+            <div class="modern-header">
+                <div class="modal-title-section">
+                    <div class="modal-icon">
+                        <i class="fas fa-user-tag"></i>
+                    </div>
+                    <div class="modal-title-content">
+                        <h2>Editar Tipo de Usuário</h2>
+                        <p class="modal-subtitle">Modifique os dados do tipo de usuário</p>
+                    </div>
+                </div>
+                <span class="modern-close" id="closeModalEditarTipoUsuario">&times;</span>
+            </div>
+            <div class="modern-body">
+                <form id="formEditarTipoUsuario" class="form-container">
+                    <input type="hidden" id="editCodTipoUsuario" name="codTipoUsuario">
+                    <div class="form-group">
+                        <label for="editNomeTipoUsuario">Nome do Tipo *</label>
+                        <input type="text" id="editNomeTipoUsuario" name="nomeTipoUsuario" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editDescricaoTipoUsuario">Descrição</label>
+                        <textarea id="editDescricaoTipoUsuario" name="descricaoTipoUsuario" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="editNivelAcessoTipoUsuario">Nível de Acesso *</label>
+                        <input type="number" id="editNivelAcessoTipoUsuario" name="nivelAcessoTipoUsuario" min="0" max="10" required>
+                        <small class="form-help">0 = Sistema, 1 = Admin, 2 = Gestor, 3 = Board, 4 = Membro</small>
+                    </div>
+                    <div class="form-group">
+                        <label>Permissões</label>
+                        <div class="permissions-container">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="editPodeAdicionarUsuarios" name="podeAdicionarUsuarios">
+                                <span class="checkmark"></span>
+                                Pode adicionar usuários
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="editPodeGerenciarAreas" name="podeGerenciarAreas">
+                                <span class="checkmark"></span>
+                                Pode gerenciar áreas
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="editPodeAcessoSistema" name="podeAcessoSistema">
+                                <span class="checkmark"></span>
+                                Tem acesso total ao sistema
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="editStatusTipoUsuario">Status</label>
+                        <select id="editStatusTipoUsuario" name="statusTipoUsuario">
+                            <option value="S">Ativo</option>
+                            <option value="N">Inativo</option>
+                        </select>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" id="cancelarEditarTipoUsuarioBtn" class="btn btn-secondary">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Atualizar Tipo</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Area -->
+    <div id="notificationArea" class="notification-area" style="display: none;"></div>
+
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <script src="supabase-database.js"></script>
+    <script src="cadastro.js"></script>
+</body>
+</html>

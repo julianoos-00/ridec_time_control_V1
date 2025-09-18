@@ -1,0 +1,1115 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ocorrências RIDEC - Sistema de Controle</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="occurrences-styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Estilos específicos para a página de ocorrências */
+        .occurrences-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .occurrences-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .occurrences-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+            pointer-events: none;
+        }
+
+        .header-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .header-icon {
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .header-text h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 0;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin: 0;
+        }
+
+        .header-stats {
+            display: flex;
+            gap: 30px;
+            margin-top: 20px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .occurrences-filters {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .filters-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .filters-header h3 {
+            margin: 0;
+            color: #333;
+            font-size: 1.3rem;
+        }
+
+        .filters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .filter-label {
+            font-weight: 600;
+            color: #555;
+            font-size: 0.9rem;
+        }
+
+        .filter-input {
+            padding: 12px 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: #f8fafc;
+        }
+
+        .filter-input:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .filter-select {
+            padding: 12px 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 1rem;
+            background: #f8fafc;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .filter-select:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .filter-actions {
+            display: flex;
+            gap: 15px;
+            align-items: end;
+        }
+
+        .btn-filter {
+            padding: 12px 25px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-filter:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-clear {
+            padding: 12px 25px;
+            background: #f1f5f9;
+            color: #64748b;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-clear:hover {
+            background: #e2e8f0;
+            color: #475569;
+        }
+
+        .occurrences-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .occurrence-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            border: 1px solid #e1e5e9;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .occurrence-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+        }
+
+        .occurrence-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .occurrence-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+
+        .occurrence-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin: 0;
+            line-height: 1.3;
+        }
+
+        .occurrence-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-active {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .badge-completed {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .badge-overdue {
+            background: #fef2f2;
+            color: #dc2626;
+        }
+
+        .badge-pending {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        .occurrence-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .info-item {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .info-label {
+            font-size: 0.8rem;
+            color: #64748b;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .info-value {
+            font-size: 1rem;
+            color: #1e293b;
+            font-weight: 500;
+        }
+
+        .occurrence-progress {
+            margin-bottom: 20px;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .progress-label {
+            font-size: 0.9rem;
+            color: #64748b;
+            font-weight: 600;
+        }
+
+        .progress-percentage {
+            font-size: 0.9rem;
+            color: #1e293b;
+            font-weight: 700;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .progress-fill.overdue {
+            background: linear-gradient(90deg, #ef4444, #dc2626);
+        }
+
+        .progress-fill.completed {
+            background: linear-gradient(90deg, #10b981, #059669);
+        }
+
+        .occurrence-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-action {
+            flex: 1;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            font-size: 0.9rem;
+        }
+
+        .btn-view {
+            background: #f1f5f9;
+            color: #475569;
+        }
+
+        .btn-view:hover {
+            background: #e2e8f0;
+            color: #1e293b;
+        }
+
+        .btn-edit {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .btn-edit:hover {
+            background: #bfdbfe;
+            color: #1e3a8a;
+        }
+
+        .btn-delete {
+            background: #fef2f2;
+            color: #dc2626;
+        }
+
+        .btn-delete:hover {
+            background: #fecaca;
+            color: #b91c1c;
+        }
+
+        .occurrence-timeline {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .timeline-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .timeline-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin: 0;
+        }
+
+        .timeline-items {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .timeline-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 0;
+        }
+
+        .timeline-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            color: white;
+        }
+
+        .timeline-icon.start {
+            background: #10b981;
+        }
+
+        .timeline-icon.progress {
+            background: #f59e0b;
+        }
+
+        .timeline-icon.complete {
+            background: #3b82f6;
+        }
+
+        .timeline-icon.overdue {
+            background: #ef4444;
+        }
+
+        .timeline-content {
+            flex: 1;
+        }
+
+        .timeline-stage {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .timeline-time {
+            font-size: 0.8rem;
+            color: #64748b;
+        }
+
+        /* Novos estilos para cards de etapas modernos */
+        .occurrence-stages {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .stages-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .stages-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin: 0;
+        }
+
+        .stages-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .stage-card {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 20px;
+            border: 2px solid #e2e8f0;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stage-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: #e2e8f0;
+            transition: all 0.3s ease;
+        }
+
+        .stage-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            border-color: #cbd5e1;
+        }
+
+        .stage-card.pending {
+            background: #f8fafc;
+        }
+
+        .stage-card.pending::before {
+            background: #cbd5e1;
+        }
+
+        .stage-card.active {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border-color: #f59e0b;
+        }
+
+        .stage-card.active::before {
+            background: #f59e0b;
+        }
+
+        .stage-card.completed {
+            background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+            border-color: #10b981;
+        }
+
+        .stage-card.completed::before {
+            background: #10b981;
+        }
+
+        .stage-card.overdue {
+            background: linear-gradient(135deg, #fef2f2 0%, #fecaca 100%);
+            border-color: #ef4444;
+        }
+
+        .stage-card.overdue::before {
+            background: #ef4444;
+        }
+
+        .stage-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .stage-icon {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .stage-icon.pending {
+            background: #6b7280;
+        }
+
+        .stage-icon.active {
+            background: #f59e0b;
+        }
+
+        .stage-icon.completed {
+            background: #10b981;
+        }
+
+        .stage-icon.overdue {
+            background: #ef4444;
+        }
+
+        .stage-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .stage-name {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin: 0 0 5px 0;
+            line-height: 1.2;
+        }
+
+        .stage-status {
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stage-status.pending {
+            color: #6b7280;
+        }
+
+        .stage-status.active {
+            color: #d97706;
+        }
+
+        .stage-status.completed {
+            color: #166534;
+        }
+
+        .stage-status.overdue {
+            color: #dc2626;
+        }
+
+        .stage-timer {
+            background: white;
+            border-radius: 8px;
+            padding: 12px;
+            margin: 15px 0;
+            text-align: center;
+            border: 1px solid #e2e8f0;
+        }
+
+        .timer-display {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1e293b;
+            font-family: 'Courier New', monospace;
+            margin-bottom: 5px;
+        }
+
+        .timer-label {
+            font-size: 0.8rem;
+            color: #64748b;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stage-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 15px;
+        }
+
+        .btn-stage {
+            flex: 1;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-start {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-start:hover {
+            background: #059669;
+            transform: translateY(-1px);
+        }
+
+        .btn-stop {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-stop:hover {
+            background: #dc2626;
+            transform: translateY(-1px);
+        }
+
+        .btn-complete {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .btn-complete:hover {
+            background: #2563eb;
+            transform: translateY(-1px);
+        }
+
+        .btn-stage:disabled {
+            background: #e2e8f0;
+            color: #94a3b8;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-stage:disabled:hover {
+            background: #e2e8f0;
+            transform: none;
+        }
+
+        .stage-progress {
+            margin: 10px 0;
+        }
+
+        .stage-progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #e2e8f0;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .stage-progress-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+
+        .stage-progress-fill.pending {
+            background: #cbd5e1;
+            width: 0%;
+        }
+
+        .stage-progress-fill.active {
+            background: linear-gradient(90deg, #f59e0b, #d97706);
+            width: 50%;
+        }
+
+        .stage-progress-fill.completed {
+            background: linear-gradient(90deg, #10b981, #059669);
+            width: 100%;
+        }
+
+        .stage-progress-fill.overdue {
+            background: linear-gradient(90deg, #ef4444, #dc2626);
+            width: 75%;
+        }
+
+        @media (max-width: 768px) {
+            .stages-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .stage-card {
+                padding: 15px;
+            }
+            
+            .stage-actions {
+                flex-direction: column;
+            }
+            
+            .btn-stage {
+                padding: 10px 12px;
+            }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .empty-icon {
+            font-size: 4rem;
+            color: #cbd5e1;
+            margin-bottom: 20px;
+        }
+
+        .empty-title {
+            font-size: 1.5rem;
+            color: #64748b;
+            margin-bottom: 10px;
+        }
+
+        .empty-description {
+            color: #94a3b8;
+            margin-bottom: 30px;
+        }
+
+        .btn-create-occurrence {
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-create-occurrence:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .occurrences-summary {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .summary-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .summary-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin: 0;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .summary-card {
+            text-align: center;
+            padding: 20px;
+            border-radius: 10px;
+            background: #f8fafc;
+            transition: all 0.3s ease;
+        }
+
+        .summary-card:hover {
+            background: #f1f5f9;
+            transform: translateY(-2px);
+        }
+
+        .summary-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .summary-icon.active {
+            color: #f59e0b;
+        }
+
+        .summary-icon.completed {
+            color: #10b981;
+        }
+
+        .summary-icon.overdue {
+            color: #ef4444;
+        }
+
+        .summary-icon.total {
+            color: #3b82f6;
+        }
+
+        .summary-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 5px;
+        }
+
+        .summary-label {
+            font-size: 0.9rem;
+            color: #64748b;
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            .occurrences-container {
+                padding: 15px;
+            }
+
+            .occurrences-header {
+                padding: 20px;
+            }
+
+            .header-text h1 {
+                font-size: 2rem;
+            }
+
+            .header-stats {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .filters-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .filter-actions {
+                flex-direction: column;
+            }
+
+            .occurrences-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .occurrence-info {
+                grid-template-columns: 1fr;
+            }
+
+            .occurrence-actions {
+                flex-direction: column;
+            }
+
+            .summary-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="occurrences-container">
+        <!-- Header -->
+        <header class="occurrences-header">
+            <div class="header-content">
+                <div class="header-title">
+                    <div class="header-icon">
+                        <i class="fas fa-clipboard-list"></i>
+                    </div>
+                    <div class="header-text">
+                        <h1>Ocorrências RIDEC</h1>
+                        <p class="header-subtitle">Gerencie e acompanhe todas as ocorrências dos modelos de RIDEC</p>
+                    </div>
+                </div>
+                <div style="position: absolute; top: 20px; right: 20px;">
+                    <a href="index.html" class="btn btn-secondary" style="background: rgba(255, 255, 255, 0.2); color: white; border: 1px solid rgba(255, 255, 255, 0.3); text-decoration: none; padding: 10px 20px; border-radius: 10px; font-weight: 600; transition: all 0.3s ease;">
+                        <i class="fas fa-arrow-left"></i> Voltar ao Sistema
+                    </a>
+                </div>
+                <div class="header-stats">
+                    <div class="stat-item">
+                        <span class="stat-number" id="totalOccurrences">0</span>
+                        <span class="stat-label">Total</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number" id="activeOccurrences">0</span>
+                        <span class="stat-label">Ativas</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number" id="completedOccurrences">0</span>
+                        <span class="stat-label">Concluídas</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number" id="overdueOccurrences">0</span>
+                        <span class="stat-label">Atrasadas</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Filtros -->
+        <section class="occurrences-filters">
+            <div class="filters-header">
+                <i class="fas fa-filter"></i>
+                <h3>Filtros e Busca</h3>
+            </div>
+            <div class="filters-grid">
+                <div class="filter-group">
+                    <label class="filter-label">Buscar por título</label>
+                    <input type="text" class="filter-input" id="searchTitle" placeholder="Digite o título da ocorrência...">
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label">Modelo RIDEC</label>
+                    <select class="filter-select" id="filterModel">
+                        <option value="">Todos os modelos</option>
+                        <option value="modelo-a">Modelo A</option>
+                        <option value="modelo-b">Modelo B</option>
+                        <option value="modelo-c">Modelo C</option>
+                        <option value="modelo-d">Modelo D</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label">Status</label>
+                    <select class="filter-select" id="filterStatus">
+                        <option value="">Todos os status</option>
+                        <option value="active">Ativa</option>
+                        <option value="completed">Concluída</option>
+                        <option value="overdue">Atrasada</option>
+                        <option value="pending">Pendente</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label">Área responsável</label>
+                    <select class="filter-select" id="filterArea">
+                        <option value="">Todas as áreas</option>
+                        <option value="ti">TI</option>
+                        <option value="rh">RH</option>
+                        <option value="financeiro">Financeiro</option>
+                        <option value="operacional">Operacional</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label">Data de criação</label>
+                    <input type="date" class="filter-input" id="filterDate">
+                </div>
+                <div class="filter-actions">
+                    <button class="btn-filter" id="applyFilters">
+                        <i class="fas fa-search"></i>
+                        Aplicar Filtros
+                    </button>
+                    <button class="btn-clear" id="clearFilters">
+                        <i class="fas fa-times"></i>
+                        Limpar
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Resumo -->
+        <section class="occurrences-summary">
+            <div class="summary-header">
+                <i class="fas fa-chart-pie"></i>
+                <h3 class="summary-title">Resumo das Ocorrências</h3>
+            </div>
+            <div class="summary-grid">
+                <div class="summary-card">
+                    <div class="summary-icon active">
+                        <i class="fas fa-play-circle"></i>
+                    </div>
+                    <div class="summary-number" id="summaryActive">0</div>
+                    <div class="summary-label">Em Andamento</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-icon completed">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="summary-number" id="summaryCompleted">0</div>
+                    <div class="summary-label">Concluídas</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-icon overdue">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <div class="summary-number" id="summaryOverdue">0</div>
+                    <div class="summary-label">Atrasadas</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-icon total">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="summary-number" id="summaryPending">0</div>
+                    <div class="summary-label">Pendentes</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Lista de Ocorrências -->
+        <section id="occurrencesList">
+            <div class="occurrences-grid" id="occurrencesGrid">
+                <!-- Cards de ocorrências serão inseridos aqui dinamicamente -->
+            </div>
+        </section>
+
+        <!-- Estado vazio -->
+        <div class="empty-state" id="emptyState" style="display: none;">
+            <div class="empty-icon">
+                <i class="fas fa-clipboard-list"></i>
+            </div>
+            <h3 class="empty-title">Nenhuma ocorrência encontrada</h3>
+            <p class="empty-description">Não há ocorrências que correspondam aos filtros aplicados ou ainda não foram criadas ocorrências.</p>
+            <button class="btn-create-occurrence" id="createFirstOccurrence">
+                <i class="fas fa-plus"></i>
+                Criar Primeira Ocorrência
+            </button>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <script src="ridec-occurrences.js"></script>
+</body>
+</html> 

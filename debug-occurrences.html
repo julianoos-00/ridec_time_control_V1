@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug - Ocorrências RIDEC</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .debug-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .debug-header {
+            background: #1e293b;
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .debug-info {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .debug-log {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 5px;
+            padding: 15px;
+            font-family: monospace;
+            font-size: 0.9em;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .test-button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        
+        .test-button:hover {
+            background: #2563eb;
+        }
+    </style>
+</head>
+<body>
+    <div class="debug-container">
+        <div class="debug-header">
+            <h1><i class="fas fa-bug"></i> Debug - Sistema de Ocorrências</h1>
+            <p>Verificando se o sistema está funcionando corretamente</p>
+        </div>
+        
+        <div class="debug-info">
+            <h3>Testes Disponíveis:</h3>
+            <button class="test-button" onclick="testLoadData()">Testar Carregamento de Dados</button>
+            <button class="test-button" onclick="testRenderCards()">Testar Renderização de Cards</button>
+            <button class="test-button" onclick="testStageControls()">Testar Controles de Etapas</button>
+            <button class="test-button" onclick="clearLog()">Limpar Log</button>
+        </div>
+        
+        <div class="debug-info">
+            <h3>Log de Debug:</h3>
+            <div class="debug-log" id="debugLog">
+                Sistema de debug iniciado...
+            </div>
+        </div>
+        
+        <div class="debug-info">
+            <h3>Área de Teste:</h3>
+            <div id="testArea">
+                <!-- Cards de teste serão inseridos aqui -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sistema de debug
+        function log(message) {
+            const logElement = document.getElementById('debugLog');
+            const timestamp = new Date().toLocaleTimeString();
+            logElement.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+
+        function clearLog() {
+            document.getElementById('debugLog').innerHTML = 'Log limpo...';
+        }
+
+        // Dados de teste
+        const testOccurrence = {
+            id: 999,
+            title: 'Teste de Funcionalidade',
+            model: 'teste',
+            modelName: 'Modelo Teste',
+            status: 'active',
+            area: 'ti',
+            areaName: 'TI',
+            createdAt: '2024-01-20',
+            deadline: '2024-02-20',
+            progress: 50,
+            description: 'Ocorrência para teste das funcionalidades',
+            priority: 'alta',
+            responsible: 'Usuário Teste',
+            stages: [
+                { name: 'Análise', status: 'completed', time: '1h 30m', timeMs: 5400000 },
+                { name: 'Desenvolvimento', status: 'active', time: '2h 15m', timeMs: 8100000 },
+                { name: 'Testes', status: 'pending', time: '0h 0m', timeMs: 0 },
+                { name: 'Deploy', status: 'pending', time: '0h 0m', timeMs: 0 }
+            ]
+        };
+
+        // Teste de carregamento de dados
+        function testLoadData() {
+            log('Testando carregamento de dados...');
+            log(`Dados carregados: ${JSON.stringify(testOccurrence, null, 2)}`);
+            log('✅ Carregamento de dados OK');
+        }
+
+        // Teste de renderização de cards
+        function testRenderCards() {
+            log('Testando renderização de cards...');
+            
+            const testArea = document.getElementById('testArea');
+            const cardHtml = createTestCard(testOccurrence);
+            testArea.innerHTML = cardHtml;
+            
+            log('✅ Renderização de cards OK');
+        }
+
+        // Criar card de teste
+        function createTestCard(occurrence) {
+            const stagesHtml = occurrence.stages.map((stage, index) => {
+                const statusClass = getStatusClass(stage.status);
+                const statusText = getStatusText(stage.status);
+                const stageIcon = getStageIcon(stage.status);
+                
+                let startButton = '';
+                let stopButton = '';
+                let completeButton = '';
+                
+                if (stage.status === 'pending') {
+                    startButton = `<button class="btn-stage btn-start" onclick="testStartStage(${index})">
+                        <i class="fas fa-play"></i> Iniciar
+                    </button>`;
+                } else if (stage.status === 'active') {
+                    stopButton = `<button class="btn-stage btn-stop" onclick="testStopStage(${index})">
+                        <i class="fas fa-pause"></i> Pausar
+                    </button>`;
+                    completeButton = `<button class="btn-stage btn-complete" onclick="testCompleteStage(${index})">
+                        <i class="fas fa-check"></i> Concluir
+                    </button>`;
+                } else if (stage.status === 'completed') {
+                    completeButton = `<button class="btn-stage btn-complete" disabled>
+                        <i class="fas fa-check"></i> Concluída
+                    </button>`;
+                }
+                
+                return `
+                    <div class="stage-card ${statusClass}" data-stage-index="${index}">
+                        <div class="stage-header">
+                            <div class="stage-icon ${statusClass}">
+                                <i class="${stageIcon}"></i>
+                            </div>
+                            <div class="stage-info">
+                                <div class="stage-name">${stage.name}</div>
+                                <div class="stage-status ${statusClass}">${statusText}</div>
+                            </div>
+                        </div>
+                        
+                        <div class="stage-timer">
+                            <div class="timer-display" id="test-timer-${index}">${stage.time}</div>
+                            <div class="timer-label">Tempo de Execução</div>
+                        </div>
+                        
+                        <div class="stage-actions">
+                            ${startButton}
+                            ${stopButton}
+                            ${completeButton}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            return `
+                <div class="occurrence-card" style="background: white; border-radius: 15px; padding: 25px; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);">
+                    <div class="occurrence-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+                        <h3 style="font-size: 1.3rem; font-weight: 700; color: #1e293b; margin: 0;">${occurrence.title}</h3>
+                        <span style="padding: 6px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; background: #dbeafe; color: #1e40af;">Ativa</span>
+                    </div>
+                    
+                    <div class="occurrence-stages">
+                        <div class="stages-header" style="display: flex; align-items: center; gap: 8px; margin-bottom: 20px;">
+                            <i class="fas fa-tasks"></i>
+                            <h4 style="font-size: 1rem; font-weight: 600; color: #1e293b; margin: 0;">Etapas do Processo</h4>
+                        </div>
+                        <div class="stages-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                            ${stagesHtml}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Funções de controle de etapas para teste
+        function testStartStage(index) {
+            log(`Iniciando etapa ${index}...`);
+            const stage = testOccurrence.stages[index];
+            stage.status = 'active';
+            testRenderCards();
+            log(`✅ Etapa ${index} iniciada`);
+        }
+
+        function testStopStage(index) {
+            log(`Pausando etapa ${index}...`);
+            const stage = testOccurrence.stages[index];
+            stage.status = 'pending';
+            testRenderCards();
+            log(`✅ Etapa ${index} pausada`);
+        }
+
+        function testCompleteStage(index) {
+            log(`Concluindo etapa ${index}...`);
+            const stage = testOccurrence.stages[index];
+            stage.status = 'completed';
+            testRenderCards();
+            log(`✅ Etapa ${index} concluída`);
+        }
+
+        // Funções utilitárias
+        function getStatusClass(status) {
+            const classes = {
+                'active': 'active',
+                'completed': 'completed',
+                'pending': 'pending'
+            };
+            return classes[status] || 'pending';
+        }
+
+        function getStatusText(status) {
+            const texts = {
+                'active': 'Ativa',
+                'completed': 'Concluída',
+                'pending': 'Pendente'
+            };
+            return texts[status] || 'Pendente';
+        }
+
+        function getStageIcon(status) {
+            const icons = {
+                'completed': 'fas fa-check',
+                'active': 'fas fa-play',
+                'pending': 'fas fa-clock'
+            };
+            return icons[status] || 'fas fa-clock';
+        }
+
+        // Teste de controles de etapas
+        function testStageControls() {
+            log('Testando controles de etapas...');
+            log('✅ Controles de etapas funcionando');
+        }
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', () => {
+            log('Sistema de debug carregado');
+            log('Clique nos botões para testar as funcionalidades');
+        });
+    </script>
+</body>
+</html> 

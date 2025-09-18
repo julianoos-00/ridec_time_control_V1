@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema RIDEC - Controle de Processos</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <h1><i class="fas fa-project-diagram"></i> Sistema RIDEC</h1>
+                <div class="user-info auth-required" style="display: none;">
+                    <div class="user-details">
+                        <span class="user-name">Usuário</span>
+                        <span class="user-company">Empresa</span>
+                    </div>
+                    <div class="user-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button id="newRidecBtn" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Novo RIDEC
+                </button>
+                <button id="autoCreateRidecBtn" class="btn btn-ai">
+                    <i class="fas fa-magic"></i> Criar com IA
+                    <span class="ai-badge">🤖</span>
+                </button>
+                <button id="deleteAllBtn" class="btn btn-danger" title="Deletar Todos os RIDECs">
+                    <i class="fas fa-trash-alt"></i> Limpar Tudo
+                </button>
+                <button id="resetConfigBtn" class="btn btn-warning" title="Retornar à Configuração Padrão">
+                    <i class="fas fa-undo"></i> Reset Config
+                </button>
+                <button id="occurrencesBtn" class="btn btn-info" title="Gerenciar Ocorrências">
+                    <i class="fas fa-list-alt"></i> Ocorrências
+                </button>
+                <button id="cadastroBtn" class="btn btn-success" title="Cadastros">
+                    <i class="fas fa-user-plus"></i> Cadastros
+                </button>
+                
+                <!-- Botão de logout -->
+                <button id="logoutBtn" class="btn btn-outline auth-required" title="Sair" style="display: none;">
+                    <i class="fas fa-sign-out-alt"></i> Sair
+                </button>
+
+                <div class="notification-bell">
+                    <button id="notificationBell" class="btn btn-icon" title="RIDECs Atrasados">
+                        <i class="fas fa-bell"></i>
+                        <span id="notificationCount" class="notification-count" style="display: none;">0</span>
+                    </button>
+                    <div id="notificationDropdown" class="notification-dropdown">
+                        <div class="notification-header">
+                            <h3>RIDECs Atrasados</h3>
+                            <button id="clearAllNotifications" class="btn-clear-all">Limpar todas</button>
+                        </div>
+                        <div id="notificationList" class="notification-list">
+                            <!-- Notificações serão adicionadas aqui -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Notification Area (mantido para compatibilidade) -->
+        <div id="notificationArea" class="notification-area" style="display: none;"></div>
+
+
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Search Bar -->
+            <div class="search-container">
+                <div class="search-box">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" id="searchInput" placeholder="Buscar RIDECs por título, descrição ou área..." class="search-input">
+                    <button id="clearSearchBtn" class="clear-search-btn" style="display: none;">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- View Toggle -->
+            <div class="view-toggle">
+                <button id="cardViewBtn" class="btn btn-primary active">
+                    <i class="fas fa-th-large"></i> Visualização em Cards
+                </button>
+                <button id="flowViewBtn" class="btn btn-secondary">
+                    <i class="fas fa-project-diagram"></i> Visualização de Fluxo
+                </button>
+                <button id="chartsViewBtn" class="btn btn-secondary">
+                    <i class="fas fa-chart-bar"></i> Gráficos
+                </button>
+            </div>
+
+            <!-- RIDEC List (Card View) -->
+            <div id="ridecList" class="ridec-list">
+                <!-- RIDEC cards will be dynamically added here -->
+            </div>
+
+            <!-- Flow View -->
+            <div id="flowView" class="flow-view" style="display: none;">
+                <div id="flowContainer" class="flow-container">
+                    <!-- Flow diagram will be dynamically added here -->
+                </div>
+            </div>
+
+            <!-- Charts View -->
+            <div id="chartsView" class="charts-view" style="display: none;">
+                <div class="charts-header">
+                    <h2><i class="fas fa-chart-bar"></i> Análise de Modelos RIDEC por Área</h2>
+                    <p>Visualize estatísticas e tempos dos modelos RIDEC organizados por área</p>
+                </div>
+                
+                <div class="charts-grid">
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <h3>Distribuição de Modelos RIDEC por Área</h3>
+                            <p>Quantidade de modelos RIDEC em cada área</p>
+                        </div>
+                        <canvas id="ridecsByAreaChart"></canvas>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <h3>Tempo Total dos Modelos por Área</h3>
+                            <p>Soma dos tempos máximos de todos os modelos RIDEC por área</p>
+                        </div>
+                        <canvas id="timeByAreaChart"></canvas>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <h3>Status das Ocorrências RIDEC</h3>
+                            <p>Distribuição das ocorrências por status</p>
+                        </div>
+                        <canvas id="occurrencesStatusChart"></canvas>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <h3>Progresso das Ocorrências por Área</h3>
+                            <p>Progresso médio das ocorrências ativas por área</p>
+                        </div>
+                        <canvas id="occurrencesProgressChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="charts-summary">
+                    <div class="summary-card">
+                        <div class="summary-icon">
+                            <i class="fas fa-tasks"></i>
+                        </div>
+                        <div class="summary-content">
+                            <h4>Total de Modelos</h4>
+                            <span id="totalRidecs">0</span>
+                        </div>
+                    </div>
+                    
+                    <div class="summary-card">
+                        <div class="summary-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="summary-content">
+                            <h4>Tempo Total Planejado</h4>
+                            <span id="totalPlannedTime">0h</span>
+                        </div>
+                    </div>
+                    
+                    <div class="summary-card">
+                        <div class="summary-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="summary-content">
+                            <h4>Modelos Concluídos</h4>
+                            <span id="completedRidecs">0</span>
+                        </div>
+                    </div>
+                    
+                    <div class="summary-card">
+                        <div class="summary-icon">
+                            <i class="fas fa-plug"></i>
+                        </div>
+                        <div class="summary-content">
+                            <h4>Tempo de Integração</h4>
+                            <span id="totalIntegrationTime">0h</span>
+                        </div>
+                    </div>
+                    
+                    <div class="summary-card">
+                        <div class="summary-icon">
+                            <i class="fas fa-clipboard-list"></i>
+                        </div>
+                        <div class="summary-content">
+                            <h4>Total de Ocorrências</h4>
+                            <span id="totalOccurrences">0</span>
+                        </div>
+                    </div>
+                    
+                    <div class="summary-card">
+                        <div class="summary-icon">
+                            <i class="fas fa-play-circle"></i>
+                        </div>
+                        <div class="summary-content">
+                            <h4>Ocorrências Ativas</h4>
+                            <span id="activeOccurrences">0</span>
+                        </div>
+                    </div>
+                    
+                    <div class="summary-card">
+                        <div class="summary-icon">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div class="summary-content">
+                            <h4>Ocorrências Atrasadas</h4>
+                            <span id="overdueOccurrences">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal for creating/editing RIDEC -->
+    <div id="ridecModal" class="modal modern-modal">
+        <div class="modal-content modern-modal-content">
+            <div class="modal-header modern-header">
+                <div class="modal-title-section">
+                    <div class="modal-icon">
+                        <i class="fas fa-plus-circle"></i>
+                    </div>
+                    <div class="modal-title-content">
+                        <h2 id="modalTitle">Novo RIDEC Modelo</h2>
+                        <p class="modal-subtitle">Configure seu processo de controle de tempo</p>
+                    </div>
+                </div>
+                <span class="close modern-close">&times;</span>
+            </div>
+            
+            <div class="modal-body modern-body">
+                <form id="ridecForm" class="modern-form">
+                    <!-- Progress Indicator -->
+                    <div class="form-progress">
+                        <div class="progress-step active" data-step="1">
+                            <div class="step-number">1</div>
+                            <div class="step-label">Informações Básicas</div>
+                        </div>
+                        <div class="progress-step" data-step="2">
+                            <div class="step-number">2</div>
+                            <div class="step-label">Configuração de Tempo</div>
+                        </div>
+                        <div class="progress-step" data-step="3">
+                            <div class="step-number">3</div>
+                            <div class="step-label">Relacionamentos</div>
+                        </div>
+                    </div>
+
+                    <!-- Step 1: Basic Information -->
+                    <div class="form-step active" data-step="1">
+                        <div class="step-header">
+                            <h3><i class="fas fa-info-circle"></i> Informações Básicas</h3>
+                            <p>Defina o nome, descrição e área do seu RIDEC</p>
+                        </div>
+                        
+                        <div class="form-card">
+                            <div class="form-group modern-group">
+                                <label for="ridecTitle" class="modern-label">
+                                    <i class="fas fa-tag"></i> Título do RIDEC
+                                </label>
+                                <div class="input-wrapper">
+                                    <input type="text" id="ridecTitle" class="modern-input" placeholder="Ex: Processo de Desenvolvimento de Software" required>
+                                    <div class="input-icon">
+                                        <i class="fas fa-check-circle valid-icon"></i>
+                                        <i class="fas fa-exclamation-circle error-icon"></i>
+                                    </div>
+                                </div>
+                                <div class="input-feedback"></div>
+                            </div>
+                            
+                            <div class="form-group modern-group">
+                                <label for="ridecDescription" class="modern-label">
+                                    <i class="fas fa-align-left"></i> Descrição
+                                </label>
+                                <div class="textarea-wrapper">
+                                    <textarea id="ridecDescription" class="modern-textarea" rows="3" placeholder="Descreva o processo e seus objetivos..."></textarea>
+                                    <div class="char-counter">
+                                        <span class="current-chars">0</span>/<span class="max-chars">500</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group modern-group">
+                                <label for="ridecArea" class="modern-label">
+                                    <i class="fas fa-folder"></i> Área
+                                </label>
+                                <div class="select-wrapper">
+                                    <select id="ridecArea" class="modern-select" required>
+                                        <option value="">Selecione uma área</option>
+                                        <option value="Desenvolvimento" data-icon="fas fa-code">Desenvolvimento</option>
+                                        <option value="Vendas" data-icon="fas fa-chart-line">Vendas</option>
+                                        <option value="Marketing" data-icon="fas fa-bullhorn">Marketing</option>
+                                        <option value="Financeiro" data-icon="fas fa-dollar-sign">Financeiro</option>
+                                        <option value="Recursos Humanos" data-icon="fas fa-users">Recursos Humanos</option>
+                                        <option value="Operações" data-icon="fas fa-cogs">Operações</option>
+                                        <option value="Suporte" data-icon="fas fa-headset">Suporte</option>
+                                        <option value="Qualidade" data-icon="fas fa-check-circle">Qualidade</option>
+                                        <option value="Infraestrutura" data-icon="fas fa-server">Infraestrutura</option>
+                                        <option value="Outros" data-icon="fas fa-folder">Outros</option>
+                                    </select>
+                                    <div class="select-arrow">
+                                        <i class="fas fa-chevron-down"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Time Configuration -->
+                    <div class="form-step" data-step="2">
+                        <div class="step-header">
+                            <h3><i class="fas fa-clock"></i> Configuração de Tempo</h3>
+                            <p>Configure as unidades de tempo e prazos das etapas</p>
+                        </div>
+                        
+                        <div class="form-card">
+                            <div class="time-config-section">
+                                <div class="form-group modern-group">
+                                    <label for="ridecTimeUnit" class="modern-label">
+                                        <i class="fas fa-hourglass-half"></i> Unidade de Tempo Principal
+                                    </label>
+                                    <div class="select-wrapper">
+                                        <select id="ridecTimeUnit" class="modern-select">
+                                            <option value="seconds">Segundos</option>
+                                            <option value="minutes">Minutos</option>
+                                            <option value="hours" selected>Horas</option>
+                                            <option value="days">Dias</option>
+                                            <option value="weeks">Semanas</option>
+                                        </select>
+                                        <div class="select-arrow">
+                                            <i class="fas fa-chevron-down"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group modern-group">
+                                    <label for="ridecMaxTime" class="modern-label">
+                                        <i class="fas fa-stopwatch"></i> Tempo Máximo Total
+                                    </label>
+                                    <div class="time-input-wrapper">
+                                        <input type="number" id="ridecMaxTime" class="modern-input" min="1">
+                                        <span class="time-unit-label" id="maxTimeUnitLabel">horas</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="time-control-mode-section">
+                                <div class="time-control-header">
+                                    <h4><i class="fas fa-sliders-h"></i> Modo de Controle de Tempo</h4>
+                                    <p>Escolha como deseja controlar o tempo do RIDEC</p>
+                                </div>
+                                <div class="time-control-options">
+                                    <label class="time-control-option">
+                                        <input type="radio" name="timeControlMode" id="detailedMode" value="detailed" checked>
+                                        <div class="option-content">
+                                            <div class="option-icon">
+                                                <i class="fas fa-clock"></i>
+                                            </div>
+                                            <div class="option-text">
+                                                <h5>Controle Detalhado</h5>
+                                                <p>Configure prazos individuais para cada etapa (RI, D, E, C)</p>
+                                            </div>
+                                        </div>
+                                    </label>
+                                    <label class="time-control-option">
+                                        <input type="radio" name="timeControlMode" id="simpleMode" value="simple">
+                                        <div class="option-content">
+                                            <div class="option-icon">
+                                                <i class="fas fa-play-circle"></i>
+                                            </div>
+                                            <div class="option-text">
+                                                <h5>Controle Simples</h5>
+                                                <p>Apenas tempo total do RIDEC (início ao fim)</p>
+                                            </div>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="deadlines-section" id="detailedTimeSection">
+                                <div class="deadlines-header">
+                                    <h4><i class="fas fa-calendar-alt"></i> Prazos das Etapas RIDEC</h4>
+                                    <div class="unified-time-option">
+                                        <label class="unified-time-label">
+                                            <input type="checkbox" id="useUnifiedTime" class="unified-time-checkbox">
+                                            <span class="unified-time-text">
+                                                <i class="fas fa-link"></i> Usar mesma unidade para todas as etapas
+                                            </span>
+                                        </label>
+                                        <div class="unified-time-selector" style="display: none;">
+                                            <select id="unifiedTimeUnit" class="modern-select unified-select">
+                                                <option value="seconds">Segundos</option>
+                                                <option value="minutes">Minutos</option>
+                                                <option value="hours" selected>Horas</option>
+                                                <option value="days">Dias</option>
+                                                <option value="weeks">Semanas</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="deadlines-grid modern-grid">
+                                    <div class="deadline-card" data-stage="RI">
+                                        <div class="deadline-header">
+                                            <div class="stage-icon ri-icon">
+                                                <i class="fas fa-play"></i>
+                                            </div>
+                                            <div class="stage-info">
+                                                <h5>Requisitos e Início</h5>
+                                                <p>Definição inicial e planejamento</p>
+                                            </div>
+                                        </div>
+                                        <div class="deadline-inputs">
+                                            <div class="time-input-group modern-group">
+                                                <input type="number" id="deadlineRI" class="modern-input" min="1">
+                                                <select class="deadline-unit-select modern-select" id="unitRI">
+                                                    <option value="seconds">Segundos</option>
+                                                    <option value="minutes">Minutos</option>
+                                                    <option value="hours" selected>Horas</option>
+                                                    <option value="days">Dias</option>
+                                                    <option value="weeks">Semanas</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="deadline-card" data-stage="D">
+                                        <div class="deadline-header">
+                                            <div class="stage-icon d-icon">
+                                                <i class="fas fa-cogs"></i>
+                                            </div>
+                                            <div class="stage-info">
+                                                <h5>Desenvolvimento</h5>
+                                                <p>Execução e implementação</p>
+                                            </div>
+                                        </div>
+                                        <div class="deadline-inputs">
+                                            <div class="time-input-group modern-group">
+                                                <input type="number" id="deadlineD" class="modern-input" min="1">
+                                                <select class="deadline-unit-select modern-select" id="unitD">
+                                                    <option value="seconds">Segundos</option>
+                                                    <option value="minutes">Minutos</option>
+                                                    <option value="hours" selected>Horas</option>
+                                                    <option value="days">Dias</option>
+                                                    <option value="weeks">Semanas</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="deadline-card" data-stage="E">
+                                        <div class="deadline-header">
+                                            <div class="stage-icon e-icon">
+                                                <i class="fas fa-vial"></i>
+                                            </div>
+                                            <div class="stage-info">
+                                                <h5>Execução e Testes</h5>
+                                                <p>Validação e qualidade</p>
+                                            </div>
+                                        </div>
+                                        <div class="deadline-inputs">
+                                            <div class="time-input-group modern-group">
+                                                <input type="number" id="deadlineE" class="modern-input" min="1">
+                                                <select class="deadline-unit-select modern-select" id="unitE">
+                                                    <option value="seconds">Segundos</option>
+                                                    <option value="minutes">Minutos</option>
+                                                    <option value="hours" selected>Horas</option>
+                                                    <option value="days">Dias</option>
+                                                    <option value="weeks">Semanas</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="deadline-card" data-stage="C">
+                                        <div class="deadline-header">
+                                            <div class="stage-icon c-icon">
+                                                <i class="fas fa-check-double"></i>
+                                            </div>
+                                            <div class="stage-info">
+                                                <h5>Conclusão</h5>
+                                                <p>Finalização e entrega</p>
+                                            </div>
+                                        </div>
+                                        <div class="deadline-inputs">
+                                            <div class="time-input-group modern-group">
+                                                <input type="number" id="deadlineC" class="modern-input" min="1">
+                                                <select class="deadline-unit-select modern-select" id="unitC">
+                                                    <option value="seconds">Segundos</option>
+                                                    <option value="minutes">Minutos</option>
+                                                    <option value="hours" selected>Horas</option>
+                                                    <option value="days">Dias</option>
+                                                    <option value="weeks">Semanas</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Relationships -->
+                    <div class="form-step" data-step="3">
+                        <div class="step-header">
+                            <h3><i class="fas fa-project-diagram"></i> Relacionamentos</h3>
+                            <p>Conecte este RIDEC com outros processos (opcional)</p>
+                        </div>
+                        
+                        <div class="form-card">
+                            <div class="relations-section">
+                                <div class="relation-card">
+                                    <div class="relation-header">
+                                        <div class="relation-icon start-icon">
+                                            <i class="fas fa-arrow-right"></i>
+                                        </div>
+                                        <div class="relation-info">
+                                            <h5>RIDEC de Início</h5>
+                                            <p>Processo que deve ser concluído antes deste</p>
+                                        </div>
+                                    </div>
+                                    <div class="relation-input">
+                                        <select id="startRidec" class="modern-select">
+                                            <option value="">Nenhum (processo independente)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <div class="relation-card">
+                                    <div class="relation-header">
+                                        <div class="relation-icon end-icon">
+                                            <i class="fas fa-arrow-left"></i>
+                                        </div>
+                                        <div class="relation-info">
+                                            <h5>RIDEC de Fim</h5>
+                                            <p>Processo que deve iniciar após este</p>
+                                        </div>
+                                    </div>
+                                    <div class="relation-input">
+                                        <select id="endRidec" class="modern-select">
+                                            <option value="">Nenhum (processo final)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="modal-footer modern-footer">
+                <div class="footer-actions">
+                    <button type="button" class="btn btn-secondary modern-btn" id="cancelBtn">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                    <div class="step-navigation">
+                        <button type="button" class="btn btn-outline modern-btn" id="prevBtn" style="display: none;">
+                            <i class="fas fa-chevron-left"></i> Anterior
+                        </button>
+                        <button type="button" class="btn btn-primary modern-btn" id="nextBtn">
+                            Próximo <i class="fas fa-chevron-right"></i>
+                        </button>
+                        <button type="button" class="btn btn-success modern-btn" id="saveBtn" style="display: none;">
+                            <i class="fas fa-save"></i> Salvar RIDEC
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for adding stage A -->
+    <div id="stageAModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Adicionar Etapa A</h2>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="stageAForm">
+                    <div class="form-group">
+                        <label for="stageAPosition">Posição da Etapa A:</label>
+                        <select id="stageAPosition" required>
+                            <option value="">Selecione a posição</option>
+                            <option value="ri-d">Entre RI e D</option>
+                            <option value="d-e">Entre D e E</option>
+                            <option value="e-c">Entre E e C</option>
+                            <option value="after-c">Depois do C</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="stageADeadline">Prazo da Etapa A:</label>
+                        <div class="time-input-group">
+                            <input type="number" id="stageADeadline" min="1" required>
+                            <select class="deadline-unit-select" id="stageAUnit">
+                                <option value="seconds">Segundos</option>
+                                <option value="minutes">Minutos</option>
+                                <option value="hours" selected>Horas</option>
+                                <option value="days">Dias</option>
+                                <option value="weeks">Semanas</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="stageADescription">Descrição da Etapa A:</label>
+                        <textarea id="stageADescription" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="stageAIdentifier">Identificador da Etapa A:</label>
+                        <input type="text" id="stageAIdentifier" placeholder="Ex: A1, A2, Revisão, etc." required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="cancelStageABtn">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="saveStageABtn">Adicionar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Auto Create RIDEC Modal -->
+    <div id="autoCreateModal" class="modal">
+        <div class="modal-content auto-create-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-magic"></i> Criar RIDECs com IA</h2>
+                <button class="close" id="closeAutoCreateModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="ai-intro">
+                    <div class="ai-icon">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <h3>🤖 Criação Automática de RIDECs</h3>
+                    <p class="ai-description">
+                        <strong>Descreva seu processo livremente</strong> e a IA criará automaticamente os modelos de RIDEC com configurações otimizadas!
+                    </p>
+                </div>
+                
+                <div class="process-description-section">
+                    <label for="processDescription">📝 Descreva seu processo:</label>
+                    <textarea 
+                        id="processDescription" 
+                        placeholder="Exemplo: Processo de desenvolvimento de software que leva 40 horas, com análise de requisitos, codificação, testes e documentação, responsabilidade da área de TI..."
+                        rows="6"
+                    ></textarea>
+                </div>
+
+                <div class="ai-examples">
+                    <h4>💡 Exemplos de descrições:</h4>
+                    <div class="example-cards">
+                        <div class="example-card" onclick="ridecSystem.fillExample('desenvolvimento')">
+                            <h5>🖥️ Desenvolvimento de Software</h5>
+                            <p>"Processo de desenvolvimento com análise, codificação, testes e documentação"</p>
+                        </div>
+                        <div class="example-card" onclick="ridecSystem.fillExample('aprovacao')">
+                            <h5>📋 Fluxo de Aprovação</h5>
+                            <p>"Fluxo de aprovação com revisão técnica e validação gerencial"</p>
+                        </div>
+                        <div class="example-card" onclick="ridecSystem.fillExample('onboarding')">
+                            <h5>👥 Onboarding</h5>
+                            <p>"Processo de onboarding com documentação, treinamento e integração"</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="ai-features">
+                    <h4>✨ O que a IA faz automaticamente:</h4>
+                    <ul>
+                        <li>🔍 <strong>Analisa</strong> sua descrição e identifica etapas</li>
+                        <li>⏰ <strong>Calcula</strong> prazos otimizados para cada etapa</li>
+                        <li>🏢 <strong>Define</strong> a área responsável</li>
+                        <li>🔧 <strong>Cria</strong> etapas A personalizadas quando necessário</li>
+                        <li>📊 <strong>Configura</strong> todas as métricas automaticamente</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="createRidecsBtn" class="btn btn-ai">
+                    <i class="fas fa-magic"></i> Criar RIDECs Automaticamente
+                </button>
+                <button id="cancelAutoCreateBtn" class="btn btn-secondary">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal do Chat com IA -->
+    <div id="aiChatModal" class="modal ai-chat-modal">
+        <div class="modal-content ai-chat-content">
+            <div class="modal-header ai-chat-header">
+                <h2><i class="fas fa-robot"></i> Assistente IA - RIDECs</h2>
+                <span class="close" id="closeAiChat">&times;</span>
+            </div>
+            <div class="modal-body ai-chat-body">
+                <div class="chat-container">
+                    <div class="chat-messages" id="chatMessages">
+                        <div class="message ai-message">
+                            <div class="message-avatar">
+                                <i class="fas fa-robot"></i>
+                            </div>
+                            <div class="message-content">
+                                <div class="message-text">
+                                    🤖 <strong>Olá! Sou seu Assistente IA para RIDECs</strong><br><br>
+                                    Posso responder suas perguntas sobre:
+                                    <br>• 📊 Estatísticas e relatórios
+                                    <br>• ⏰ Tempos e prazos
+                                    <br>• 🏢 RIDECs por área
+                                    
+                                    <br>• 📈 Análises de performance
+                                </div>
+                                <div class="message-suggestions">
+                                    <button class="suggestion-btn" onclick="ridecSystem.sendSuggestion('Quantos RIDECs estão atrasados?')">
+                                        ⚠️ Quantos RIDECs estão atrasados?
+                                    </button>
+                                    <button class="suggestion-btn" onclick="ridecSystem.sendSuggestion('Mostre estatísticas gerais')">
+                                        📊 Mostre estatísticas gerais
+                                    </button>
+                                    <button class="suggestion-btn" onclick="ridecSystem.sendSuggestion('Como criar uma nova ocorrência?')">
+                                        ➕ Como criar uma nova ocorrência?
+                                    </button>
+                                    <button class="suggestion-btn" onclick="ridecSystem.sendSuggestion('Qual área tem mais RIDECs?')">
+                                        🏢 Qual área tem mais RIDECs?
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chat-input-container">
+                        <div class="chat-input-wrapper">
+                            <input type="text" id="chatInput" placeholder="Digite sua pergunta sobre RIDECs..." class="chat-input">
+                            <button id="sendMessageBtn" class="send-message-btn">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Botão Flutuante do Chat com IA -->
+    <div class="floating-ai-chat">
+        <button id="aiChatBtn" class="floating-ai-btn" title="Assistente IA - Faça perguntas sobre RIDECs">
+            <div class="ai-btn-content">
+                <i class="fas fa-robot"></i>
+                <span class="ai-btn-text">IA</span>
+            </div>
+            <div class="ai-pulse-ring"></div>
+            <div class="ai-sparkles">
+                <i class="fas fa-sparkles"></i>
+            </div>
+        </button>
+    </div>
+
+    <!-- Modal para configuração de integrações -->
+    <div id="integrationModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-plug"></i> Configurar Integrações</h2>
+                <span class="close" onclick="ridecSystem.closeIntegrationModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="integration-config">
+                    <div class="integration-header">
+                        <h3 id="integrationRidecTitle">Configurar Integrações do RIDEC</h3>
+                        <p class="integration-description">Defina quais sistemas externos podem disparar automaticamente os botões de tempo das etapas</p>
+                    </div>
+                    
+                    <div class="integration-systems">
+                        <h4>Sistemas Disponíveis</h4>
+                        <div class="systems-grid">
+                            <div class="system-card" data-system="slack">
+                                <div class="system-icon">
+                                    <i class="fab fa-slack"></i>
+                                </div>
+                                <div class="system-info">
+                                    <h5>Slack</h5>
+                                    <p>Integração com canais e mensagens</p>
+                                </div>
+                                <div class="system-status">
+                                    <span class="status-badge connected">Conectado</span>
+                                </div>
+                            </div>
+                            
+                            <div class="system-card" data-system="jira">
+                                <div class="system-icon">
+                                    <i class="fab fa-jira"></i>
+                                </div>
+                                <div class="system-info">
+                                    <h5>Jira</h5>
+                                    <p>Integração com tickets e workflows</p>
+                                </div>
+                                <div class="system-status">
+                                    <span class="status-badge connected">Conectado</span>
+                                </div>
+                            </div>
+                            
+                            <div class="system-card" data-system="teams">
+                                <div class="system-icon">
+                                    <i class="fab fa-microsoft"></i>
+                                </div>
+                                <div class="system-info">
+                                    <h5>Microsoft Teams</h5>
+                                    <p>Integração com chats e reuniões</p>
+                                </div>
+                                <div class="system-status">
+                                    <span class="status-badge disconnected">Desconectado</span>
+                                </div>
+                            </div>
+                            
+                            <div class="system-card" data-system="email">
+                                <div class="system-icon">
+                                    <i class="fas fa-envelope"></i>
+                                </div>
+                                <div class="system-info">
+                                    <h5>Email</h5>
+                                    <p>Integração com caixas de entrada</p>
+                                </div>
+                                <div class="system-status">
+                                    <span class="status-badge connected">Conectado</span>
+                                </div>
+                            </div>
+                            
+                            <div class="system-card" data-system="webhook">
+                                <div class="system-icon">
+                                    <i class="fas fa-link"></i>
+                                </div>
+                                <div class="system-info">
+                                    <h5>Webhook Customizado</h5>
+                                    <p>Integração via API personalizada</p>
+                                </div>
+                                <div class="system-status">
+                                    <span class="status-badge disconnected">Desconectado</span>
+                                </div>
+                            </div>
+                            
+                            <div class="system-card" data-system="calendar">
+                                <div class="system-icon">
+                                    <i class="fas fa-calendar-alt"></i>
+                                </div>
+                                <div class="system-info">
+                                    <h5>Google Calendar</h5>
+                                    <p>Integração com eventos e reuniões</p>
+                                </div>
+                                <div class="system-status">
+                                    <span class="status-badge connected">Conectado</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="stage-integrations">
+                        <h4>Configuração por Etapa</h4>
+                        <div class="stages-integration-list" id="stagesIntegrationList">
+                            <!-- Lista de etapas será gerada dinamicamente -->
+                        </div>
+                    </div>
+                    
+                    <div class="integration-triggers">
+                        <h4>Triggers Automáticos</h4>
+                        <div class="triggers-config">
+                            <div class="trigger-item">
+                                <div class="trigger-header">
+                                    <i class="fas fa-play-circle"></i>
+                                    <span>Iniciar Etapa</span>
+                                </div>
+                                <div class="trigger-options">
+                                    <label class="trigger-option">
+                                        <input type="checkbox" id="autoStartSlack" checked>
+                                        <span class="checkmark"></span>
+                                        <span>Slack - Mensagem específica</span>
+                                    </label>
+                                    <label class="trigger-option">
+                                        <input type="checkbox" id="autoStartJira" checked>
+                                        <span class="checkmark"></span>
+                                        <span>Jira - Status alterado</span>
+                                    </label>
+                                    <label class="trigger-option">
+                                        <input type="checkbox" id="autoStartEmail">
+                                        <span class="checkmark"></span>
+                                        <span>Email - Assunto específico</span>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="trigger-item">
+                                <div class="trigger-header">
+                                    <i class="fas fa-stop-circle"></i>
+                                    <span>Finalizar Etapa</span>
+                                </div>
+                                <div class="trigger-options">
+                                    <label class="trigger-option">
+                                        <input type="checkbox" id="autoFinishSlack" checked>
+                                        <span class="checkmark"></span>
+                                        <span>Slack - Comando específico</span>
+                                    </label>
+                                    <label class="trigger-option">
+                                        <input type="checkbox" id="autoFinishJira" checked>
+                                        <span class="checkmark"></span>
+                                        <span>Jira - Ticket fechado</span>
+                                    </label>
+                                    <label class="trigger-option">
+                                        <input type="checkbox" id="autoFinishEmail">
+                                        <span class="checkmark"></span>
+                                        <span>Email - Confirmação</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="ridecSystem.closeIntegrationModal()">Cancelar</button>
+                <button class="btn btn-primary" onclick="ridecSystem.saveIntegrationConfig()">
+                    <i class="fas fa-save"></i>
+                    Salvar Configurações
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para configuração de integrações -->
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <script src="auth-manager.js"></script>
+    <script src="supabase-database.js"></script>
+    <script src="script.js"></script>
+    <script src="integration-example.js"></script>
+</body>
+</html> 
