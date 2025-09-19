@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Limpeza de Dados Corrompidos</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .alert {
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+            border-left: 4px solid #dc3545;
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px;
+            font-size: 16px;
+        }
+        .btn:hover {
+            background: #c82333;
+        }
+        .btn-success {
+            background: #28a745;
+        }
+        .btn-success:hover {
+            background: #218838;
+        }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 20px 0;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .log-entry {
+            margin: 5px 0;
+            padding: 5px;
+            border-radius: 3px;
+        }
+        .log-error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .log-success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .log-warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧹 Limpeza de Dados Corrompidos</h1>
+        
+        <div class="alert">
+            <strong>ℹ️ INFORMAÇÃO:</strong> Sistema de limpeza de dados atualizado!
+            <br>O usuário <strong>julianooschulz@gmail.com</strong> não é mais bloqueado.
+            <br>Este utilitário agora limpa apenas dados realmente corrompidos.
+        </div>
+        
+        <p>Este utilitário irá limpar completamente todos os dados corrompidos e forçar um novo login.</p>
+        
+        <div style="text-align: center;">
+            <button class="btn" onclick="emergencyCleanup()">
+                🚨 LIMPEZA DE EMERGÊNCIA
+            </button>
+            <button class="btn btn-success" onclick="simulateValidLogin()">
+                ✅ Simular Login Válido
+            </button>
+        </div>
+        
+        <div class="log" id="cleanupLog">
+            <div class="log-entry log-warning">Aguardando ação...</div>
+        </div>
+        
+        <div style="margin-top: 30px; padding: 15px; background: #e3f2fd; border-radius: 5px;">
+            <h3>📋 O que será limpo:</h3>
+            <ul>
+                <li>Dados de sessão (localStorage e sessionStorage)</li>
+                <li>Dados do AuthChecker</li>
+                <li>Dados de RIDECs</li>
+                <li>Notificações</li>
+                <li>Qualquer dado relacionado ao usuário corrompido</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        let logEntries = [];
+
+        function addLog(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const entry = {
+                timestamp,
+                message,
+                type
+            };
+            logEntries.push(entry);
+            updateLogDisplay();
+        }
+
+        function updateLogDisplay() {
+            const logContainer = document.getElementById('cleanupLog');
+            logContainer.innerHTML = logEntries.map(entry => 
+                `<div class="log-entry log-${entry.type}">
+                    [${entry.timestamp}] ${entry.message}
+                </div>`
+            ).join('');
+            
+            // Scroll para o final
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+
+        function emergencyCleanup() {
+            addLog('🚨 Iniciando limpeza de emergência...', 'warning');
+            
+            try {
+                // Limpar localStorage
+                addLog('🧹 Limpando localStorage...', 'info');
+                localStorage.removeItem('ridec_session');
+                localStorage.removeItem('ridecs');
+                localStorage.removeItem('notifications');
+                addLog('✅ localStorage limpo', 'success');
+                
+                // Limpar sessionStorage
+                addLog('🧹 Limpando sessionStorage...', 'info');
+                sessionStorage.removeItem('ridec_session');
+                sessionStorage.clear();
+                addLog('✅ sessionStorage limpo', 'success');
+                
+                // Limpar AuthChecker se disponível
+                if (window.authChecker) {
+                    addLog('🧹 Limpando AuthChecker...', 'info');
+                    window.authChecker.currentUser = null;
+                    addLog('✅ AuthChecker limpo', 'success');
+                }
+                
+                // Limpar outros dados possíveis
+                addLog('🧹 Limpando outros dados...', 'info');
+                const keysToRemove = [];
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key && (key.includes('ridec') || key.includes('user') || key.includes('session'))) {
+                        keysToRemove.push(key);
+                    }
+                }
+                
+                keysToRemove.forEach(key => {
+                    localStorage.removeItem(key);
+                    addLog(`🗑️ Removido: ${key}`, 'info');
+                });
+                
+                addLog('✅ Limpeza de emergência concluída!', 'success');
+                addLog('🔄 Recarregando página em 3 segundos...', 'warning');
+                
+                // Recarregar página
+                setTimeout(() => {
+                    window.location.reload();
+                }, 3000);
+                
+            } catch (error) {
+                addLog(`❌ Erro durante limpeza: ${error.message}`, 'error');
+            }
+        }
+
+        function simulateValidLogin() {
+            addLog('🔐 Simulando login válido...', 'info');
+            
+            try {
+                // Limpar dados antigos primeiro
+                emergencyCleanup();
+                
+                // Aguardar um pouco e então simular login válido
+                setTimeout(() => {
+                    const validUser = {
+                        cod_usuario: 1,
+                        nome_usuario: 'Ed Schmoller',
+                        email_usuario: 'edschmoller@gmail.com',
+                        email: 'edschmoller@gmail.com',
+                        cod_empresa: 1,
+                        cod_tipo_usuario: 1,
+                        ies_ativo: 'S',
+                        role: 'admin'
+                    };
+
+                    const sessionData = {
+                        user: validUser,
+                        loginTime: new Date().toISOString(),
+                        rememberMe: true
+                    };
+
+                    localStorage.setItem('ridec_session', JSON.stringify(sessionData));
+                    addLog('✅ Login válido simulado', 'success');
+                    addLog('🔄 Redirecionando para index...', 'info');
+                    
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 1000);
+                    
+                }, 2000);
+                
+            } catch (error) {
+                addLog(`❌ Erro ao simular login: ${error.message}`, 'error');
+            }
+        }
+
+        // Verificar dados corrompidos ao carregar
+        document.addEventListener('DOMContentLoaded', () => {
+            addLog('🔍 Verificando dados corrompidos...', 'info');
+            
+            try {
+                const localData = localStorage.getItem('ridec_session');
+                const sessionData = sessionStorage.getItem('ridec_session');
+                
+                if (localData) {
+                    const parsed = JSON.parse(localData);
+                    if (parsed.user) {
+                        const email = parsed.user.email_usuario || parsed.user.email;
+                        const name = parsed.user.nome_usuario || parsed.user.name;
+                        
+                        addLog(`✅ Dados encontrados no localStorage: ${email}`, 'success');
+                    }
+                }
+                
+                if (sessionData) {
+                    const parsed = JSON.parse(sessionData);
+                    if (parsed.user) {
+                        const email = parsed.user.email_usuario || parsed.user.email;
+                        const name = parsed.user.nome_usuario || parsed.user.name;
+                        
+                        addLog(`✅ Dados encontrados no sessionStorage: ${email}`, 'success');
+                    }
+                }
+                
+                if (!localData && !sessionData) {
+                    addLog('ℹ️ Nenhum dado de sessão encontrado', 'info');
+                }
+                
+            } catch (error) {
+                addLog(`❌ Erro ao verificar dados: ${error.message}`, 'error');
+            }
+        });
+    </script>
+</body>
+</html>

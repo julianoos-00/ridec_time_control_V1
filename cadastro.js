@@ -18,9 +18,19 @@ class CadastroManager {
             // Carregar apenas os dados da aba inicial (usuários)
             await this.loadTabData('usuarios');
         } else {
-            console.warn('⚠️ Supabase não inicializado, aguardando conexão...');
-            // Tentar reconectar após um delay
-            setTimeout(() => this.init(), 1000);
+            console.warn('⚠️ Supabase não inicializado, aguardando evento supabaseReady...');
+            // Aguardar o evento de inicialização do Supabase
+            window.addEventListener('supabaseReady', async (event) => {
+                if (event.detail.success) {
+                    console.log('✅ Supabase pronto, inicializando sistema...');
+                    await this.loadTabData('usuarios');
+                } else {
+                    console.error('❌ Falha na inicialização do Supabase:', event.detail.error);
+                    this.showNotification('Erro ao conectar com o banco de dados. Usando dados de exemplo.', 'error');
+                    // Carregar dados de fallback
+                    await this.loadTabData('usuarios');
+                }
+            });
         }
     }
 
@@ -79,6 +89,10 @@ class CadastroManager {
         
         // Toggle de senha
         document.getElementById('toggleSenha').addEventListener('click', () => this.togglePassword());
+        document.getElementById('toggleEditSenha').addEventListener('click', () => this.toggleEditPassword());
+        
+        // Validação de senha em tempo real
+        document.getElementById('editSenhaUsuario').addEventListener('input', (e) => this.validateEditPassword(e.target));
         
         // Busca
         document.getElementById('searchUsuario').addEventListener('input', (e) => this.filtrarUsuarios(e.target.value));
@@ -268,7 +282,34 @@ class CadastroManager {
     async loadUsuarios() {
         try {
             if (typeof supabaseDB !== 'undefined' && supabaseDB.isConnected()) {
-                this.usuarios = await supabaseDB.getUsuarios();
+                try {
+                    this.usuarios = await supabaseDB.getUsuarios();
+                    console.log('✅ Usuários carregados do Supabase:', this.usuarios);
+                } catch (dbError) {
+                    console.error('❌ Erro específico do banco de dados:', dbError);
+                    console.log('⚠️ Usando dados de fallback devido ao erro do banco...');
+                    this.usuarios = [
+                        {
+                            cod_usuario: 1,
+                            nome_usuario: 'João Silva',
+                            email_usuario: 'joao@empresa.com',
+                            cod_empresa: 1,
+                            cod_tipo_usuario: 1,
+                            ies_ativo: 'S',
+                            empresa_nome: 'Empresa Demo'
+                        },
+                        {
+                            cod_usuario: 2,
+                            nome_usuario: 'Maria Santos',
+                            email_usuario: 'maria@empresa.com',
+                            cod_empresa: 1,
+                            cod_tipo_usuario: 2,
+                            ies_ativo: 'S',
+                            empresa_nome: 'Empresa Demo'
+                        }
+                    ];
+                    this.showNotification('Erro ao conectar com banco de dados. Usando dados de exemplo.', 'error');
+                }
             } else {
                 // Dados de exemplo para fallback
                 this.usuarios = [
@@ -297,6 +338,29 @@ class CadastroManager {
         } catch (error) {
             console.error('Erro ao carregar usuários:', error);
             this.showNotification('Erro ao carregar usuários', 'error');
+            
+            // Garantir que sempre temos dados para exibir
+            this.usuarios = [
+                {
+                    cod_usuario: 1,
+                    nome_usuario: 'João Silva',
+                    email_usuario: 'joao@empresa.com',
+                    cod_empresa: 1,
+                    cod_tipo_usuario: 1,
+                    ies_ativo: 'S',
+                    empresa_nome: 'Empresa Demo'
+                },
+                {
+                    cod_usuario: 2,
+                    nome_usuario: 'Maria Santos',
+                    email_usuario: 'maria@empresa.com',
+                    cod_empresa: 1,
+                    cod_tipo_usuario: 2,
+                    ies_ativo: 'S',
+                    empresa_nome: 'Empresa Demo'
+                }
+            ];
+            this.renderizarUsuarios();
         }
     }
 
@@ -320,23 +384,30 @@ class CadastroManager {
         card.className = 'data-card';
         const empresaNome = usuario.empresa ? usuario.empresa.nome_empresa : usuario.empresa_nome || 'N/A';
         card.innerHTML = `
-            <div class="card-header">
+            <div class="card-header-new">
                 <div class="user-avatar">
                     <i class="fas fa-user"></i>
                 </div>
-                <div class="user-info">
-                    <h3>${usuario.nome_usuario}</h3>
-                    <p class="user-email">${usuario.email_usuario}</p>
-                    <p class="user-company">${empresaNome}</p>
-                </div>
-                <div class="user-status ${usuario.ies_ativo === 'S' ? 'active' : 'inactive'}">
-                    <span class="status-dot"></span>
-                    ${usuario.ies_ativo === 'S' ? 'Ativo' : 'Inativo'}
+                <div class="user-name-status">
+                    <h3 class="user-name">${usuario.nome_usuario}</h3>
+                    <div class="user-status ${usuario.ies_ativo === 'S' ? 'active' : 'inactive'}">
+                        <span class="status-dot"></span>
+                        ${usuario.ies_ativo === 'S' ? 'Ativo' : 'Inativo'}
+                    </div>
                 </div>
             </div>
-            <div class="card-body">
-                <div class="user-details">
-                    <span class="user-type">${this.getTipoUsuarioLabel(usuario.cod_tipo_usuario)}</span>
+            <div class="card-content-new">
+                <div class="info-line">
+                    <i class="fas fa-envelope info-icon"></i>
+                    <span class="info-text">${usuario.email_usuario}</span>
+                </div>
+                <div class="info-line">
+                    <i class="fas fa-building info-icon"></i>
+                    <span class="info-text">${empresaNome}</span>
+                </div>
+                <div class="info-line">
+                    <i class="fas fa-user-tag info-icon"></i>
+                    <span class="user-type-badge">${this.getTipoUsuarioLabel(usuario.cod_tipo_usuario)}</span>
                 </div>
             </div>
             <div class="card-actions">
@@ -406,13 +477,18 @@ class CadastroManager {
         card.className = 'data-card';
         const empresaNome = area.empresa ? area.empresa.nome_empresa : area.empresa_nome || 'N/A';
         card.innerHTML = `
-            <div class="card-header">
+            <div class="card-header-new">
                 <div class="area-icon">
                     <i class="fas fa-building"></i>
                 </div>
-                <div class="area-info">
-                    <h3>${area.nome_area}</h3>
-                    <p class="area-company">${empresaNome}</p>
+                <div class="user-name-status">
+                    <h3 class="user-name">${area.nome_area}</h3>
+                </div>
+            </div>
+            <div class="card-content-new">
+                <div class="info-line">
+                    <i class="fas fa-building info-icon"></i>
+                    <span class="info-text">${empresaNome}</span>
                 </div>
             </div>
             <div class="card-actions">
@@ -436,8 +512,19 @@ class CadastroManager {
             
             if (typeof supabaseDB !== 'undefined' && supabaseDB.isConnected()) {
                 console.log('📡 Carregando empresas do Supabase...');
-                this.empresas = await supabaseDB.getEmpresas();
-                console.log('✅ Empresas carregadas do Supabase:', this.empresas);
+                try {
+                    this.empresas = await supabaseDB.getEmpresas();
+                    console.log('✅ Empresas carregadas do Supabase:', this.empresas);
+                } catch (dbError) {
+                    console.error('❌ Erro específico do banco de dados:', dbError);
+                    console.log('⚠️ Usando dados de fallback devido ao erro do banco...');
+                    this.empresas = [
+                        { cod_empresa: 1, nome_empresa: 'Empresa Demo', ies_ativo: 'S' },
+                        { cod_empresa: 2, nome_empresa: 'Tech Solutions', ies_ativo: 'S' },
+                        { cod_empresa: 3, nome_empresa: 'Inovação Corp', ies_ativo: 'N' }
+                    ];
+                    this.showNotification('Erro ao conectar com banco de dados. Usando dados de exemplo.', 'error');
+                }
             } else {
                 console.log('⚠️ Supabase não disponível, usando dados de fallback...');
                 // Dados de fallback se Supabase não estiver disponível
@@ -454,13 +541,38 @@ class CadastroManager {
             console.log('🎨 Renderizando empresas...');
             this.renderizarEmpresas();
             console.log('✅ Carregamento de empresas concluído!');
+            
+            // Verificar se o select foi populado corretamente
+            const selectEmpresa = document.getElementById('empresaUsuario');
+            if (selectEmpresa) {
+                const options = selectEmpresa.querySelectorAll('option');
+                console.log(`🔍 Select empresaUsuario tem ${options.length} opções após carregamento`);
+                options.forEach((option, index) => {
+                    console.log(`   Opção ${index}: ${option.value} - ${option.textContent}`);
+                });
+            } else {
+                console.log('❌ Select empresaUsuario não encontrado após carregamento');
+            }
         } catch (error) {
-            console.error('❌ Erro ao carregar empresas:', error);
+            console.error('❌ Erro geral ao carregar empresas:', error);
             this.showNotification('Erro ao carregar empresas: ' + error.message, 'error');
+            
+            // Garantir que sempre temos dados para exibir
+            this.empresas = [
+                { cod_empresa: 1, nome_empresa: 'Empresa Demo', ies_ativo: 'S' },
+                { cod_empresa: 2, nome_empresa: 'Tech Solutions', ies_ativo: 'S' },
+                { cod_empresa: 3, nome_empresa: 'Inovação Corp', ies_ativo: 'N' }
+            ];
+            this.popularSelectsEmpresas();
+            this.renderizarEmpresas();
         }
     }
 
     popularSelectsEmpresas() {
+        console.log('🎯 Iniciando popularSelectsEmpresas...');
+        console.log('📊 Empresas disponíveis:', this.empresas);
+        console.log('📊 Quantidade de empresas:', this.empresas.length);
+        
         const selects = [
             'empresaUsuario',
             'empresaArea',
@@ -469,17 +581,24 @@ class CadastroManager {
         ];
 
         selects.forEach(selectId => {
+            console.log(`🔍 Processando select: ${selectId}`);
             const select = document.getElementById(selectId);
             if (select) {
+                console.log(`✅ Select ${selectId} encontrado, populando...`);
                 select.innerHTML = '<option value="">Selecione a empresa</option>';
                 this.empresas.forEach(empresa => {
                     const option = document.createElement('option');
                     option.value = empresa.cod_empresa;
                     option.textContent = empresa.nome_empresa;
                     select.appendChild(option);
+                    console.log(`   ➕ Adicionada opção: ${empresa.cod_empresa} - ${empresa.nome_empresa}`);
                 });
+                console.log(`✅ Select ${selectId} populado com ${this.empresas.length} opções`);
+            } else {
+                console.log(`❌ Select ${selectId} não encontrado no DOM`);
             }
         });
+        console.log('✅ popularSelectsEmpresas concluído!');
     }
 
     // Gerenciamento de Empresas
@@ -502,17 +621,22 @@ class CadastroManager {
         const card = document.createElement('div');
         card.className = 'data-card';
         card.innerHTML = `
-            <div class="card-header">
+            <div class="card-header-new">
                 <div class="empresa-icon">
                     <i class="fas fa-industry"></i>
                 </div>
-                <div class="empresa-info">
-                    <h3>${empresa.nome_empresa}</h3>
-                    <p class="empresa-id">ID: ${empresa.cod_empresa}</p>
+                <div class="user-name-status">
+                    <h3 class="user-name">${empresa.nome_empresa}</h3>
+                    <div class="user-status ${empresa.ies_ativo === 'S' ? 'active' : 'inactive'}">
+                        <span class="status-dot"></span>
+                        ${empresa.ies_ativo === 'S' ? 'Ativo' : 'Inativo'}
+                    </div>
                 </div>
-                <div class="empresa-status ${empresa.ies_ativo === 'S' ? 'active' : 'inactive'}">
-                    <span class="status-dot"></span>
-                    ${empresa.ies_ativo === 'S' ? 'Ativo' : 'Inativo'}
+            </div>
+            <div class="card-content-new">
+                <div class="info-line">
+                    <i class="fas fa-hashtag info-icon"></i>
+                    <span class="info-text">ID: ${empresa.cod_empresa}</span>
                 </div>
             </div>
             <div class="card-actions">
@@ -553,26 +677,35 @@ class CadastroManager {
         if (tipo.pode_acesso_sistema) permissoes.push('<span class="permission-badge"><i class="fas fa-cog"></i> Acesso Sistema</span>');
         
         card.innerHTML = `
-            <div class="card-header">
+            <div class="card-header-new">
                 <div class="tipo-icon">
                     <i class="fas fa-user-tag"></i>
                 </div>
-                <div class="tipo-info">
-                    <h3>${tipo.nome_tipo_usuario}</h3>
-                    <p class="tipo-descricao">${tipo.descricao_tipo || 'Sem descrição'}</p>
-                    <p class="tipo-nivel">Nível: ${tipo.nivel_acesso}</p>
-                </div>
-                <div class="tipo-status ${tipo.ies_ativo === 'S' ? 'active' : 'inactive'}">
-                    <span class="status-dot"></span>
-                    ${tipo.ies_ativo === 'S' ? 'Ativo' : 'Inativo'}
+                <div class="user-name-status">
+                    <h3 class="user-name">${tipo.nome_tipo_usuario}</h3>
+                    <div class="user-status ${tipo.ies_ativo === 'S' ? 'active' : 'inactive'}">
+                        <span class="status-dot"></span>
+                        ${tipo.ies_ativo === 'S' ? 'Ativo' : 'Inativo'}
+                    </div>
                 </div>
             </div>
-            <div class="card-body">
-                <div class="permissions-display">
-                    <h4>Permissões:</h4>
-                    <div class="permissions-list">
-                        ${permissoes.length > 0 ? permissoes.join('') : '<span class="no-permissions">Nenhuma permissão especial</span>'}
-                    </div>
+            <div class="card-content-new">
+                <div class="info-line">
+                    <i class="fas fa-info-circle info-icon"></i>
+                    <span class="info-text">${tipo.descricao_tipo || 'Sem descrição'}</span>
+                </div>
+                <div class="info-line">
+                    <i class="fas fa-layer-group info-icon"></i>
+                    <span class="info-text">Nível: ${tipo.nivel_acesso}</span>
+                </div>
+                <div class="info-line">
+                    <i class="fas fa-key info-icon"></i>
+                    <span class="info-text">
+                        ${permissoes.length > 0 ? 
+                            permissoes.map(p => p.replace(/<[^>]*>/g, '').replace(/^[^>]*>\s*/, '')).join(', ') : 
+                            'Nenhuma permissão especial'
+                        }
+                    </span>
                 </div>
             </div>
             <div class="card-actions">
@@ -599,6 +732,88 @@ class CadastroManager {
         } else {
             senhaInput.type = 'password';
             icon.className = 'fas fa-eye';
+        }
+    }
+
+    toggleEditPassword() {
+        const senhaInput = document.getElementById('editSenhaUsuario');
+        const toggleBtn = document.getElementById('toggleEditSenha');
+        const icon = toggleBtn.querySelector('i');
+
+        if (senhaInput.type === 'password') {
+            senhaInput.type = 'text';
+            icon.className = 'fas fa-eye-slash';
+        } else {
+            senhaInput.type = 'password';
+            icon.className = 'fas fa-eye';
+        }
+    }
+
+    validateEditPassword(input) {
+        const senha = input.value;
+        const formGroup = input.closest('.form-group');
+        let feedback = formGroup.querySelector('.password-feedback');
+        
+        // Criar elemento de feedback se não existir
+        if (!feedback) {
+            feedback = document.createElement('div');
+            feedback.className = 'password-feedback';
+            formGroup.appendChild(feedback);
+        }
+        
+        // Se campo está vazio, não mostrar feedback
+        if (!senha || senha.trim() === '') {
+            feedback.style.display = 'none';
+            input.classList.remove('error', 'success');
+            return;
+        }
+        
+        // Validar força da senha
+        if (typeof passwordSecurity !== 'undefined') {
+            const strength = passwordSecurity.validatePasswordStrength(senha);
+            
+            let strengthText = '';
+            let strengthClass = '';
+            let inputClass = '';
+            
+            switch (strength.strength) {
+                case 'weak':
+                    strengthText = 'Senha fraca';
+                    strengthClass = 'strength-weak';
+                    inputClass = 'error';
+                    break;
+                case 'medium':
+                    strengthText = 'Senha média';
+                    strengthClass = 'strength-medium';
+                    inputClass = 'warning';
+                    break;
+                case 'strong':
+                    strengthText = 'Senha forte';
+                    strengthClass = 'strength-strong';
+                    inputClass = 'success';
+                    break;
+            }
+            
+            const requirements = strength.requirements;
+            const requirementsText = `
+                <div class="strength-indicator">
+                    <span class="strength-text ${strengthClass}">${strengthText}</span>
+                    <div class="strength-bar">
+                        <div class="strength-fill ${strengthClass}" style="width: ${(strength.score / strength.maxScore) * 100}%"></div>
+                    </div>
+                </div>
+                <div class="requirements">
+                    <small>Requisitos: ${requirements.minLength ? '✅' : '❌'} 8+ chars, 
+                    ${requirements.hasUpperCase ? '✅' : '❌'} Maiúscula, 
+                    ${requirements.hasLowerCase ? '✅' : '❌'} Minúscula, 
+                    ${requirements.hasNumbers ? '✅' : '❌'} Número, 
+                    ${requirements.hasSpecialChar ? '✅' : '❌'} Especial</small>
+                </div>
+            `;
+            
+            feedback.innerHTML = requirementsText;
+            feedback.style.display = 'block';
+            input.className = input.className.replace(/error|warning|success/g, '').trim() + ' ' + inputClass;
         }
     }
 
@@ -770,9 +985,38 @@ class CadastroManager {
 }
 
 // Adicionar as operações CRUD ao protótipo da classe
-CadastroManager.prototype.showModalUsuario = function() {
+CadastroManager.prototype.showModalUsuario = async function() {
+    console.log('🚀 showModalUsuario iniciado...');
     document.getElementById('modalUsuario').style.display = 'block';
     document.getElementById('formUsuario').reset();
+    
+    // Carregar dados necessários para os comboboxes
+    try {
+        console.log('📋 Verificando tipos de usuário...');
+        console.log('📊 Tipos de usuário disponíveis:', this.tiposUsuario.length);
+        
+        // Carregar tipos de usuário se ainda não foram carregados
+        if (this.tiposUsuario.length === 0) {
+            console.log('👥 Carregando tipos de usuário...');
+            await this.loadTiposUsuario();
+        } else {
+            console.log('👥 Tipos já carregados, populando selects...');
+            // Se já foram carregados, apenas popular os selects
+            this.popularSelectsTiposUsuario();
+        }
+        
+        console.log('🏢 Verificando empresas...');
+        console.log('📊 Empresas disponíveis:', this.empresas.length);
+        
+        // Carregar empresas (sempre recarregar para garantir dados atualizados)
+        console.log('🏢 Carregando empresas...');
+        await this.loadEmpresas();
+        
+        console.log('✅ showModalUsuario concluído com sucesso!');
+    } catch (error) {
+        console.error('❌ Erro ao carregar dados para o modal de usuário:', error);
+        this.showNotification('Erro ao carregar dados do formulário', 'error');
+    }
 };
 
 CadastroManager.prototype.hideModalUsuario = function() {
@@ -783,16 +1027,33 @@ CadastroManager.prototype.salvarUsuario = async function(e) {
     e.preventDefault();
     
     const formData = new FormData(e.target);
-    const usuarioData = {
-        nome_usuario: formData.get('nomeUsuario'),
-        email_usuario: formData.get('emailUsuario'),
-        senha_usuario: formData.get('senhaUsuario'),
-        cod_tipo_usuario: parseInt(formData.get('tipoUsuario')),
-        cod_empresa: parseInt(formData.get('empresaUsuario')),
-        ies_ativo: formData.get('statusUsuario')
-    };
-
+    const senhaOriginal = formData.get('senhaUsuario');
+    
+    // Validar força da senha
+    if (typeof passwordSecurity !== 'undefined') {
+        const strength = passwordSecurity.validatePasswordStrength(senhaOriginal);
+        if (strength.score < 3) {
+            this.showNotification('Senha muito fraca. Use pelo menos 8 caracteres com maiúsculas, minúsculas e números.', 'error');
+            return;
+        }
+    }
+    
     try {
+        // Criptografar a senha
+        let senhaCriptografada = senhaOriginal;
+        if (typeof passwordSecurity !== 'undefined') {
+            senhaCriptografada = await passwordSecurity.hashPassword(senhaOriginal);
+        }
+        
+        const usuarioData = {
+            nome_usuario: formData.get('nomeUsuario'),
+            email_usuario: formData.get('emailUsuario'),
+            senha_usuario: senhaCriptografada,
+            cod_tipo_usuario: parseInt(formData.get('tipoUsuario')),
+            cod_empresa: parseInt(formData.get('empresaUsuario')),
+            ies_ativo: formData.get('statusUsuario')
+        };
+
         if (typeof supabaseDB !== 'undefined' && supabaseDB.isConnected()) {
             await supabaseDB.createUsuario(usuarioData);
             await this.loadUsuarios();
@@ -814,13 +1075,31 @@ CadastroManager.prototype.salvarUsuario = async function(e) {
     }
 };
 
-CadastroManager.prototype.editarUsuario = function(codUsuario) {
+CadastroManager.prototype.editarUsuario = async function(codUsuario) {
     const usuario = this.usuarios.find(u => u.cod_usuario === codUsuario);
     if (!usuario) return;
+
+    // Carregar dados necessários para os comboboxes
+    try {
+        // Carregar tipos de usuário se ainda não foram carregados
+        if (this.tiposUsuario.length === 0) {
+            await this.loadTiposUsuario();
+        } else {
+            // Se já foram carregados, apenas popular os selects
+            this.popularSelectsTiposUsuario();
+        }
+        
+        // Carregar empresas (sempre recarregar para garantir dados atualizados)
+        await this.loadEmpresas();
+    } catch (error) {
+        console.error('Erro ao carregar dados para o modal de edição de usuário:', error);
+        this.showNotification('Erro ao carregar dados do formulário', 'error');
+    }
 
     document.getElementById('editCodUsuario').value = usuario.cod_usuario;
     document.getElementById('editNomeUsuario').value = usuario.nome_usuario;
     document.getElementById('editEmailUsuario').value = usuario.email_usuario;
+    document.getElementById('editSenhaUsuario').value = ''; // Limpar campo de senha
     document.getElementById('editTipoUsuario').value = usuario.cod_tipo_usuario;
     document.getElementById('editEmpresaUsuario').value = usuario.cod_empresa;
     document.getElementById('editStatusUsuario').value = usuario.ies_ativo;
@@ -837,6 +1116,9 @@ CadastroManager.prototype.atualizarUsuario = async function(e) {
     
     const formData = new FormData(e.target);
     const codUsuario = parseInt(formData.get('codUsuario'));
+    const novaSenha = formData.get('senhaUsuario');
+    
+    // Preparar dados básicos do usuário
     const usuarioData = {
         nome_usuario: formData.get('nomeUsuario'),
         email_usuario: formData.get('emailUsuario'),
@@ -846,6 +1128,27 @@ CadastroManager.prototype.atualizarUsuario = async function(e) {
     };
 
     try {
+        // Se uma nova senha foi fornecida, validar e criptografar
+        if (novaSenha && novaSenha.trim() !== '') {
+            // Validar força da senha
+            if (typeof passwordSecurity !== 'undefined') {
+                const strength = passwordSecurity.validatePasswordStrength(novaSenha);
+                if (strength.score < 3) {
+                    this.showNotification('Senha muito fraca. Use pelo menos 8 caracteres com maiúsculas, minúsculas e números.', 'error');
+                    return;
+                }
+            }
+            
+            // Criptografar a nova senha
+            let senhaCriptografada = novaSenha;
+            if (typeof passwordSecurity !== 'undefined') {
+                senhaCriptografada = await passwordSecurity.hashPassword(novaSenha);
+            }
+            
+            // Adicionar senha criptografada aos dados
+            usuarioData.senha_usuario = senhaCriptografada;
+        }
+
         if (typeof supabaseDB !== 'undefined' && supabaseDB.isConnected()) {
             await supabaseDB.updateUsuario(codUsuario, usuarioData);
             await this.loadUsuarios();
@@ -862,7 +1165,10 @@ CadastroManager.prototype.atualizarUsuario = async function(e) {
         }
         
         this.hideModalEditarUsuario();
-        this.showNotification('Usuário atualizado com sucesso!', 'success');
+        const message = novaSenha && novaSenha.trim() !== '' ? 
+            'Usuário atualizado com sucesso! Senha alterada.' : 
+            'Usuário atualizado com sucesso!';
+        this.showNotification(message, 'success');
     } catch (error) {
         console.error('Erro ao atualizar usuário:', error);
         this.showNotification('Erro ao atualizar usuário: ' + error.message, 'error');
@@ -892,9 +1198,23 @@ CadastroManager.prototype.excluirUsuario = async function(codUsuario) {
 // OPERAÇÕES CRUD DE ÁREAS
 // ==============================================
 
-CadastroManager.prototype.showModalArea = function() {
+CadastroManager.prototype.showModalArea = async function() {
     document.getElementById('modalArea').style.display = 'block';
     document.getElementById('formArea').reset();
+    
+    // Carregar dados necessários para os comboboxes
+    try {
+        // Carregar empresas se ainda não foram carregadas
+        if (this.empresas.length === 0) {
+            await this.loadEmpresas();
+        } else {
+            // Se já foram carregadas, apenas popular os selects
+            this.popularSelectsEmpresas();
+        }
+    } catch (error) {
+        console.error('Erro ao carregar dados para o modal de área:', error);
+        this.showNotification('Erro ao carregar dados do formulário', 'error');
+    }
 };
 
 CadastroManager.prototype.hideModalArea = function() {
@@ -932,9 +1252,23 @@ CadastroManager.prototype.salvarArea = async function(e) {
     }
 };
 
-CadastroManager.prototype.editarArea = function(codArea) {
+CadastroManager.prototype.editarArea = async function(codArea) {
     const area = this.areas.find(a => a.cod_area === codArea);
     if (!area) return;
+
+    // Carregar dados necessários para os comboboxes
+    try {
+        // Carregar empresas se ainda não foram carregadas
+        if (this.empresas.length === 0) {
+            await this.loadEmpresas();
+        } else {
+            // Se já foram carregadas, apenas popular os selects
+            this.popularSelectsEmpresas();
+        }
+    } catch (error) {
+        console.error('Erro ao carregar dados para o modal de edição de área:', error);
+        this.showNotification('Erro ao carregar dados do formulário', 'error');
+    }
 
     document.getElementById('editCodArea').value = area.cod_area;
     document.getElementById('editNomeArea').value = area.nome_area;

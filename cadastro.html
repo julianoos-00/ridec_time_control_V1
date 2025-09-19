@@ -12,14 +12,15 @@
         <!-- Header -->
         <header class="header">
             <div class="header-left">
-                <button id="voltarBtn" class="btn btn-secondary" title="Voltar ao Sistema">
-                    <i class="fas fa-arrow-left"></i> Voltar
-                </button>
-                <h1><i class="fas fa-user-plus"></i> Sistema de Cadastros</h1>
+                
+                <h1><i class="fas fa-user-plus"></i> Cadastros</h1>
             </div>
             <div class="header-actions">
                 <button id="refreshBtn" class="btn btn-info" title="Atualizar Dados">
                     <i class="fas fa-sync-alt"></i> Atualizar
+                </button>
+                <button id="voltarBtn" class="btn btn-secondary" title="Voltar ao Sistema">
+                    <i class="fas fa-arrow-left"></i> Voltar
                 </button>
             </div>
         </header>
@@ -271,6 +272,16 @@
                     <div class="form-group">
                         <label for="editEmailUsuario">Email *</label>
                         <input type="email" id="editEmailUsuario" name="emailUsuario" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editSenhaUsuario">Nova Senha</label>
+                        <div class="password-input">
+                            <input type="password" id="editSenhaUsuario" name="senhaUsuario" placeholder="Deixe em branco para manter a senha atual">
+                            <button type="button" class="toggle-password" id="toggleEditSenha">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                        <small class="form-help">Deixe em branco para manter a senha atual. Preencha apenas se desejar alterar.</small>
                     </div>
                     <div class="form-group">
                         <label for="editTipoUsuario">Tipo de Usuário *</label>
@@ -551,6 +562,7 @@
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script src="supabase-config.js"></script>
     <script src="supabase-database.js"></script>
+    <script src="password-security.js"></script>
     <script src="cadastro.js"></script>
 </body>
 </html>

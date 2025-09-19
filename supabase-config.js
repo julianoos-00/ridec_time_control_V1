@@ -22,6 +22,12 @@ const SUPABASE_CONFIG = {
 
 // Função para conectar ao Supabase via JavaScript
 function connectToSupabase() {
+    // Verificar se já existe uma instância global
+    if (window.supabaseClient && window.supabaseClientInitialized) {
+        console.log('✅ Reutilizando instância global do Supabase');
+        return window.supabaseClient;
+    }
+
     // Verificar se a biblioteca do Supabase está carregada
     if (typeof supabase === 'undefined') {
         console.error('Biblioteca do Supabase não encontrada. Carregue o script do Supabase primeiro.');
@@ -30,6 +36,10 @@ function connectToSupabase() {
     
     // Criar cliente Supabase
     const supabaseClient = supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey);
+    
+    // Armazenar como instância global
+    window.supabaseClient = supabaseClient;
+    window.supabaseClientInitialized = true;
     
     return supabaseClient;
 }

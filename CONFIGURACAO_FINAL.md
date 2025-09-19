@@ -170,5 +170,3 @@ O sistema RIDEC Time Control está agora **totalmente integrado com Supabase** e
 
 **Status**: ✅ **CONFIGURAÇÃO CONCLUÍDA COM SUCESSO**
 
-
-

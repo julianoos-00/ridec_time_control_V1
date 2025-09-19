@@ -316,4 +316,56 @@
     font-weight: 600 !important;
     color: #1e293b !important;
     margin: 0 !important;
+}
+
+/* Scroll horizontal para etapas */
+.stages-table-scroll {
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    width: 100% !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: thin !important;
+    scrollbar-color: #cbd5e1 #f1f5f9 !important;
+}
+
+.stages-table-scroll::-webkit-scrollbar {
+    height: 8px !important;
+}
+
+.stages-table-scroll::-webkit-scrollbar-track {
+    background: #f1f5f9 !important;
+    border-radius: 4px !important;
+}
+
+.stages-table-scroll::-webkit-scrollbar-thumb {
+    background: #cbd5e1 !important;
+    border-radius: 4px !important;
+}
+
+.stages-table-scroll::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8 !important;
+}
+
+.stages-table-content {
+    display: flex !important;
+    gap: 15px !important;
+    min-width: max-content !important;
+    padding: 10px 0 !important;
+}
+
+.stage-column {
+    min-width: 200px !important;
+    max-width: 250px !important;
+    flex-shrink: 0 !important;
+    background: #f8fafc !important;
+    border-radius: 8px !important;
+    padding: 15px !important;
+    border: 1px solid #e2e8f0 !important;
+    transition: all 0.3s ease !important;
+}
+
+.stage-column:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+    border-color: #cbd5e1 !important;
 } 

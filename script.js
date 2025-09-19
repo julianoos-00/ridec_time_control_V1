@@ -1,7 +1,14 @@
 // Sistema RIDEC - Controle de Processos
 class RIDECSystem {
     constructor() {
-        this.ridecs = JSON.parse(localStorage.getItem('ridecs')) || [];
+        // Limpar dados de exemplo do localStorage ANTES de carregar
+        RIDECSystem.clearExampleDataStatic();
+        
+        // LIMPEZA AGRESSIVA - Remover dados antigos/corrompidos
+        this.aggressiveDataCleanup();
+        
+        // Inicializar arrays vazios - dados serão carregados do banco
+        this.ridecs = [];
         this.currentRidecId = null;
         this.notificationId = 0;
         this.overdueCheckInterval = null;
@@ -10,6 +17,10 @@ class RIDECSystem {
         this.chatOpened = false;
         this.showAiWelcome = true;
         this.currentView = 'card';
+        this.loadingAreas = false;
+        this.renderingList = false; // Flag para evitar múltiplas renderizações
+        this.lastRidecsHash = null; // Hash para detectar mudanças significativas
+        this.supabaseReadyListenerAdded = false; // Flag para evitar múltiplos listeners
         
         this.initializeEventListeners();
         this.checkAndCleanResidualData(); // Verificar e limpar dados residuais
@@ -17,14 +28,14 @@ class RIDECSystem {
         // VERIFICAÇÃO ADICIONAL - Garantir que não há dados residuais
         this.ensureCleanState();
         
-        this.renderRidecList();
+        // Não renderizar lista ainda - aguardar dados do banco
         this.startOverdueMonitoring();
-        this.loadSampleData();
         this.updateNotificationCount();
         this.checkForEditRidec();
         this.showAiWelcomeMessage();
         
-
+        // Aguardar Supabase estar pronto antes de inicializar
+        this.waitForSupabaseAndInitialize();
     }
 
     // Inicializar event listeners
@@ -39,23 +50,6 @@ class RIDECSystem {
             this.openAutoCreateModal();
         });
 
-        // Botão deletar todos os RIDECs
-        document.getElementById('deleteAllBtn').addEventListener('click', () => {
-            this.deleteAllRidecs();
-        });
-
-        // Botão resetar configuração
-        document.getElementById('resetConfigBtn').addEventListener('click', () => {
-            this.resetToDefaultConfiguration();
-        });
-
-        // Botão de logout
-        const logoutBtn = document.getElementById('logoutBtn');
-        if (logoutBtn) {
-            logoutBtn.addEventListener('click', () => {
-                this.handleLogout();
-            });
-        }
 
         // Botão de ocorrências
         document.getElementById('occurrencesBtn').addEventListener('click', () => {
@@ -92,9 +86,6 @@ class RIDECSystem {
             this.switchToCardView();
         });
 
-        document.getElementById('flowViewBtn').addEventListener('click', () => {
-            this.switchToFlowView();
-        });
 
 
 
@@ -109,10 +100,6 @@ class RIDECSystem {
             this.filterRidecs('');
         });
 
-        // Charts View Button
-        document.getElementById('chartsViewBtn').addEventListener('click', () => {
-            this.switchToChartsView();
-        });
 
         // Modal RIDEC
         const ridecModal = document.getElementById('ridecModal');
@@ -184,10 +171,85 @@ class RIDECSystem {
             }
         });
 
+        // Modal Criar Ocorrência
+        const createOccurrenceModal = document.getElementById('createOccurrenceModal');
+        const closeCreateOccurrenceBtn = document.getElementById('closeCreateOccurrenceModal');
+        const cancelCreateOccurrenceBtn = document.getElementById('cancelCreateOccurrenceBtn');
+        const confirmCreateOccurrenceBtn = document.getElementById('confirmCreateOccurrenceBtn');
+
+        // Modal Editar Modelo
+        const editModelModal = document.getElementById('editModelModal');
+        const closeEditModelBtn = document.getElementById('closeEditModelModal');
+        const cancelEditModelBtn = document.getElementById('cancelEditModelBtn');
+        const saveEditModelBtn = document.getElementById('saveEditModelBtn');
+
+        console.log('🔍 Configurando modal de criar ocorrência...');
+        console.log('Modal:', createOccurrenceModal);
+        console.log('Botão fechar:', closeCreateOccurrenceBtn);
+        console.log('Botão cancelar:', cancelCreateOccurrenceBtn);
+        console.log('Botão confirmar:', confirmCreateOccurrenceBtn);
+
+        if (closeCreateOccurrenceBtn) {
+            closeCreateOccurrenceBtn.addEventListener('click', () => this.closeCreateOccurrenceModal());
+            console.log('✅ Event listener adicionado ao botão fechar');
+        } else {
+            console.error('❌ Botão fechar não encontrado');
+        }
+
+        if (cancelCreateOccurrenceBtn) {
+            cancelCreateOccurrenceBtn.addEventListener('click', () => this.closeCreateOccurrenceModal());
+            console.log('✅ Event listener adicionado ao botão cancelar');
+        } else {
+            console.error('❌ Botão cancelar não encontrado');
+        }
+
+        if (confirmCreateOccurrenceBtn) {
+            confirmCreateOccurrenceBtn.addEventListener('click', () => this.createOccurrence());
+            console.log('✅ Event listener adicionado ao botão confirmar');
+        } else {
+            console.error('❌ Botão confirmar não encontrado');
+        }
+
+        // Event listeners para modal de edição de modelo
+        if (closeEditModelBtn) {
+            closeEditModelBtn.addEventListener('click', () => this.closeEditModelModal());
+        }
+        
+        if (cancelEditModelBtn) {
+            cancelEditModelBtn.addEventListener('click', () => this.closeEditModelModal());
+        }
+        
+        if (saveEditModelBtn) {
+            saveEditModelBtn.addEventListener('click', () => this.saveEditModel());
+        }
+
+        // Event listeners para expanders de ocorrências
+        const activeOccurrencesHeader = document.getElementById('activeOccurrencesHeader');
+        const completedOccurrencesHeader = document.getElementById('completedOccurrencesHeader');
+        
+        if (activeOccurrencesHeader) {
+            activeOccurrencesHeader.addEventListener('click', () => this.toggleOccurrencesExpander('activeOccurrences'));
+        }
+        
+        if (completedOccurrencesHeader) {
+            completedOccurrencesHeader.addEventListener('click', () => this.toggleOccurrencesExpander('completedOccurrences'));
+        }
+
+        // Event listener para o expander de informações do modelo
+        const modelInfoExpanderHeader = document.getElementById('modelInfoExpanderHeader');
+        if (modelInfoExpanderHeader) {
+            modelInfoExpanderHeader.addEventListener('click', () => this.toggleModelInfoExpander());
+            console.log('✅ Event listener adicionado ao expander de informações do modelo');
+        } else {
+            console.error('❌ Header do expander não encontrado');
+        }
+
         // Fechar modais ao clicar fora
         window.addEventListener('click', (e) => {
             if (e.target === ridecModal) this.closeRidecModal();
             if (e.target === stageAModal) this.closeStageAModal();
+            if (e.target === createOccurrenceModal) this.closeCreateOccurrenceModal();
+            if (e.target === editModelModal) this.closeEditModelModal();
         });
 
         // Event listener para mudança de unidade de tempo
@@ -196,220 +258,76 @@ class RIDECSystem {
         });
     }
 
-    // Carregar dados de exemplo
-    loadSampleData() {
-        if (this.ridecs.length === 0) {
-            const ridec1 = {
-                id: this.generateId(),
-                title: 'Análise de Requisitos',
-                description: 'Coleta e análise dos requisitos do sistema',
-                area: 'Desenvolvimento',
-                timeUnit: 'hours',
-                maxTime: 20,
-                deadlines: { RI: 4, D: 6, E: 8, C: 2 },
-                deadlineUnits: { RI: 'hours', D: 'hours', E: 'hours', C: 'hours' },
-                stageA: null,
-                currentStage: 'RI',
-                startTime: Date.now() - (2 * 60 * 60 * 1000), // 2 horas atrás
-                stageStartTime: Date.now() - (2 * 60 * 60 * 1000),
-                relations: { start: null, end: null },
-                completed: false
-            };
-
-            const ridec2 = {
-                id: this.generateId(),
-                title: 'Desenvolvimento Frontend',
-                description: 'Implementação da interface do usuário',
-                area: 'Desenvolvimento',
-                timeUnit: 'hours',
-                maxTime: 35,
-                deadlines: { RI: 6, D: 10, E: 15, C: 4 },
-                deadlineUnits: { RI: 'hours', D: 'hours', E: 'hours', C: 'hours' },
-                stagesA: [
-                    { 
-                        position: 'd-e', 
-                        deadline: 8, 
-                        timeUnit: 'hours',
-                        description: 'Revisão de Design e Interface', 
-                        identifier: 'Revisão Design',
-                        startTime: Date.now() 
-                    },
-                    { 
-                        position: 'e-c', 
-                        deadline: 6, 
-                        timeUnit: 'hours',
-                        description: 'Testes de Usabilidade e Performance', 
-                        identifier: 'Testes Usabilidade',
-                        startTime: Date.now() 
-                    }
-                ],
-                currentStage: 'D',
-                startTime: Date.now() - (1 * 60 * 60 * 1000), // 1 hora atrás
-                stageStartTime: Date.now() - (30 * 60 * 1000), // 30 minutos atrás
-                relations: { start: ridec1.id, end: null },
-                completed: false
-            };
-
-            const ridec3 = {
-                id: this.generateId(),
-                title: 'Desenvolvimento Backend',
-                description: 'Implementação da lógica de negócio',
-                area: 'Desenvolvimento',
-                timeUnit: 'hours',
-                maxTime: 30,
-                deadlines: { RI: 5, D: 8, E: 12, C: 5 },
-                stageA: null,
-                currentStage: 'E',
-                startTime: Date.now() - (3 * 60 * 60 * 1000), // 3 horas atrás
-                stageStartTime: Date.now() - (1 * 60 * 60 * 1000), // 1 hora atrás
-                relations: { start: ridec1.id, end: null },
-                completed: false
-            };
-
-            const ridec4 = {
-                id: this.generateId(),
-                title: 'Venda de Caminhão',
-                description: 'Processo de venda do caminhão',
-                area: 'Vendas',
-                timeUnit: 'hours',
-                maxTime: 20,
-                deadlines: { RI: 4, D: 6, E: 8, C: 2 },
-                stageA: null,
-                currentStage: 'RI',
-                startTime: Date.now(),
-                stageStartTime: Date.now(),
-                relations: { start: null, end: null },
-                completed: false
-            };
-
-            const ridec5 = {
-                id: this.generateId(),
-                title: 'Manutenção Pós-Venda',
-                description: 'Serviços de manutenção após a venda',
-                area: 'Suporte',
-                timeUnit: 'hours',
-                maxTime: 10,
-                deadlines: { RI: 2, D: 3, E: 4, C: 1 },
-                stageA: null,
-                currentStage: 'RI',
-                startTime: Date.now(),
-                stageStartTime: Date.now(),
-                relations: { start: null, end: null },
-                completed: false
-            };
-
-            // Configurar relacionamentos de fluxo
-            ridec2.relations.start = ridec1.id; // Frontend vem depois de Análise
-            ridec3.relations.start = ridec1.id; // Backend vem depois de Análise
-            ridec4.relations.start = ridec2.id; // Venda vem depois de Frontend
-            ridec5.relations.start = ridec4.id; // Manutenção vem depois de Venda
-
-            // Adicionar ocorrências de exemplo
-            const occurrence1 = {
-                id: this.generateId(),
-                title: 'Implementação de Sistema de Backup',
-                description: 'Implementação de sistema de backup automatizado para servidores críticos',
-                area: 'TI',
-                timeUnit: 'hours',
-                maxTime: 15,
-                deadlines: { RI: 3, D: 5, E: 5, C: 2 },
-                deadlineUnits: { RI: 'hours', D: 'hours', E: 'hours', C: 'hours' },
-                stageA: null,
-                currentStage: 'D',
-                startTime: Date.now() - (4 * 60 * 60 * 1000), // 4 horas atrás
-                stageStartTime: Date.now() - (2 * 60 * 60 * 1000), // 2 horas atrás
-                relations: { start: null, end: null },
-                completed: false,
-                isOccurrence: true,
-                stages: [
-                    { name: 'Análise', status: 'completed', time: '2h 30m', timeMs: 9000000 },
-                    { name: 'Desenvolvimento', status: 'active', time: '5h 45m', timeMs: 20700000 },
-                    { name: 'Testes', status: 'pending', time: '0h 0m', timeMs: 0 },
-                    { name: 'Deploy', status: 'pending', time: '0h 0m', timeMs: 0 }
-                ]
-            };
-
-            const occurrence2 = {
-                id: this.generateId(),
-                title: 'Atualização de Políticas de RH',
-                description: 'Revisão e atualização das políticas internas de recursos humanos',
-                area: 'RH',
-                timeUnit: 'hours',
-                maxTime: 12,
-                deadlines: { RI: 2, D: 4, E: 4, C: 2 },
-                deadlineUnits: { RI: 'hours', D: 'hours', E: 'hours', C: 'hours' },
-                stageA: null,
-                currentStage: 'C',
-                startTime: Date.now() - (8 * 60 * 60 * 1000), // 8 horas atrás
-                stageStartTime: Date.now() - (1 * 60 * 60 * 1000), // 1 hora atrás
-                relations: { start: null, end: null },
-                completed: true,
-                isOccurrence: true,
-                stages: [
-                    { name: 'Revisão', status: 'completed', time: '3h 15m', timeMs: 11700000 },
-                    { name: 'Aprovação', status: 'completed', time: '1h 30m', timeMs: 5400000 },
-                    { name: 'Implementação', status: 'completed', time: '4h 20m', timeMs: 15600000 },
-                    { name: 'Treinamento', status: 'completed', time: '2h 45m', timeMs: 9900000 }
-                ]
-            };
-
-            const occurrence3 = {
-                id: this.generateId(),
-                title: 'Auditoria Financeira Trimestral',
-                description: 'Auditoria financeira do primeiro trimestre do ano',
-                area: 'Financeiro',
-                timeUnit: 'hours',
-                maxTime: 25,
-                deadlines: { RI: 5, D: 8, E: 8, C: 4 },
-                deadlineUnits: { RI: 'hours', D: 'hours', E: 'hours', C: 'hours' },
-                stageA: null,
-                currentStage: 'E',
-                startTime: Date.now() - (12 * 60 * 60 * 1000), // 12 horas atrás
-                stageStartTime: Date.now() - (3 * 60 * 60 * 1000), // 3 horas atrás
-                relations: { start: null, end: null },
-                completed: false,
-                isOccurrence: true,
-                stages: [
-                    { name: 'Coleta de Dados', status: 'completed', time: '6h 20m', timeMs: 22800000 },
-                    { name: 'Análise', status: 'active', time: '8h 15m', timeMs: 29700000 },
-                    { name: 'Relatório', status: 'pending', time: '0h 0m', timeMs: 0 },
-                    { name: 'Apresentação', status: 'pending', time: '0h 0m', timeMs: 0 }
-                ]
-            };
-
-            const occurrence4 = {
-                id: this.generateId(),
-                title: 'Otimização de Processos Operacionais',
-                description: 'Análise e otimização dos processos operacionais da empresa',
-                area: 'Operacional',
-                timeUnit: 'hours',
-                maxTime: 18,
-                deadlines: { RI: 4, D: 6, E: 6, C: 2 },
-                deadlineUnits: { RI: 'hours', D: 'hours', E: 'hours', C: 'hours' },
-                stageA: null,
-                currentStage: 'RI',
-                startTime: Date.now() - (1 * 60 * 60 * 1000), // 1 hora atrás
-                stageStartTime: Date.now() - (30 * 60 * 1000), // 30 minutos atrás
-                relations: { start: null, end: null },
-                completed: false,
-                isOccurrence: true,
-                stages: [
-                    { name: 'Mapeamento', status: 'active', time: '1h 30m', timeMs: 5400000 },
-                    { name: 'Análise', status: 'pending', time: '0h 0m', timeMs: 0 },
-                    { name: 'Proposta', status: 'pending', time: '0h 0m', timeMs: 0 },
-                    { name: 'Implementação', status: 'pending', time: '0h 0m', timeMs: 0 }
-                ]
-            };
-
-            this.ridecs.push(ridec1, ridec2, ridec3, ridec4, ridec5, occurrence1, occurrence2, occurrence3, occurrence4);
-            this.saveToLocalStorage();
-            this.renderRidecList();
-        }
-    }
 
     // Gerar ID único
     generateId() {
         return Date.now().toString(36) + Math.random().toString(36).substr(2);
+    }
+
+    // Limpar dados de exemplo do localStorage
+    clearExampleData() {
+        try {
+            // Limpar dados de RIDEC que podem ter sido criados como exemplo
+            const ridecs = JSON.parse(localStorage.getItem('ridecs')) || [];
+            const exampleTitles = [
+                'Análise de Requisitos',
+                'Desenvolvimento Frontend', 
+                'Desenvolvimento Backend',
+                'Venda de Caminhão',
+                'Manutenção Pós-Venda',
+                'Implementação de Sistema de Backup',
+                'Atualização de Políticas de RH',
+                'Auditoria Financeira Trimestral',
+                'Otimização de Processos Operacionais',
+                'Migração de Dados para Cloud'
+            ];
+            
+            const filteredRidecs = ridecs.filter(ridec => 
+                !exampleTitles.includes(ridec.title)
+            );
+            
+            if (filteredRidecs.length !== ridecs.length) {
+                console.log('🧹 Removendo dados de exemplo do localStorage...');
+                localStorage.setItem('ridecs', JSON.stringify(filteredRidecs));
+                if (this.ridecs) {
+                    this.ridecs = filteredRidecs;
+                }
+                console.log(`✅ ${ridecs.length - filteredRidecs.length} RIDECs de exemplo removidos`);
+            }
+        } catch (error) {
+            console.error('❌ Erro ao limpar dados de exemplo:', error);
+        }
+    }
+
+    // Método estático para limpar dados antes da instanciação
+    static clearExampleDataStatic() {
+        try {
+            const ridecs = JSON.parse(localStorage.getItem('ridecs')) || [];
+            const exampleTitles = [
+                'Análise de Requisitos',
+                'Desenvolvimento Frontend', 
+                'Desenvolvimento Backend',
+                'Venda de Caminhão',
+                'Manutenção Pós-Venda',
+                'Implementação de Sistema de Backup',
+                'Atualização de Políticas de RH',
+                'Auditoria Financeira Trimestral',
+                'Otimização de Processos Operacionais',
+                'Migração de Dados para Cloud'
+            ];
+            
+            const filteredRidecs = ridecs.filter(ridec => 
+                !exampleTitles.includes(ridec.title)
+            );
+            
+            if (filteredRidecs.length !== ridecs.length) {
+                console.log('🧹 Removendo dados de exemplo do localStorage...');
+                localStorage.setItem('ridecs', JSON.stringify(filteredRidecs));
+                console.log(`✅ ${ridecs.length - filteredRidecs.length} RIDECs de exemplo removidos`);
+            }
+        } catch (error) {
+            console.error('❌ Erro ao limpar dados de exemplo:', error);
+        }
     }
 
     // Abrir modal RIDEC
@@ -421,18 +339,37 @@ class RIDECSystem {
         this.currentRidecId = ridecId;
 
         if (ridecId) {
-            const ridec = this.ridecs.find(r => r.id === ridecId);
+            console.log(`🔍 Procurando RIDEC com ID: ${ridecId} (tipo: ${typeof ridecId})`);
+            console.log(`📋 RIDECs disponíveis:`, this.ridecs.map(r => ({ 
+                id: r.id, 
+                idType: typeof r.id,
+                title: r.title, 
+                isModeloRidec: r.isModeloRidec 
+            })));
+            
+            const ridec = this.ridecs.find(r => {
+                console.log(`🔍 Comparando: ${r.id} (${typeof r.id}) === ${ridecId} (${typeof ridecId}) -> ${r.id === ridecId}`);
+                return r.id === ridecId;
+            });
+            
             if (ridec) {
+                console.log(`✅ RIDEC encontrado:`, ridec);
                 if (ridec.isOccurrence) {
                     modalTitle.textContent = 'Editar Ocorrência';
                 } else {
                     modalTitle.textContent = 'Editar RIDEC Modelo';
                 }
                 this.populateRidecForm(ridec);
+            } else {
+                console.log(`❌ RIDEC não encontrado com ID: ${ridecId}`);
+                modalTitle.textContent = 'Novo RIDEC Modelo';
+                form.reset();
+                this.clearStageDescriptions();
             }
         } else {
             modalTitle.textContent = 'Novo RIDEC Modelo';
             form.reset();
+            this.clearStageDescriptions();
         }
 
         this.updateRelationsDropdowns();
@@ -806,11 +743,23 @@ class RIDECSystem {
 
     // Preencher formulário RIDEC
     populateRidecForm(ridec) {
+        console.log('🔍 Preenchendo formulário RIDEC com dados:', ridec);
+        console.log('📋 Dados das etapas recebidos:', {
+            deadlines: ridec.deadlines,
+            deadlineUnits: ridec.deadlineUnits,
+            stageDescriptions: ridec.stageDescriptions,
+            pathRI: ridec.pathRI,
+            pathD: ridec.pathD,
+            pathE: ridec.pathE,
+            pathC: ridec.pathC
+        });
+        
         document.getElementById('ridecTitle').value = ridec.title;
         document.getElementById('ridecDescription').value = ridec.description;
         document.getElementById('ridecArea').value = ridec.area || '';
         document.getElementById('ridecTimeUnit').value = ridec.timeUnit || 'hours';
         document.getElementById('ridecMaxTime').value = ridec.maxTime || '';
+        document.getElementById('ridecNonconformityPercent').value = ridec.nonconformityPercent || 0;
         
         // Definir modo de controle de tempo
         const timeControlMode = ridec.timeControlMode || 'detailed';
@@ -819,18 +768,36 @@ class RIDECSystem {
         // Atualizar visibilidade da seção detalhada
         this.initializeTimeControlMode();
         
+        // Preencher prazos das etapas
+        console.log('📝 Preenchendo prazos das etapas...');
         document.getElementById('deadlineRI').value = ridec.deadlines?.RI || '';
         document.getElementById('deadlineD').value = ridec.deadlines?.D || '';
         document.getElementById('deadlineE').value = ridec.deadlines?.E || '';
         document.getElementById('deadlineC').value = ridec.deadlines?.C || '';
         
+        console.log('📝 Prazos preenchidos:', {
+            RI: ridec.deadlines?.RI || '',
+            D: ridec.deadlines?.D || '',
+            E: ridec.deadlines?.E || '',
+            C: ridec.deadlines?.C || ''
+        });
+        
         // Carregar unidades individuais das etapas
+        console.log('📝 Preenchendo unidades das etapas...');
         if (ridec.deadlineUnits) {
             document.getElementById('unitRI').value = ridec.deadlineUnits.RI || 'hours';
             document.getElementById('unitD').value = ridec.deadlineUnits.D || 'hours';
             document.getElementById('unitE').value = ridec.deadlineUnits.E || 'hours';
             document.getElementById('unitC').value = ridec.deadlineUnits.C || 'hours';
+            
+            console.log('📝 Unidades preenchidas:', {
+                RI: ridec.deadlineUnits.RI || 'hours',
+                D: ridec.deadlineUnits.D || 'hours',
+                E: ridec.deadlineUnits.E || 'hours',
+                C: ridec.deadlineUnits.C || 'hours'
+            });
         } else {
+            console.log('⚠️ Nenhuma unidade de deadline encontrada, usando padrão');
             // Fallback para RIDECs antigos
             document.getElementById('unitRI').value = 'hours';
             document.getElementById('unitD').value = 'hours';
@@ -838,11 +805,65 @@ class RIDECSystem {
             document.getElementById('unitC').value = 'hours';
         }
         
-        document.getElementById('startRidec').value = ridec.relations.start || '';
-        document.getElementById('endRidec').value = ridec.relations.end || '';
+        // Carregar descrições das etapas
+        console.log('📝 Preenchendo descrições das etapas...');
+        if (ridec.stageDescriptions) {
+            document.getElementById('descriptionRI').value = ridec.stageDescriptions.RI || '';
+            document.getElementById('descriptionD').value = ridec.stageDescriptions.D || '';
+            document.getElementById('descriptionE').value = ridec.stageDescriptions.E || '';
+            document.getElementById('descriptionC').value = ridec.stageDescriptions.C || '';
+            
+            console.log('📝 Descrições preenchidas:', {
+                RI: ridec.stageDescriptions.RI || '',
+                D: ridec.stageDescriptions.D || '',
+                E: ridec.stageDescriptions.E || '',
+                C: ridec.stageDescriptions.C || ''
+            });
+        } else {
+            console.log('⚠️ Nenhuma descrição de etapa encontrada, limpando campos');
+            // Fallback para RIDECs antigos - limpar campos
+            document.getElementById('descriptionRI').value = '';
+            document.getElementById('descriptionD').value = '';
+            document.getElementById('descriptionE').value = '';
+            document.getElementById('descriptionC').value = '';
+        }
+        
+        // Carregar caminhos dos arquivos das etapas
+        console.log('📝 Preenchendo caminhos das etapas...');
+        document.getElementById('pathRI').value = ridec.pathRI || '';
+        document.getElementById('pathD').value = ridec.pathD || '';
+        document.getElementById('pathE').value = ridec.pathE || '';
+        document.getElementById('pathC').value = ridec.pathC || '';
+        
+        console.log('📝 Caminhos preenchidos:', {
+            pathRI: ridec.pathRI || '',
+            pathD: ridec.pathD || '',
+            pathE: ridec.pathE || '',
+            pathC: ridec.pathC || ''
+        });
+        
+        document.getElementById('startRidec').value = ridec.relations?.start || '';
+        document.getElementById('endRidec').value = ridec.relations?.end || '';
         
         // Atualizar labels das unidades de tempo
         this.updateTimeUnitLabels();
+    }
+
+    // Limpar campos de descrição das etapas e não conformidades
+    clearStageDescriptions() {
+        const descriptionFields = ['descriptionRI', 'descriptionD', 'descriptionE', 'descriptionC'];
+        descriptionFields.forEach(fieldId => {
+            const field = document.getElementById(fieldId);
+            if (field) {
+                field.value = '';
+            }
+        });
+        
+        // Limpar campo de não conformidades
+        const nonconformityField = document.getElementById('ridecNonconformityPercent');
+        if (nonconformityField) {
+            nonconformityField.value = '';
+        }
     }
 
     // Atualizar dropdowns de relacionamentos
@@ -880,7 +901,7 @@ class RIDECSystem {
     }
 
     // Salvar RIDEC
-    saveRidec() {
+    async saveRidec() {
         const form = document.getElementById('ridecForm');
         if (!form.checkValidity()) {
             form.reportValidity();
@@ -910,10 +931,13 @@ class RIDECSystem {
 
         // Coletar dados dos campos de tempo, permitindo valores vazios
         const maxTimeValue = document.getElementById('ridecMaxTime').value;
+        const nonconformityPercentValue = document.getElementById('ridecNonconformityPercent').value;
         const timeControlMode = document.querySelector('input[name="timeControlMode"]:checked').value;
         
         let deadlines = {};
         let deadlineUnits = {};
+        let stageDescriptions = {};
+        let stagePaths = {};
         
         if (timeControlMode === 'detailed') {
             const deadlineRIValue = document.getElementById('deadlineRI').value;
@@ -934,6 +958,22 @@ class RIDECSystem {
                 E: document.getElementById('unitE').value,
                 C: document.getElementById('unitC').value
             };
+            
+            // Capturar descrições das etapas
+            stageDescriptions = {
+                RI: document.getElementById('descriptionRI').value || '',
+                D: document.getElementById('descriptionD').value || '',
+                E: document.getElementById('descriptionE').value || '',
+                C: document.getElementById('descriptionC').value || ''
+            };
+            
+            // Capturar caminhos dos arquivos das etapas
+            stagePaths = {
+                RI: document.getElementById('pathRI').value || '',
+                D: document.getElementById('pathD').value || '',
+                E: document.getElementById('pathE').value || '',
+                C: document.getElementById('pathC').value || ''
+            };
         } else {
             // Modo simples - apenas tempo total
             deadlines = {
@@ -949,6 +989,22 @@ class RIDECSystem {
                 E: document.getElementById('ridecTimeUnit').value,
                 C: document.getElementById('ridecTimeUnit').value
             };
+            
+            // No modo simples, usar descrições padrão
+            stageDescriptions = {
+                RI: 'Requisitos e Início - Definição inicial e planejamento',
+                D: 'Desenvolvimento - Execução e implementação',
+                E: 'Execução e Testes - Validação e qualidade',
+                C: 'Conclusão - Finalização e entrega'
+            };
+            
+            // No modo simples, não há campos de path específicos
+            stagePaths = {
+                RI: '',
+                D: '',
+                E: '',
+                C: ''
+            };
         }
 
         const ridecData = {
@@ -957,9 +1013,15 @@ class RIDECSystem {
             area: document.getElementById('ridecArea').value,
             timeUnit: document.getElementById('ridecTimeUnit').value,
             maxTime: maxTimeValue ? parseInt(maxTimeValue) : null,
+            nonconformityPercent: nonconformityPercentValue ? parseFloat(nonconformityPercentValue) : 0,
             timeControlMode: timeControlMode,
             deadlines: deadlines,
             deadlineUnits: deadlineUnits,
+            stageDescriptions: stageDescriptions,
+            pathRI: stagePaths.RI,
+            pathD: stagePaths.D,
+            pathE: stagePaths.E,
+            pathC: stagePaths.C,
             relations: {
                 start: startRidecId,
                 end: endRidecId
@@ -976,20 +1038,104 @@ class RIDECSystem {
             }
         } else {
             // Criar novo RIDEC modelo
-            const newRidec = {
-                id: this.generateId(),
-                ...ridecData,
-                stageA: null,
-                currentStage: 'RI',
-                startTime: Date.now(),
-                stageStartTime: Date.now(),
-                completed: false,
-                isOccurrence: false, // Marcar como modelo
-                integrations: {} // Inicializar integrações vazias
-            };
-            this.ridecs.push(newRidec);
-            this.showNotification('RIDEC modelo criado com sucesso!', 'success', false);
-            this.integrateWithExternalSystem(newRidec.id, 'RI', 'ridec_created');
+            try {
+                // Verificar se o Supabase está disponível
+                console.log('🔍 Verificando disponibilidade do Supabase...');
+                console.log('📊 window.supabaseDB:', !!window.supabaseDB);
+                console.log('📊 isConnected():', window.supabaseDB ? window.supabaseDB.isConnected() : 'N/A');
+                
+                if (window.supabaseDB && window.supabaseDB.isConnected()) {
+                    console.log('🚀 Criando modelo RIDEC no Supabase...');
+                    
+                    try {
+                        // Criar modelo no Supabase
+                        const supabaseResult = await window.supabaseDB.createModeloRidecCompleto(ridecData);
+                        
+                        console.log('✅ Modelo criado no Supabase:', supabaseResult);
+                        
+                        // Criar também no localStorage para compatibilidade
+                        const newRidec = {
+                            id: this.generateId(),
+                            ...ridecData,
+                            stageA: null,
+                            currentStage: 'RI',
+                            startTime: Date.now(),
+                            stageStartTime: Date.now(),
+                            completed: false,
+                            isOccurrence: false, // Marcar como modelo
+                            integrations: {}, // Inicializar integrações vazias
+                            supabaseId: supabaseResult.modelo.cod_modelo_ridec // Armazenar ID do Supabase
+                        };
+                        
+                        this.ridecs.push(newRidec);
+                        this.showNotification('RIDEC modelo criado com sucesso no Supabase!', 'success', false);
+                        this.integrateWithExternalSystem(newRidec.id, 'RI', 'ridec_created');
+                        
+                    } catch (supabaseError) {
+                        console.error('❌ Erro ao criar no Supabase:', supabaseError);
+                        this.showNotification('Erro ao salvar no banco de dados: ' + supabaseError.message, 'error', false);
+                        
+                        // Fallback: criar apenas no localStorage
+                        const newRidec = {
+                            id: this.generateId(),
+                            ...ridecData,
+                            stageA: null,
+                            currentStage: 'RI',
+                            startTime: Date.now(),
+                            stageStartTime: Date.now(),
+                            completed: false,
+                            isOccurrence: false, // Marcar como modelo
+                            integrations: {} // Inicializar integrações vazias
+                        };
+                        
+                        this.ridecs.push(newRidec);
+                        this.showNotification('RIDEC modelo criado localmente (erro no banco)', 'warning', false);
+                        this.integrateWithExternalSystem(newRidec.id, 'RI', 'ridec_created');
+                    }
+                    
+                } else {
+                    console.log('⚠️ Supabase não disponível, criando apenas no localStorage...');
+                    console.log('📊 Motivo: window.supabaseDB =', !!window.supabaseDB);
+                    console.log('📊 Motivo: isConnected() =', window.supabaseDB ? window.supabaseDB.isConnected() : 'N/A');
+                    
+                    // Criar apenas no localStorage se Supabase não estiver disponível
+                    const newRidec = {
+                        id: this.generateId(),
+                        ...ridecData,
+                        stageA: null,
+                        currentStage: 'RI',
+                        startTime: Date.now(),
+                        stageStartTime: Date.now(),
+                        completed: false,
+                        isOccurrence: false, // Marcar como modelo
+                        integrations: {} // Inicializar integrações vazias
+                    };
+                    
+                    this.ridecs.push(newRidec);
+                    this.showNotification('RIDEC modelo criado com sucesso! (Apenas local)', 'success', false);
+                    this.integrateWithExternalSystem(newRidec.id, 'RI', 'ridec_created');
+                }
+                
+            } catch (error) {
+                console.error('❌ Erro ao criar modelo RIDEC:', error);
+                
+                // Fallback: criar apenas no localStorage
+                const newRidec = {
+                    id: this.generateId(),
+                    ...ridecData,
+                    stageA: null,
+                    currentStage: 'RI',
+                    startTime: Date.now(),
+                    stageStartTime: Date.now(),
+                    completed: false,
+                    isOccurrence: false, // Marcar como modelo
+                    integrations: {} // Inicializar integrações vazias
+                };
+                
+                this.ridecs.push(newRidec);
+                this.showNotification('RIDEC modelo criado localmente (erro no Supabase)', 'warning', false);
+                this.integrateWithExternalSystem(newRidec.id, 'RI', 'ridec_created');
+            }
         }
 
         this.saveToLocalStorage();
@@ -999,7 +1145,9 @@ class RIDECSystem {
 
     // Abrir modal Etapa A
     openStageAModal(ridecId) {
-        this.currentRidecId = ridecId;
+        // Converter para número se for string, pois os IDs no banco são números
+        const numericRidecId = typeof ridecId === 'string' ? parseInt(ridecId, 10) : ridecId;
+        this.currentRidecId = numericRidecId;
         const modal = document.getElementById('stageAModal');
         document.getElementById('stageAForm').reset();
         modal.style.display = 'block';
@@ -1057,33 +1205,145 @@ class RIDECSystem {
         this.closeStageAModal();
     }
 
-    // Renderizar lista de RIDECs
-    renderRidecList() {
-        const ridecList = document.getElementById('ridecList');
-        if (!ridecList) return;
-        
-        ridecList.innerHTML = '';
+    // Renderização otimizada para exclusão - sem operações custosas
+    renderRidecListOptimized() {
+        try {
+            const ridecList = document.getElementById('ridecList');
+            if (!ridecList) return;
+            
+            ridecList.innerHTML = '';
 
-        // Verificar se há dados residuais e limpar
-        this.checkAndCleanResidualData();
+            // GARANTIR QUE O ARRAY ESTÁ LIMPO
+            if (!Array.isArray(this.ridecs)) {
+                this.ridecs = [];
+            }
+
+            const modelRidecs = this.ridecs.filter(ridec => {
+                // Validações mais rigorosas
+                const isValid = ridec && 
+                    ridec.id && 
+                    ridec.title && 
+                    !ridec.isOccurrence &&
+                    typeof ridec === 'object' &&
+                    typeof ridec.id !== 'undefined' &&
+                    ridec.id !== null &&
+                    ridec.id !== 'undefined' &&
+                    ridec.id !== 'null';
+                
+                if (!isValid) {
+                    console.warn('⚠️ RIDEC inválido filtrado:', {
+                        id: ridec?.id,
+                        title: ridec?.title,
+                        isOccurrence: ridec?.isOccurrence,
+                        isModeloRidec: ridec?.isModeloRidec
+                    });
+                }
+                
+                return isValid;
+            });
+            
+            console.log(`RIDECs encontrados (otimizado): ${modelRidecs.length}`);
+            
+            // Verificar se há áreas para renderizar
+            if (!this.availableAreas || this.availableAreas.length === 0) {
+                console.log('⚠️ Nenhuma área carregada, renderizando estado vazio');
+                this.renderEmptyState();
+                return;
+            }
+
+            if (modelRidecs.length === 0) {
+                console.log('⚠️ Nenhum RIDEC encontrado, mas há áreas disponíveis');
+            }
+
+            // Organizar RIDECs modelos por área (filtrado pela empresa do usuário)
+            const ridecsByArea = this.groupRidecsByArea(modelRidecs);
+
+            // Verificar se há áreas para exibir
+            const areasToShow = Object.keys(ridecsByArea);
+            if (areasToShow.length === 0) {
+                console.log('⚠️ Nenhuma área da empresa do usuário encontrada para exibir RIDECs');
+                this.renderEmptyState('Nenhuma área da sua empresa encontrada');
+                return;
+            }
+
+            Object.keys(ridecsByArea).forEach(area => {
+                const areaSection = this.createAreaSection(area, ridecsByArea[area]);
+                ridecList.appendChild(areaSection);
+            });
+            
+        } catch (error) {
+            console.error('❌ Erro ao renderizar lista de RIDECs (otimizado):', error);
+        }
+    }
+
+    // Renderizar lista de RIDECs
+    async renderRidecList() {
+        // Evitar múltiplas renderizações simultâneas
+        if (this.renderingList) {
+            console.log('⏳ Renderização já em andamento, aguardando...');
+            return;
+        }
+        
+        // Verificar se há mudanças significativas antes de renderizar
+        const currentRidecsHash = JSON.stringify(this.ridecs.map(r => ({
+            id: r.id,
+            title: r.title,
+            currentStage: r.currentStage,
+            completed: r.completed,
+            stageTimers: r.stageTimers
+        })));
+        
+        if (this.lastRidecsHash === currentRidecsHash) {
+            // Não há mudanças significativas, não renderizar
+            return;
+        }
+        
+        this.lastRidecsHash = currentRidecsHash;
+        this.renderingList = true;
+        
+        try {
+            const ridecList = document.getElementById('ridecList');
+            if (!ridecList) return;
+            
+            ridecList.innerHTML = '';
+
+            // Verificar se há dados residuais e limpar
+            this.checkAndCleanResidualData();
 
         // GARANTIR QUE O ARRAY ESTÁ LIMPO
         if (!Array.isArray(this.ridecs)) {
             this.ridecs = [];
         }
 
-
-        const modelRidecs = this.ridecs.filter(ridec => 
-            ridec && 
-            ridec.id && 
-            ridec.title && 
-            !ridec.isOccurrence &&
-            typeof ridec === 'object'
-        );
+        const modelRidecs = this.ridecs.filter(ridec => {
+            // Validações mais rigorosas
+            const isValid = ridec && 
+                ridec.id && 
+                ridec.title && 
+                !ridec.isOccurrence &&
+                typeof ridec === 'object' &&
+                typeof ridec.id !== 'undefined' &&
+                ridec.id !== null &&
+                ridec.id !== 'undefined' &&
+                ridec.id !== 'null';
+            
+            if (!isValid) {
+                console.warn('⚠️ RIDEC inválido filtrado:', {
+                    id: ridec?.id,
+                    title: ridec?.title,
+                    isOccurrence: ridec?.isOccurrence,
+                    isModeloRidec: ridec?.isModeloRidec
+                });
+            }
+            
+            return isValid;
+        });
         
         console.log(`RIDECs encontrados: ${modelRidecs.length}`);
         
-        if (modelRidecs.length === 0) {
+        // Verificar se há áreas para renderizar (mesmo sem RIDECs)
+        if (!this.availableAreas || this.availableAreas.length === 0) {
+            console.log('⚠️ Nenhuma área carregada, renderizando estado vazio');
             this.renderEmptyState();
             
             // Limpar dados residuais do localStorage se não há RIDECs
@@ -1094,8 +1354,22 @@ class RIDECSystem {
             return;
         }
 
-        // Organizar RIDECs modelos por área
+        if (modelRidecs.length === 0) {
+            console.log('⚠️ Nenhum RIDEC encontrado, mas há áreas disponíveis');
+        }
+
+        // As áreas já foram verificadas acima, continuar com o processamento
+
+        // Organizar RIDECs modelos por área (filtrado pela empresa do usuário)
         const ridecsByArea = this.groupRidecsByArea(modelRidecs);
+
+        // Verificar se há áreas para exibir
+        const areasToShow = Object.keys(ridecsByArea);
+        if (areasToShow.length === 0) {
+            console.log('⚠️ Nenhuma área da empresa do usuário encontrada para exibir RIDECs');
+            this.renderEmptyState('Nenhuma área da sua empresa encontrada');
+            return;
+        }
 
         Object.keys(ridecsByArea).forEach(area => {
             const areaSection = this.createAreaSection(area, ridecsByArea[area]);
@@ -1111,10 +1385,72 @@ class RIDECSystem {
         if (document.getElementById('chartsView').style.display !== 'none') {
             this.renderChartsView();
         }
+        
+        } catch (error) {
+            console.error('❌ Erro ao renderizar lista de RIDECs:', error);
+        } finally {
+            this.renderingList = false;
+        }
     }
 
-    // Agrupar RIDECs por área
+    // Agrupar RIDECs por área (apenas áreas da empresa do usuário)
     groupRidecsByArea(ridecs) {
+        const grouped = {};
+        
+        // Obter áreas disponíveis da empresa do usuário
+        const userAreas = this.getUserCompanyAreas();
+        console.log('🏢 Áreas da empresa do usuário:', userAreas);
+        
+        // Primeiro, adicionar todas as áreas da empresa (mesmo sem RIDECs)
+        userAreas.forEach(area => {
+            grouped[area] = [];
+            console.log(`🆕 Área adicionada: "${area}" (0 RIDECs)`);
+        });
+        
+        // Depois, adicionar os RIDECs às suas respectivas áreas
+        ridecs.forEach(ridec => {
+            const area = ridec.area || 'Sem Área';
+            
+            // Filtrar apenas áreas da empresa do usuário
+            if (userAreas.includes(area) || area === 'Sem Área') {
+                if (!grouped[area]) {
+                    grouped[area] = [];
+                }
+                grouped[area].push(ridec);
+                console.log(`✅ RIDEC "${ridec.title}" adicionado à área "${area}"`);
+            } else {
+                console.log(`⚠️ RIDEC "${ridec.title}" ignorado - área "${area}" não pertence à empresa do usuário`);
+            }
+        });
+
+        console.log('📊 RIDECs agrupados por área:', grouped);
+        return grouped;
+    }
+
+    // Obter áreas da empresa do usuário
+    getUserCompanyAreas() {
+        // Se já temos as áreas carregadas, usar elas
+        if (this.availableAreas && this.availableAreas.length > 0) {
+            return this.availableAreas;
+        }
+        
+        // Fallback: tentar obter do dropdown
+        const areaSelect = document.getElementById('ridecArea');
+        if (areaSelect) {
+            const areas = [];
+            for (let i = 1; i < areaSelect.options.length; i++) { // Pular primeira opção vazia
+                areas.push(areaSelect.options[i].value);
+            }
+            return areas;
+        }
+        
+        // Se não conseguir obter, retornar array vazio
+        console.log('⚠️ Não foi possível obter áreas da empresa do usuário');
+        return [];
+    }
+
+    // Agrupar RIDECs por área sem filtro (para evitar loop)
+    groupRidecsByAreaWithoutFilter(ridecs) {
         const grouped = {};
         
         ridecs.forEach(ridec => {
@@ -1125,6 +1461,7 @@ class RIDECSystem {
             grouped[area].push(ridec);
         });
 
+        console.log('📊 RIDECs agrupados por área (sem filtro):', grouped);
         return grouped;
     }
 
@@ -1186,10 +1523,28 @@ class RIDECSystem {
             areaGrid.classList.add('four-ridecs');
         }
 
-        ridecs.forEach(ridec => {
-            const card = this.createRidecCard(ridec);
-            areaGrid.appendChild(card);
-        });
+        if (ridecs.length > 0) {
+            ridecs.forEach(ridec => {
+                const card = this.createRidecCard(ridec);
+                areaGrid.appendChild(card);
+            });
+        } else {
+            // Mostrar mensagem quando não há RIDECs na área
+            const emptyMessage = document.createElement('div');
+            emptyMessage.className = 'ridec-area-empty';
+            emptyMessage.innerHTML = `
+                <div class="empty-area-content">
+                    <i class="fas fa-inbox"></i>
+                    <h4>Nenhum RIDEC cadastrado</h4>
+                    <p>Esta área ainda não possui RIDECs cadastrados.</p>
+                    <button class="btn-create-ridec" onclick="ridecSystem.createRidecInArea('${area}')">
+                        <i class="fas fa-plus"></i>
+                        Criar Primeiro RIDEC
+                    </button>
+                </div>
+            `;
+            areaGrid.appendChild(emptyMessage);
+        }
 
         areaContent.appendChild(areaGrid);
         areaSection.appendChild(areaHeader);
@@ -1209,25 +1564,14 @@ class RIDECSystem {
 
     // Obter ícone da área
     getAreaIcon(area) {
-        const icons = {
-            'Desenvolvimento': 'fas fa-code',
-            'Vendas': 'fas fa-chart-line',
-            'Marketing': 'fas fa-bullhorn',
-            'Financeiro': 'fas fa-dollar-sign',
-            'Recursos Humanos': 'fas fa-users',
-            'Operações': 'fas fa-cogs',
-            'Suporte': 'fas fa-headset',
-            'Qualidade': 'fas fa-check-circle',
-            'Infraestrutura': 'fas fa-server',
-            'Outros': 'fas fa-folder',
-            'Sem Área': 'fas fa-question-circle'
-        };
-        
-        return icons[area] || 'fas fa-folder';
+        // Sem ícone para as áreas
+        return '';
     }
 
     // Criar card RIDEC
     createRidecCard(ridec) {
+        console.log('🎴 Criando card para RIDEC:', ridec.id, 'tipo:', typeof ridec.id, 'título:', ridec.title);
+        
         const card = document.createElement('div');
         card.className = `ridec-card model-card ${this.isOverdue(ridec) ? 'overdue' : ''}`;
         
@@ -1246,29 +1590,24 @@ class RIDECSystem {
                     <button class="action-btn" onclick="ridecSystem.deleteRidec('${ridec.id}')" title="Excluir Modelo">
                         <i class="fas fa-trash"></i>
                     </button>
-                    <button class="action-btn" onclick="ridecSystem.openStageAModal('${ridec.id}')" title="Adicionar Etapa A">
-                        <i class="fas fa-plus"></i>
-                        ${ridec.stagesA && ridec.stagesA.length > 0 ? `<span class="stage-count">${ridec.stagesA.length}</span>` : ''}
-                    </button>
                     <button class="action-btn integration-btn" onclick="ridecSystem.openIntegrationModal('${ridec.id}')" title="Configurar Integrações">
                         <i class="fas fa-plug"></i>
                         ${ridec.integrations && Object.keys(ridec.integrations).length > 0 ? `<span class="integration-count">${Object.keys(ridec.integrations).length}</span>` : ''}
                     </button>
-                    <button class="action-btn occurrences-btn" onclick="ridecSystem.openRidecOccurrences('${ridec.id}')" title="Ver Ocorrências">
-                        <i class="fas fa-clipboard-list"></i>
-                        <span class="occurrences-count">0</span>
+                    <button class="action-btn create-occurrence-btn" onclick="console.log('🔍 Botão clicado! ID:', '${ridec.id}', 'Tipo:', typeof '${ridec.id}'); ridecSystem.openCreateOccurrenceModal('${ridec.id}')" title="Criar Ocorrência">
+                        <i class="fas fa-plus-circle"></i>
                     </button>
                 </div>
             </div>
             <div class="ridec-body">
-                <div class="ridec-info">
+                <div class="ridec-info">                    
                     <div class="info-item">
                         <div class="info-label">Tempo Máximo</div>
                         <div class="info-value ${!ridec.maxTime ? 'missing-value' : ''}">${ridec.maxTime ? ridec.maxTime + this.getTimeUnitLabel(ridec.timeUnit || 'hours').charAt(0) : 'Não configurado'}</div>
                     </div>
                     <div class="info-item">
                         <div class="info-label">Modo de Controle</div>
-                        <div class="info-value">${ridec.timeControlMode === 'simple' ? 'Simples' : 'Detalhado'}</div>
+                        <div class="info-value">${ridec.tipo_modelo?.nome_tipo_modelo || 'Não definido'}</div>
                     </div>
                     <div class="info-item">
                         <div class="info-label">Etapas A</div>
@@ -1915,19 +2254,58 @@ class RIDECSystem {
 
     // Editar RIDEC
     editRidec(ridecId) {
-        this.openRidecModal(ridecId);
+        // Converter para número se for string, pois os IDs no banco são números
+        const numericRidecId = typeof ridecId === 'string' ? parseInt(ridecId, 10) : ridecId;
+        
+        // Verificar se é um modelo RIDEC (tem a classe model-card)
+        const cardElement = document.querySelector(`[onclick*="editRidec('${ridecId}')"]`);
+        if (cardElement && cardElement.closest('.model-card')) {
+            this.openEditModelModal(numericRidecId);
+        } else {
+            this.openRidecModal(numericRidecId);
+        }
     }
 
-    // Excluir RIDEC
-    deleteRidec(ridecId) {
-        if (confirm('Tem certeza que deseja excluir este RIDEC?')) {
-            // Limpar relações que referenciam o RIDEC deletado
-            this.cleanupRelations(ridecId);
-            
-            this.ridecs = this.ridecs.filter(r => r.id !== ridecId);
-            this.saveToLocalStorage();
-            this.renderRidecList();
-            this.showNotification('RIDEC excluído com sucesso!', 'success', false);
+    // Excluir RIDEC (Soft Delete)
+    async deleteRidec(ridecId) {
+        if (confirm('Tem certeza que deseja excluir este modelo RIDEC?')) {
+            try {
+                // Converter para número se for string, pois os IDs no banco são números
+                const numericRidecId = typeof ridecId === 'string' ? parseInt(ridecId, 10) : ridecId;
+                
+                // Mostrar indicador de carregamento
+                this.showNotification('Excluindo RIDEC...', 'info', false);
+                
+                // Chamar função de soft delete no banco de dados
+                if (window.supabaseDB && window.supabaseDB.isConnected()) {
+                    console.log('📡 Supabase conectado, executando soft delete...');
+                    await window.supabaseDB.deleteModeloRidec(numericRidecId);
+                    console.log('✅ RIDEC marcado como inativo no banco de dados');
+                    
+                    // Recarregar modelos após exclusão
+                    console.log('🔄 Recarregando modelos após exclusão...');
+                    await this.reloadModelsAfterDelete();
+                    
+                } else {
+                    console.log('⚠️ Supabase não disponível, usando exclusão local');
+                    
+                    // Limpar relações que referenciam o RIDEC deletado
+                    this.cleanupRelations(numericRidecId);
+                    
+                    // Remover da lista local
+                    this.ridecs = this.ridecs.filter(r => r.id !== numericRidecId);
+                    this.saveToLocalStorage();
+                    
+                    // Renderização otimizada para modo offline
+                    this.renderRidecListOptimized();
+                }
+                
+                this.showNotification('RIDEC excluído com sucesso! (marcado como inativo)', 'success', false);
+                
+            } catch (error) {
+                console.error('❌ Erro ao excluir RIDEC:', error);
+                this.showNotification('Erro ao excluir RIDEC. Tente novamente.', 'error', false);
+            }
         }
     }
 
@@ -1943,6 +2321,45 @@ class RIDECSystem {
                 }
             }
         });
+    }
+
+    // Recarregar modelos após exclusão
+    async reloadModelsAfterDelete() {
+        try {
+            console.log('🔄 Recarregando modelos após exclusão...');
+            
+            // Limpar dados antigos
+            this.ridecs = [];
+            this.saveToLocalStorage();
+            
+            // Obter usuário atual
+            const currentUser = this.getCurrentUser();
+            if (!currentUser || !currentUser.cod_empresa) {
+                console.log('⚠️ Usuário não encontrado, não é possível recarregar modelos');
+                return;
+            }
+            
+            // Carregar áreas da empresa
+            const areas = await window.supabaseDB.getAreasByEmpresa(currentUser.cod_empresa);
+            if (areas && areas.length > 0) {
+                console.log('✅ Áreas carregadas:', areas.length);
+                
+                // Carregar modelos das áreas
+                await this.loadModelosRidecFromAreas(areas);
+                
+                // Renderizar lista
+                this.renderRidecList();
+                
+                console.log('✅ Modelos recarregados com sucesso');
+            } else {
+                console.log('⚠️ Nenhuma área encontrada para recarregar');
+                this.renderRidecList();
+            }
+            
+        } catch (error) {
+            console.error('❌ Erro ao recarregar modelos:', error);
+            this.renderRidecList(); // Renderizar mesmo com erro
+        }
     }
 
     // Criar RIDEC em uma área específica
@@ -2005,6 +2422,9 @@ class RIDECSystem {
             ridec.currentStage = 'Concluído';
         }
 
+        // Limpar notificações de atraso para esta etapa
+        this.clearOverdueNotifications(ridecId, stage);
+
         this.ridecs[index] = ridec;
         this.saveToLocalStorage();
         this.renderRidecList();
@@ -2021,7 +2441,7 @@ class RIDECSystem {
     }
 
     // Mostrar notificação
-    showNotification(message, type = 'info', saveToHistory = false) {
+    showNotification(message, type = 'info', saveToHistory = false, ridecId = null, stage = null) {
         // Se não deve salvar no histórico, mostrar apenas notificação temporária
         if (!saveToHistory) {
             this.showTemporaryNotification(message, type);
@@ -2034,7 +2454,9 @@ class RIDECSystem {
             message: message,
             type: type,
             timestamp: Date.now(),
-            read: false
+            read: false,
+            ridecId: ridecId,
+            stage: stage
         };
         
         this.notifications.unshift(notification);
@@ -2226,29 +2648,46 @@ class RIDECSystem {
             // Só atualizar se estiver na visualização de cards ou fluxo
             const chartsView = document.getElementById('chartsView');
             if (chartsView && chartsView.style.display !== 'block') {
-                this.renderRidecList();
+                // Verificar se há timers ativos antes de renderizar
+                const hasActiveTimers = this.ridecs.some(ridec => 
+                    ridec.stageTimers && Object.values(ridec.stageTimers).some(timer => timer.running)
+                );
+                
+                if (hasActiveTimers) {
+                    this.renderRidecList();
+                }
             }
         }, 1000); // Atualizar a cada segundo
     }
 
     // Verificar etapas atrasadas
     checkOverdueStages() {
-
+        console.log('🔍 Verificando etapas atrasadas...');
         
         this.ridecs.forEach(ridec => {
             if (ridec.completed) return;
 
             // Verificar etapa atual
             if (this.isStageOverdue(ridec, ridec.currentStage)) {
-                this.showNotification(
-                    `RIDEC "${ridec.title}" - Etapa ${ridec.currentStage} está atrasada!`,
-                    'error',
-                    true // Salvar no histórico
+                // Verificar se já foi notificado sobre este atraso
+                const notificationKey = `overdue_${ridec.id}_${ridec.currentStage}`;
+                const alreadyNotified = this.notifications.some(n => 
+                    n.type === 'overdue' && 
+                    n.ridecId === ridec.id && 
+                    n.stage === ridec.currentStage &&
+                    !n.read
                 );
-                this.integrateWithExternalSystem(ridec.id, ridec.currentStage, 'overdue_alert');
                 
-                if (ridec.isOccurrence) {
-                    hasOverdueOccurrences = true;
+                if (!alreadyNotified) {
+                    console.log(`⚠️ Etapa atrasada detectada: ${ridec.title} - ${ridec.currentStage}`);
+                    this.showNotification(
+                        `RIDEC "${ridec.title}" - Etapa ${ridec.currentStage} está atrasada!`,
+                        'error',
+                        true, // Salvar no histórico
+                        ridec.id, // ridecId
+                        ridec.currentStage // stage
+                    );
+                    this.integrateWithExternalSystem(ridec.id, ridec.currentStage, 'overdue_alert');
                 }
             }
 
@@ -2256,20 +2695,44 @@ class RIDECSystem {
             if (ridec.stagesA && ridec.stagesA.length > 0) {
                 ridec.stagesA.forEach(stageA => {
                     if (ridec.currentStage === stageA.identifier && this.isStageOverdue(ridec, stageA.identifier)) {
-                        this.showNotification(
-                            `RIDEC "${ridec.title}" - Etapa ${stageA.identifier} está atrasada!`,
-                            'error',
-                            true // Salvar no histórico
+                        // Verificar se já foi notificado sobre este atraso
+                        const notificationKey = `overdue_${ridec.id}_${stageA.identifier}`;
+                        const alreadyNotified = this.notifications.some(n => 
+                            n.type === 'overdue' && 
+                            n.ridecId === ridec.id && 
+                            n.stage === stageA.identifier &&
+                            !n.read
                         );
-                        this.integrateWithExternalSystem(ridec.id, stageA.identifier, 'overdue_alert');
                         
-                        
+                        if (!alreadyNotified) {
+                            console.log(`⚠️ Etapa A atrasada detectada: ${ridec.title} - ${stageA.identifier}`);
+                            this.showNotification(
+                                `RIDEC "${ridec.title}" - Etapa ${stageA.identifier} está atrasada!`,
+                                'error',
+                                true, // Salvar no histórico
+                                ridec.id, // ridecId
+                                stageA.identifier // stage
+                            );
+                            this.integrateWithExternalSystem(ridec.id, stageA.identifier, 'overdue_alert');
+                        }
                     }
                 });
             }
         });
-        
+    }
 
+    // Limpar notificações de atraso para uma etapa específica
+    clearOverdueNotifications(ridecId, stage) {
+        console.log(`🧹 Limpando notificações de atraso para RIDEC ${ridecId}, etapa ${stage}`);
+        
+        // Remover notificações de atraso não lidas para esta etapa
+        this.notifications = this.notifications.filter(n => 
+            !(n.type === 'overdue' && n.ridecId === ridecId && n.stage === stage && !n.read)
+        );
+        
+        this.saveNotifications();
+        this.updateNotificationCount();
+        this.renderNotificationList();
     }
 
     // Obter unidade de tempo do RIDEC atual
@@ -2399,40 +2862,12 @@ class RIDECSystem {
         document.getElementById('flowView').style.display = 'none';
         document.getElementById('chartsView').style.display = 'none';
         document.getElementById('cardViewBtn').classList.add('active');
-        document.getElementById('flowViewBtn').classList.remove('active');
-        document.getElementById('chartsViewBtn').classList.remove('active');
         
         // Limpar gráficos e indicadores
         this.clearCharts();
     }
 
-    // Alternar para visualização de fluxo
-    switchToFlowView() {
-        this.currentView = 'flow';
-        document.getElementById('ridecList').style.display = 'none';
-        document.getElementById('flowView').style.display = 'block';
-        document.getElementById('chartsView').style.display = 'none';
-        document.getElementById('cardViewBtn').classList.remove('active');
-        document.getElementById('flowViewBtn').classList.add('active');
-        document.getElementById('chartsViewBtn').classList.remove('active');
-        
-        // Limpar gráficos e indicadores
-        this.clearCharts();
-        
-        this.renderFlowView();
-    }
 
-    // Alternar para visualização de gráficos
-    switchToChartsView() {
-        this.currentView = 'charts';
-        document.getElementById('ridecList').style.display = 'none';
-        document.getElementById('flowView').style.display = 'none';
-        document.getElementById('chartsView').style.display = 'block';
-        document.getElementById('cardViewBtn').classList.remove('active');
-        document.getElementById('flowViewBtn').classList.remove('active');
-        document.getElementById('chartsViewBtn').classList.add('active');
-        this.renderChartsView();
-    }
 
     // Renderizar visualização de fluxo
     renderFlowView() {
@@ -2540,7 +2975,7 @@ class RIDECSystem {
         
         // Preencher as relações
         this.ridecs.forEach(ridec => {
-            if (ridec.relations.start) {
+            if (ridec.relations?.start) {
                 // Este RIDEC vem depois de outro
                 flowMap[ridec.id].predecessors.push(ridec.relations.start);
                 flowMap[ridec.relations.start].successors.push(ridec.id);
@@ -2633,8 +3068,8 @@ class RIDECSystem {
     getFlowNodeClass(ridec) {
         if (ridec.completed) return 'completed';
         if (this.isOverdue(ridec)) return 'overdue';
-        if (ridec.relations.start && !ridec.relations.end) return 'start-node';
-        if (ridec.relations.end && !ridec.relations.start) return 'end-node';
+        if (ridec.relations?.start && !ridec.relations?.end) return 'start-node';
+        if (ridec.relations?.end && !ridec.relations?.start) return 'end-node';
         return 'middle-node';
     }
 
@@ -2642,14 +3077,14 @@ class RIDECSystem {
     getFlowNodeRelations(ridec) {
         let relations = '';
         
-        if (ridec.relations.start) {
+        if (ridec.relations?.start) {
             const startRidec = this.ridecs.find(r => r.id === ridec.relations.start);
             if (startRidec && !startRidec.isOccurrence && !startRidec.occurrenceNumber) {
                 relations += `← ${startRidec.title}<br>`;
             }
         }
         
-        if (ridec.relations.end) {
+        if (ridec.relations?.end) {
             const endRidec = this.ridecs.find(r => r.id === ridec.relations.end);
             if (endRidec && !endRidec.isOccurrence && !endRidec.occurrenceNumber) {
                 relations += `→ ${endRidec.title}`;
@@ -4077,56 +4512,8 @@ class RIDECSystem {
         const lowerDesc = description.toLowerCase();
         
         // Padrões de reconhecimento de processos
-        const processPatterns = [
-            {
-                name: 'Desenvolvimento de Software',
-                keywords: ['desenvolvimento', 'software', 'programação', 'codificação', 'código'],
-                area: 'TI',
-                baseTime: 40,
-                stages: [
-                    { name: 'Análise de Requisitos', time: 8, position: 'ri-d' },
-                    { name: 'Codificação', time: 20, position: 'd-e' },
-                    { name: 'Testes', time: 8, position: 'e-c' },
-                    { name: 'Documentação', time: 4, position: 'after-c' }
-                ]
-            },
-            {
-                name: 'Fluxo de Aprovação',
-                keywords: ['aprovação', 'revisão', 'validação', 'autorização'],
-                area: 'Administrativo',
-                baseTime: 24,
-                stages: [
-                    { name: 'Análise Inicial', time: 4, position: 'ri-d' },
-                    { name: 'Revisão Técnica', time: 8, position: 'd-e' },
-                    { name: 'Aprovação Gerencial', time: 8, position: 'e-c' },
-                    { name: 'Notificação', time: 4, position: 'after-c' }
-                ]
-            },
-            {
-                name: 'Onboarding de Funcionários',
-                keywords: ['onboarding', 'funcionário', 'colaborador', 'treinamento', 'integração'],
-                area: 'RH',
-                baseTime: 32,
-                stages: [
-                    { name: 'Documentação', time: 8, position: 'ri-d' },
-                    { name: 'Treinamento', time: 16, position: 'd-e' },
-                    { name: 'Avaliação', time: 4, position: 'e-c' },
-                    { name: 'Integração', time: 4, position: 'after-c' }
-                ]
-            },
-            {
-                name: 'Manutenção de Sistemas',
-                keywords: ['manutenção', 'sistema', 'correção', 'bug', 'atualização'],
-                area: 'TI',
-                baseTime: 16,
-                stages: [
-                    { name: 'Identificação', time: 2, position: 'ri-d' },
-                    { name: 'Análise', time: 4, position: 'd-e' },
-                    { name: 'Correção', time: 6, position: 'e-c' },
-                    { name: 'Teste', time: 4, position: 'after-c' }
-                ]
-            }
-        ];
+        // Padrões de reconhecimento de processos - removidos para usar apenas dados do banco
+        const processPatterns = [];
         
         // Procurar por padrões na descrição
         for (const pattern of processPatterns) {
@@ -4297,8 +4684,10 @@ class RIDECSystem {
 
     // Métodos para gerenciar integrações
     openIntegrationModal(ridecId) {
-        this.currentRidecId = ridecId;
-        const ridec = this.ridecs.find(r => r.id === ridecId);
+        // Converter para número se for string, pois os IDs no banco são números
+        const numericRidecId = typeof ridecId === 'string' ? parseInt(ridecId, 10) : ridecId;
+        this.currentRidecId = numericRidecId;
+        const ridec = this.ridecs.find(r => r.id === numericRidecId);
         if (!ridec) return;
 
         document.getElementById('integrationRidecTitle').textContent = `Configurar Integrações - ${ridec.title}`;
@@ -5471,9 +5860,798 @@ class RIDECSystem {
 
     // Obter usuário atual (implementar conforme necessário)
     getCurrentUser() {
-        // Por enquanto, retorna um usuário padrão
-        // Em uma implementação real, isso viria do sistema de autenticação
-        return 'usuario@exemplo.com';
+        console.log('🔍 getCurrentUser: Iniciando busca...');
+        
+        // PRIORIDADE 1: Obter usuário do sistema de autenticação (AuthChecker)
+        if (window.authChecker && window.authChecker.getCurrentUser) {
+            console.log('✅ AuthChecker disponível, obtendo usuário...');
+            const user = window.authChecker.getCurrentUser();
+            if (user) {
+                console.log('👤 Usuário via AuthChecker:', user);
+                console.log('🏢 Empresa do usuário (AuthChecker):', user.cod_empresa);
+                return user;
+            } else {
+                console.log('⚠️ AuthChecker retornou null, tentando fallback...');
+            }
+        } else {
+            console.log('❌ AuthChecker não disponível ou sem getCurrentUser');
+        }
+        
+        // PRIORIDADE 2: Fallback - obter dados diretamente da sessão
+        console.log('🔄 Tentando fallback via dados de sessão...');
+        const sessionData = this.getSessionDataDirectly();
+        if (sessionData && sessionData.user) {
+            console.log('📦 Usando dados de sessão como fallback');
+            console.log('👤 Usuário via sessão:', sessionData.user);
+            console.log('🏢 Empresa do usuário (sessão):', sessionData.user.cod_empresa);
+            
+            // SINCRONIZAR: Atualizar AuthChecker se ele estiver disponível mas sem dados
+            if (window.authChecker && !window.authChecker.currentUser) {
+                console.log('🔄 Sincronizando AuthChecker com dados de sessão...');
+                window.authChecker.currentUser = sessionData.user;
+                console.log('✅ AuthChecker sincronizado');
+            }
+            
+            return sessionData.user;
+        } else {
+            console.log('❌ Nenhum dado de sessão encontrado');
+        }
+        
+        console.log('❌ getCurrentUser: Nenhum usuário encontrado');
+        return null;
+    }
+
+    // Limpar dados do localStorage relacionados aos RIDECs
+    clearLocalStorageData() {
+        try {
+            console.log('🧹 Limpando dados do localStorage...');
+            
+            // Remover apenas dados de RIDECs, mantendo notificações e configurações
+            localStorage.removeItem('ridecs');
+            
+            // Limpar também dados de sessão antigos se existirem
+            const sessionData = localStorage.getItem('ridec_session');
+            if (sessionData) {
+                try {
+                    const parsed = JSON.parse(sessionData);
+                    if (parsed.ridecs) {
+                        delete parsed.ridecs;
+                        localStorage.setItem('ridec_session', JSON.stringify(parsed));
+                    }
+                } catch (e) {
+                    // Se não conseguir fazer parse, remover completamente
+                    localStorage.removeItem('ridec_session');
+                }
+            }
+            
+            console.log('✅ Dados do localStorage limpos');
+        } catch (error) {
+            console.error('❌ Erro ao limpar localStorage:', error);
+        }
+    }
+
+    // Carregar áreas da empresa do usuário do Supabase
+    async loadAreasFromSupabase() {
+        // Proteção contra chamadas múltiplas
+        if (this.loadingAreas) {
+            console.log('⏳ Carregamento de áreas já em andamento, aguardando...');
+            return;
+        }
+        
+        // Verificar se já foi carregado recentemente (evitar loops)
+        const lastLoadTime = localStorage.getItem('lastAreasLoad');
+        const now = Date.now();
+        if (lastLoadTime && (now - parseInt(lastLoadTime)) < 5000) { // 5 segundos
+            console.log('⏳ Áreas carregadas recentemente, aguardando...');
+            return;
+        }
+        
+        this.loadingAreas = true;
+        
+        try {
+            console.log('🔍 Iniciando carregamento de áreas do Supabase...');
+            
+            // Limpar dados antigos do localStorage antes de carregar do banco
+            console.log('🧹 Limpando dados antigos do localStorage...');
+            this.clearLocalStorageData();
+            
+            // Validar consistência antes de carregar áreas
+            this.validateUserDataConsistency();
+            
+            const currentUser = this.getCurrentUser();
+            console.log('👤 Usuário atual:', currentUser);
+            console.log('🏢 Empresa do usuário:', currentUser ? currentUser.cod_empresa : 'N/A');
+            console.log('📧 Email do usuário:', currentUser ? (currentUser.email_usuario || currentUser.email) : 'N/A');
+            
+            if (!currentUser) {
+                console.log('❌ Usuário não autenticado, usando áreas padrão');
+                return;
+            }
+
+            // Inicializar conexão com Supabase se necessário
+            if (!window.supabaseDB) {
+                console.log('🔧 Aguardando Supabase estar pronto...');
+                // Aguardar o Supabase estar pronto
+                await this.waitForSupabase();
+            }
+
+            // Obter empresa do usuário
+            const userEmpresa = currentUser.cod_empresa || currentUser.empresa;
+            console.log('🏢 Empresa do usuário:', userEmpresa);
+            
+            if (!userEmpresa) {
+                console.log('❌ Usuário não possui empresa associada');
+                return;
+            }
+
+            // Carregar áreas da empresa
+            console.log('📡 Buscando áreas para empresa:', userEmpresa);
+            const areas = await window.supabaseDB.getAreasByEmpresa(userEmpresa);
+            
+            if (areas && areas.length > 0) {
+                console.log('✅ Áreas carregadas do Supabase:', areas);
+                this.updateAreaDropdown(areas);
+                this.updateAreaOptions(areas);
+                
+                // Carregar modelos RIDEC das áreas
+                await this.loadModelosRidecFromAreas(areas);
+                
+                // Re-renderizar a lista de RIDECs com as áreas filtradas
+                console.log('🔄 Re-renderizando lista de RIDECs com áreas filtradas...');
+                this.renderRidecList();
+            } else {
+                console.log('⚠️ Nenhuma área encontrada para a empresa do usuário');
+                // Renderizar lista vazia mesmo sem áreas
+                this.renderRidecList();
+            }
+
+        } catch (error) {
+            console.error('❌ Erro ao carregar áreas do Supabase:', error);
+            this.showNotification('Erro ao carregar áreas da empresa', 'error', false);
+            // Renderizar lista vazia em caso de erro
+            this.renderRidecList();
+        } finally {
+            this.loadingAreas = false;
+            // Registrar timestamp do último carregamento
+            localStorage.setItem('lastAreasLoad', Date.now().toString());
+        }
+    }
+
+    // Carregar modelos RIDEC das áreas
+    async loadModelosRidecFromAreas(areas) {
+        try {
+            console.log('🔄 Carregando modelos RIDEC das áreas...');
+            
+            const allModelos = [];
+            
+            for (const area of areas) {
+                console.log(`🔍 Carregando modelos para área: ${area.nome_area} (${area.cod_area})`);
+                
+                const { data, error } = await window.supabaseDB.getClient()
+                    .from('modelo_ridec')
+                    .select(`
+                        *,
+                        empresa:cod_empresa(nome_empresa),
+                        uom:cod_uom(desc_uom),
+                        tipo_modelo:cod_tipo_modelo(nome_tipo_modelo)
+                    `)
+                    .eq('cod_area', area.cod_area)
+                    .eq('ies_ativo', 'S') // Apenas modelos ativos
+                    .order('nome_modelo');
+
+                if (error) {
+                    console.error(`❌ Erro ao buscar modelos da área ${area.nome_area}:`, error);
+                    continue;
+                }
+
+                const modelos = data || [];
+                console.log(`📋 Modelos encontrados para ${area.nome_area}: ${modelos.length}`);
+                
+                // Log dos modelos encontrados para debug
+                modelos.forEach((modelo, index) => {
+                    console.log(`📋 Modelo ${index + 1}:`, {
+                        id: modelo.cod_modelo_ridec,
+                        tipo: typeof modelo.cod_modelo_ridec,
+                        nome: modelo.nome_modelo
+                    });
+                });
+                
+                // Converter modelos em RIDECs
+                for (const modelo of modelos) {
+                    const ridec = await this.convertModeloToRidec(modelo, area);
+                    allModelos.push(ridec);
+                }
+            }
+
+            console.log(`✅ Total de modelos RIDEC carregados: ${allModelos.length}`);
+            
+            // Adicionar aos RIDECs existentes (sem duplicar)
+            const existingIds = this.ridecs.map(r => r.id);
+            const newRidecs = allModelos.filter(r => !existingIds.includes(r.id));
+            
+            this.ridecs.push(...newRidecs);
+            console.log(`✅ ${newRidecs.length} novos RIDECs adicionados`);
+            
+        } catch (error) {
+            console.error('❌ Erro ao carregar modelos RIDEC:', error);
+        }
+    }
+
+    // Converter modelo RIDEC em RIDEC
+    async convertModeloToRidec(modelo, area) {
+        // Mapear descrição UOM para unidade de tempo
+        const uomMapping = {
+            'Segundos': 'seconds',
+            'Minutos': 'minutes', 
+            'Horas': 'hours',
+            'Dias': 'days',
+            'Semanas': 'weeks'
+        };
+
+        // Determinar unidade de tempo baseada na descrição UOM
+        let timeUnit = 'hours'; // padrão
+        if (modelo.uom && modelo.uom.desc_uom) {
+            timeUnit = uomMapping[modelo.uom.desc_uom] || 'hours';
+        }
+
+        // Carregar etapas do modelo
+        let etapas = [];
+        let deadlines = {};
+        let deadlineUnits = {};
+        let stageDescriptions = {};
+        let stagePaths = {};
+
+        try {
+            if (window.supabaseDB && window.supabaseDB.isConnected()) {
+                console.log(`🔍 Carregando etapas para modelo ${modelo.cod_modelo_ridec}...`);
+                etapas = await window.supabaseDB.getEtapasModeloRidec(modelo.cod_modelo_ridec);
+                console.log(`📋 Etapas carregadas para modelo ${modelo.cod_modelo_ridec}:`, etapas);
+                
+                // Processar etapas para extrair dados do step 2
+                if (etapas && etapas.length > 0) {
+                    console.log(`🔧 Processando ${etapas.length} etapas encontradas...`);
+                    
+                    etapas.forEach((etapa, index) => {
+                        console.log(`🔧 Processando etapa ${index + 1}:`, etapa);
+                        const tipoEtapa = this.getTipoEtapaName(etapa.cod_tipo_etapa);
+                        console.log(`📝 Tipo da etapa ${etapa.cod_tipo_etapa} -> ${tipoEtapa}`);
+                        
+                        if (tipoEtapa) {
+                            deadlines[tipoEtapa] = etapa.valor_uom || 0;
+                            
+                            // Mapear UOM da etapa para unidade de tempo
+                            let etapaTimeUnit = 'hours';
+                            if (etapa.uom && etapa.uom.desc_uom) {
+                                etapaTimeUnit = uomMapping[etapa.uom.desc_uom] || 'hours';
+                            }
+                            deadlineUnits[tipoEtapa] = etapaTimeUnit;
+                            stageDescriptions[tipoEtapa] = etapa.desc_etapa_modelo || '';
+                            stagePaths[tipoEtapa] = etapa.path_arquivo || '';
+                            
+                            console.log(`✅ Dados da etapa ${tipoEtapa}:`, {
+                                deadline: deadlines[tipoEtapa],
+                                unit: deadlineUnits[tipoEtapa],
+                                description: stageDescriptions[tipoEtapa],
+                                path: stagePaths[tipoEtapa]
+                            });
+                        } else {
+                            console.log(`❌ Tipo de etapa inválido: ${etapa.cod_tipo_etapa}`);
+                        }
+                    });
+                } else {
+                    console.log('⚠️ Nenhuma etapa encontrada para processar');
+                }
+                
+                console.log(`📊 Resumo dos dados processados:`, {
+                    deadlines,
+                    deadlineUnits,
+                    stageDescriptions,
+                    stagePaths
+                });
+            } else {
+                console.log('⚠️ Supabase não disponível para carregar etapas');
+            }
+        } catch (error) {
+            console.error('❌ Erro ao carregar etapas do modelo:', error);
+        }
+
+        console.log('🔧 Criando RIDEC com ID:', modelo.cod_modelo_ridec, 'tipo:', typeof modelo.cod_modelo_ridec);
+        
+        return {
+            id: modelo.cod_modelo_ridec,
+            title: modelo.nome_modelo,
+            description: modelo.descricao_modelo || 'Modelo RIDEC sem descrição',
+            area: area.nome_area,
+            areaId: area.cod_area,
+            priority: modelo.prioridade || 'média',
+            responsible: modelo.responsavel || 'Não definido',
+            status: 'pending',
+            createdAt: modelo.created_at || new Date().toISOString().split('T')[0],
+            deadline: modelo.prazo_estimado || null,
+            progress: 0,
+            stages: [],
+            isOccurrence: false,
+            isModeloRidec: true,
+            codModeloRidec: modelo.cod_modelo_ridec,
+            // Campos de tempo máximo baseados em valor_uom e cod_uom
+            maxTime: modelo.valor_uom || null,
+            timeUnit: timeUnit,
+            // Incluir dados do tipo de modelo
+            tipo_modelo: modelo.tipo_modelo,
+            // Campos do step 2 carregados das etapas
+            deadlines: deadlines,
+            deadlineUnits: deadlineUnits,
+            stageDescriptions: stageDescriptions,
+            // Campos de caminhos de arquivo
+            pathRI: stagePaths.RI || '',
+            pathD: stagePaths.D || '',
+            pathE: stagePaths.E || '',
+            pathC: stagePaths.C || '',
+            // Percentual de não conformidades
+            nonconformityPercent: modelo.valor_nc || 0,
+            // Modo de controle de tempo baseado no tipo de modelo
+            timeControlMode: modelo.tipo_modelo?.nome_tipo_modelo === 'Simples' ? 'simple' : 'detailed'
+        };
+    }
+
+    // Mapear código do tipo de etapa para nome
+    getTipoEtapaName(codTipoEtapa) {
+        const tipoMapping = {
+            1: 'RI',
+            2: 'D', 
+            3: 'E',
+            4: 'C'
+        };
+        return tipoMapping[codTipoEtapa] || null;
+    }
+
+    // Atualizar dropdown de áreas no modal
+    updateAreaDropdown(areas) {
+        const areaSelect = document.getElementById('ridecArea');
+        if (!areaSelect) {
+            console.log('❌ Elemento ridecArea não encontrado');
+            return;
+        }
+
+        console.log('🔄 Atualizando dropdown de áreas com:', areas);
+
+        // Limpar opções existentes (exceto a primeira)
+        areaSelect.innerHTML = '<option value="">Selecione uma área</option>';
+
+        // Adicionar áreas do Supabase
+        areas.forEach(area => {
+            const option = document.createElement('option');
+            option.value = area.nome_area;
+            option.textContent = area.nome_area;
+            option.setAttribute('data-icon', this.getAreaIcon(area.nome_area));
+            areaSelect.appendChild(option);
+        });
+
+        console.log('✅ Dropdown de áreas atualizado com', areas.length, 'áreas');
+    }
+
+    // Atualizar opções de área para criação automática
+    updateAreaOptions(areas) {
+        // Armazenar áreas para uso em outras funções
+        this.availableAreas = areas.map(area => area.nome_area);
+        console.log('Áreas disponíveis atualizadas:', this.availableAreas);
+    }
+
+    // Aguardar Supabase estar pronto
+    async waitForSupabase() {
+        return new Promise((resolve) => {
+            if (window.supabaseDB && window.supabaseDB.isConnected()) {
+                resolve(true);
+                return;
+            }
+
+            const checkSupabase = () => {
+                if (window.supabaseDB && window.supabaseDB.isConnected()) {
+                    resolve(true);
+                } else {
+                    setTimeout(checkSupabase, 100);
+                }
+            };
+            checkSupabase();
+        });
+    }
+
+    // Aguardar Supabase estar pronto e inicializar sistema
+    async waitForSupabaseAndInitialize() {
+        console.log('⏳ Aguardando Supabase estar pronto...');
+        
+        // Validar consistência dos dados do usuário antes de prosseguir
+        this.validateUserDataConsistency();
+        
+        // Aguardar evento de Supabase pronto (apenas uma vez)
+        if (!this.supabaseReadyListenerAdded) {
+            this.supabaseReadyListenerAdded = true;
+            window.addEventListener('supabaseReady', async (event) => {
+                if (event.detail.success) {
+                    console.log('✅ Supabase pronto, inicializando sistema...');
+                    await this.waitForAuthAndInitialize();
+                } else {
+                    console.error('❌ Falha na inicialização do Supabase');
+                    this.showNotification('Erro ao conectar com o banco de dados', 'error');
+                }
+            });
+        }
+        
+        // Se o Supabase já estiver pronto, inicializar imediatamente
+        if (window.supabaseDB && window.supabaseDB.isConnected()) {
+            console.log('✅ Supabase já está pronto, inicializando sistema...');
+            await this.waitForAuthAndInitialize();
+        }
+    }
+
+    // Aguardar autenticação estar pronta e inicializar sistema
+    async waitForAuthAndInitialize() {
+        console.log('⏳ Aguardando sistema de autenticação estar pronto...');
+        
+        // Verificar se já está carregando para evitar múltiplas chamadas
+        if (this.loadingAreas) {
+            console.log('⏳ Carregamento de áreas já em andamento, aguardando...');
+            return;
+        }
+        
+        // Limpar dados de exemplo se existirem
+        this.clearExampleData();
+        
+        let attempts = 0;
+        const maxAttempts = 20; // Aumentar tentativas
+        
+        while (attempts < maxAttempts) {
+            // Verificar se authChecker está disponível
+            if (window.authChecker) {
+                console.log('✅ AuthChecker disponível');
+                
+                if (window.authChecker.currentUser) {
+                    console.log('✅ AuthChecker.currentUser disponível');
+                    const currentUser = this.getCurrentUser();
+                    console.log('👤 Usuário obtido:', currentUser);
+                    
+                    if (currentUser && currentUser.cod_empresa) {
+                        console.log('✅ Autenticação pronta, carregando áreas...');
+                        console.log('🏢 Empresa do usuário:', currentUser.cod_empresa);
+                        await this.loadAreasFromSupabase();
+                        return;
+                    } else if (currentUser) {
+                        console.log('⚠️ Usuário autenticado mas sem empresa:', currentUser);
+                        console.log('🔍 Campos disponíveis:', Object.keys(currentUser));
+                        return;
+                    } else {
+                        console.log('❌ getCurrentUser retornou null');
+                    }
+                } else {
+                    console.log('❌ AuthChecker.currentUser não disponível');
+                }
+            } else {
+                console.log('❌ AuthChecker não disponível');
+            }
+            
+            attempts++;
+            console.log(`⏳ Tentativa ${attempts}/${maxAttempts} - Aguardando authChecker...`);
+            await new Promise(resolve => setTimeout(resolve, 250));
+        }
+        
+        console.log('⚠️ Timeout aguardando autenticação. Verificando se há dados de sessão...');
+        
+        // Fallback: tentar obter dados diretamente da sessão
+        const sessionData = this.getSessionDataDirectly();
+        if (sessionData && sessionData.user && sessionData.user.cod_empresa) {
+            console.log('✅ Dados de sessão encontrados, carregando áreas...');
+            console.log('👤 Usuário da sessão:', sessionData.user);
+            console.log('🏢 Empresa da sessão:', sessionData.user.cod_empresa);
+            await this.loadAreasFromSupabase();
+        } else {
+            console.log('❌ Nenhuma sessão válida encontrada');
+            if (sessionData) {
+                console.log('📦 Dados de sessão encontrados mas inválidos:', sessionData);
+            }
+        }
+    }
+
+    // Limpeza agressiva de dados antigos/corrompidos
+    aggressiveDataCleanup() {
+        console.log('🧹 Iniciando limpeza agressiva de dados...');
+        
+        try {
+            // Não bloquear usuários específicos - apenas dados realmente corrompidos
+            const problematicEmails = [];
+            const problematicNames = [];
+            
+            // Verificar localStorage
+            const localData = localStorage.getItem('ridec_session');
+            if (localData) {
+                try {
+                    const parsed = JSON.parse(localData);
+                    if (parsed.user) {
+                        const email = parsed.user.email_usuario || parsed.user.email;
+                        const name = parsed.user.nome_usuario || parsed.user.name;
+                        
+                        if (problematicEmails.includes(email) || problematicNames.includes(name)) {
+                            console.log(`🚨 Removendo dados problemáticos do localStorage: ${email} / ${name}`);
+                            localStorage.removeItem('ridec_session');
+                        }
+                    }
+                } catch (error) {
+                    console.log('🧹 Removendo dados corrompidos do localStorage');
+                    localStorage.removeItem('ridec_session');
+                }
+            }
+            
+            // Verificar sessionStorage
+            const sessionData = sessionStorage.getItem('ridec_session');
+            if (sessionData) {
+                try {
+                    const parsed = JSON.parse(sessionData);
+                    if (parsed.user) {
+                        const email = parsed.user.email_usuario || parsed.user.email;
+                        const name = parsed.user.nome_usuario || parsed.user.name;
+                        
+                        if (problematicEmails.includes(email) || problematicNames.includes(name)) {
+                            console.log(`🚨 Removendo dados problemáticos do sessionStorage: ${email} / ${name}`);
+                            sessionStorage.removeItem('ridec_session');
+                        }
+                    }
+                } catch (error) {
+                    console.log('🧹 Removendo dados corrompidos do sessionStorage');
+                    sessionStorage.removeItem('ridec_session');
+                }
+            }
+            
+            console.log('✅ Limpeza agressiva concluída');
+            
+        } catch (error) {
+            console.error('❌ Erro durante limpeza agressiva:', error);
+        }
+    }
+
+    // Limpar dados de exemplo
+    clearExampleData() {
+        try {
+            const sessionData = this.getSessionDataDirectly();
+            if (sessionData && sessionData.user) {
+                const user = sessionData.user;
+                // Verificar se são dados de exemplo
+                if (user.email_usuario === 'joao@empresa.com' || 
+                    user.email === 'joao@empresa.com' ||
+                    user.nome_usuario === 'João Silva') {
+                    console.log('🧹 Limpando dados de exemplo...');
+                    localStorage.removeItem('ridec_session');
+                    sessionStorage.removeItem('ridec_session');
+                    console.log('✅ Dados de exemplo removidos');
+                }
+            }
+        } catch (error) {
+            console.error('Erro ao limpar dados de exemplo:', error);
+        }
+    }
+
+    // Obter dados de sessão diretamente (fallback)
+    getSessionDataDirectly() {
+        console.log('🔍 getSessionDataDirectly: Iniciando busca...');
+        
+        try {
+            let sessionData = localStorage.getItem('ridec_session');
+            console.log('📦 localStorage:', sessionData ? 'Dados encontrados' : 'Vazio');
+            
+            if (!sessionData) {
+                sessionData = sessionStorage.getItem('ridec_session');
+                console.log('📦 sessionStorage:', sessionData ? 'Dados encontrados' : 'Vazio');
+            }
+            
+            if (sessionData) {
+                const parsed = JSON.parse(sessionData);
+                console.log('✅ Dados de sessão parseados:', parsed);
+                return parsed;
+            } else {
+                console.log('❌ Nenhum dado de sessão encontrado');
+            }
+        } catch (error) {
+            console.error('❌ Erro ao obter dados de sessão:', error);
+        }
+        return null;
+    }
+
+    // Validar consistência dos dados do usuário entre diferentes fontes
+    validateUserDataConsistency() {
+        console.log('🔍 validateUserDataConsistency: Verificando consistência dos dados...');
+        
+        try {
+            // Obter dados do AuthChecker
+            let authCheckerUser = null;
+            if (window.authChecker && window.authChecker.getCurrentUser) {
+                authCheckerUser = window.authChecker.getCurrentUser();
+            }
+            
+            // Obter dados da sessão direta
+            const sessionData = this.getSessionDataDirectly();
+            const sessionUser = sessionData ? sessionData.user : null;
+            
+            // Verificar se há dados antigos ou corrompidos
+            this.checkForCorruptedData(authCheckerUser, sessionUser);
+            
+            // Comparar dados
+            if (authCheckerUser && sessionUser) {
+                const isSameUser = (
+                    authCheckerUser.email_usuario === sessionUser.email_usuario ||
+                    authCheckerUser.email === sessionUser.email ||
+                    authCheckerUser.cod_usuario === sessionUser.cod_usuario
+                );
+                
+                if (isSameUser) {
+                    console.log('✅ Dados de usuário consistentes entre AuthChecker e sessão');
+                } else {
+                    console.error('❌ INCONSISTÊNCIA DETECTADA: Dados de usuário diferentes!');
+                    console.error('AuthChecker:', authCheckerUser);
+                    console.error('Sessão:', sessionUser);
+                    
+                    // Tentar corrigir usando os dados da sessão como fonte de verdade
+                    if (window.authChecker) {
+                        console.log('🔄 Corrigindo AuthChecker com dados da sessão...');
+                        window.authChecker.currentUser = sessionUser;
+                        console.log('✅ AuthChecker corrigido');
+                    }
+                }
+            } else if (authCheckerUser && !sessionUser) {
+                console.log('⚠️ AuthChecker tem dados mas sessão não - isso pode indicar problema');
+            } else if (!authCheckerUser && sessionUser) {
+                console.log('⚠️ Sessão tem dados mas AuthChecker não - sincronizando...');
+                if (window.authChecker) {
+                    window.authChecker.currentUser = sessionUser;
+                    console.log('✅ AuthChecker sincronizado com dados da sessão');
+                }
+            } else {
+                console.log('❌ Nenhum dado de usuário encontrado em nenhuma fonte');
+            }
+            
+        } catch (error) {
+            console.error('❌ Erro ao validar consistência dos dados:', error);
+        }
+    }
+
+    // Verificar e limpar dados corrompidos ou antigos
+    checkForCorruptedData(authUser, sessionUser) {
+        console.log('🔍 checkForCorruptedData: Verificando dados corrompidos...');
+        
+        // Não bloquear usuários específicos - apenas dados realmente corrompidos
+        const knownOldEmails = [];
+        const knownOldNames = [];
+        
+        let foundCorruptedData = false;
+        
+        // Verificar AuthChecker
+        if (authUser) {
+            const authEmail = authUser.email_usuario || authUser.email;
+            const authName = authUser.nome_usuario || authUser.name;
+            
+            if (knownOldEmails.includes(authEmail) || knownOldNames.includes(authName)) {
+                console.error('🚨 DADOS CORROMPIDOS DETECTADOS no AuthChecker!');
+                console.error(`Email: ${authEmail}, Nome: ${authName}`);
+                foundCorruptedData = true;
+                
+                // LIMPEZA AGRESSIVA IMEDIATA
+                this.emergencyDataCleanup();
+            }
+        }
+        
+        // Verificar sessão
+        if (sessionUser) {
+            const sessionEmail = sessionUser.email_usuario || sessionUser.email;
+            const sessionName = sessionUser.nome_usuario || sessionUser.name;
+            
+            if (knownOldEmails.includes(sessionEmail) || knownOldNames.includes(sessionName)) {
+                console.error('🚨 DADOS CORROMPIDOS DETECTADOS na sessão!');
+                console.error(`Email: ${sessionEmail}, Nome: ${sessionName}`);
+                foundCorruptedData = true;
+                
+                // LIMPEZA AGRESSIVA IMEDIATA
+                this.emergencyDataCleanup();
+            }
+        }
+        
+        if (foundCorruptedData) {
+            console.log('🔄 Dados corrompidos removidos. Usuário deve fazer login novamente.');
+            // Opcional: redirecionar para login
+            // window.location.href = 'login.html';
+        }
+    }
+
+    // Limpeza de emergência de dados corrompidos
+    emergencyDataCleanup() {
+        console.log('🚨 LIMPEZA DE EMERGÊNCIA: Removendo dados corrompidos...');
+        
+        try {
+            // Limpar AuthChecker
+            if (window.authChecker) {
+                window.authChecker.currentUser = null;
+                console.log('🧹 AuthChecker limpo (emergência)');
+            }
+            
+            // Limpar todas as sessões
+            localStorage.removeItem('ridec_session');
+            sessionStorage.removeItem('ridec_session');
+            console.log('🧹 Sessões limpas (emergência)');
+            
+            // Limpar outros dados relacionados
+            localStorage.removeItem('ridecs');
+            localStorage.removeItem('notifications');
+            console.log('🧹 Dados relacionados limpos (emergência)');
+            
+            // Forçar recarregamento da página para garantir limpeza completa
+            console.log('🔄 Recarregando página para garantir limpeza completa...');
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+            
+        } catch (error) {
+            console.error('❌ Erro durante limpeza de emergência:', error);
+        }
+    }
+
+    // Aguardar autenticação estar pronta e carregar áreas
+    async waitForAuthenticationAndLoadAreas() {
+        console.log('⏳ Aguardando autenticação estar pronta...');
+        
+        let attempts = 0;
+        const maxAttempts = 10;
+        
+        while (attempts < maxAttempts) {
+            const currentUser = this.getCurrentUser();
+            
+            if (currentUser && currentUser.cod_empresa) {
+                console.log('✅ Autenticação pronta, carregando áreas...');
+                await this.loadAreasFromSupabase();
+                return;
+            }
+            
+            attempts++;
+            console.log(`⏳ Tentativa ${attempts}/${maxAttempts} - Aguardando autenticação...`);
+            await new Promise(resolve => setTimeout(resolve, 500));
+        }
+        
+        console.log('⚠️ Timeout aguardando autenticação. Tentando carregar áreas mesmo assim...');
+        await this.loadAreasFromSupabase();
+    }
+
+    // Função de teste para verificar carregamento de áreas
+    async testLoadAreas() {
+        console.log('🧪 Iniciando teste de carregamento de áreas...');
+        
+        // Verificar autenticação
+        const currentUser = this.getCurrentUser();
+        console.log('👤 Usuário atual no teste:', currentUser);
+        
+        if (!currentUser) {
+            console.log('❌ Teste falhou: Usuário não autenticado');
+            return false;
+        }
+        
+        // Verificar empresa
+        const userEmpresa = currentUser.cod_empresa || currentUser.empresa;
+        console.log('🏢 Empresa do usuário no teste:', userEmpresa);
+        
+        if (!userEmpresa) {
+            console.log('❌ Teste falhou: Usuário não possui empresa');
+            return false;
+        }
+        
+        // Testar conexão Supabase
+        if (!window.supabaseDB) {
+            console.log('🔧 Aguardando Supabase estar pronto...');
+            await this.waitForSupabase();
+        }
+        
+        // Testar busca de áreas
+        try {
+            const areas = await window.supabaseDB.getAreasByEmpresa(userEmpresa);
+            console.log('✅ Teste concluído. Áreas encontradas:', areas);
+            return areas && areas.length > 0;
+        } catch (error) {
+            console.error('❌ Teste falhou com erro:', error);
+            return false;
+        }
     }
 
     // Simular trigger de integração para demonstração
@@ -5579,253 +6757,10 @@ class RIDECSystem {
         container.insertAdjacentHTML('beforeend', simulationHtml);
     }
 
-            // Deletar todos os RIDECs modelo
-    deleteAllRidecs() {
-        // Mostrar modal de confirmação
-        this.showDeleteAllConfirmationModal();
-    }
 
-    // Mostrar modal de confirmação para deletar todos os RIDECs
-    showDeleteAllConfirmationModal() {
-        const modalHtml = `
-            <div id="deleteAllModal" class="modal">
-                <div class="modal-content delete-all-modal">
-                    <div class="modal-header">
-                        <h2>
-                            <i class="fas fa-exclamation-triangle" style="color: #e53e3e;"></i>
-                            Deletar Todos os RIDECs
-                        </h2>
-                        <span class="close" onclick="ridecSystem.closeDeleteAllModal()">&times;</span>
-                    </div>
-                    <div class="modal-body">
-                        <div class="delete-all-warning">
-                            <div class="warning-icon">
-                                <i class="fas fa-exclamation-triangle"></i>
-                            </div>
-                            <div class="warning-content">
-                                <h3>⚠️ ATENÇÃO!</h3>
-                                <p>Esta ação irá <strong>deletar permanentemente</strong> todos os RIDECs modelo criados.</p>
-                                <p>Esta ação <strong>NÃO PODE SER DESFEITA</strong>.</p>
-                                
-                                <div class="delete-stats">
-                                    <div class="stat-item">
-                                        <span class="stat-number">${this.ridecs.length}</span>
-                                        <span class="stat-label">RIDECs Modelo</span>
-                                    </div>
-                                    
-                                    <div class="stat-item">
-                                        <span class="stat-number">${this.getTotalStages()}</span>
-                                        <span class="stat-label">Etapas</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="delete-options">
-                            <h4>Opções de Deletar:</h4>
-                            <div class="delete-option-group">
-                                <label class="delete-option">
-                                    <input type="checkbox" id="deleteModels" checked>
-                                    <span class="checkmark"></span>
-                                    <span>Deletar RIDECs Modelo</span>
-                                </label>
-                                <label class="delete-option">
-                                    <input type="checkbox" id="deleteOccurrences" checked>
-                                    <span class="checkmark"></span>
-                                    <span>Deletar Ocorrências</span>
-                                </label>
-                                <label class="delete-option">
-                                    <input type="checkbox" id="deleteIntegrations">
-                                    <span class="checkmark"></span>
-                                    <span>Deletar Configurações de Integração</span>
-                                </label>
-                                <label class="delete-option">
-                                    <input type="checkbox" id="deleteLogs">
-                                    <span class="checkmark"></span>
-                                    <span>Deletar Logs de Integração</span>
-                                </label>
-                            </div>
-                        </div>
-                        
-                        <div class="confirmation-input">
-                            <label for="confirmDelete">Digite "DELETAR" para confirmar:</label>
-                            <input type="text" id="confirmDelete" placeholder="Digite DELETAR" class="form-control">
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button class="btn btn-secondary" onclick="ridecSystem.closeDeleteAllModal()">
-                            <i class="fas fa-times"></i>
-                            Cancelar
-                        </button>
-                        <button class="btn btn-danger" onclick="ridecSystem.confirmDeleteAll()" id="confirmDeleteBtn" disabled>
-                            <i class="fas fa-trash"></i>
-                            Deletar Tudo
-                        </button>
-                        <button class="btn btn-warning" onclick="ridecSystem.forceCompleteCleanup()" title="Forçar limpeza completa">
-                            <i class="fas fa-broom"></i>
-                            Limpeza Forçada
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `;
 
-        // Remover modal anterior se existir
-        const existingModal = document.getElementById('deleteAllModal');
-        if (existingModal) {
-            existingModal.remove();
-        }
 
-        // Adicionar novo modal
-        document.body.insertAdjacentHTML('beforeend', modalHtml);
-        
-        // Mostrar modal
-        document.getElementById('deleteAllModal').style.display = 'block';
-        
-        // Adicionar event listener para validação
-        document.getElementById('confirmDelete').addEventListener('input', (e) => {
-            const confirmBtn = document.getElementById('confirmDeleteBtn');
-            confirmBtn.disabled = e.target.value !== 'DELETAR';
-        });
-    }
 
-    // Fechar modal de deletar todos
-    closeDeleteAllModal() {
-        const modal = document.getElementById('deleteAllModal');
-        if (modal) {
-            modal.style.display = 'none';
-            modal.remove();
-        }
-    }
-
-    // Confirmar deletar todos os RIDECs
-    confirmDeleteAll() {
-        const deleteModels = document.getElementById('deleteModels').checked;
-
-        const deleteIntegrations = document.getElementById('deleteIntegrations').checked;
-        const deleteLogs = document.getElementById('deleteLogs').checked;
-
-        let deletedCount = 0;
-
-        // Deletar RIDECs modelo
-        if (deleteModels) {
-            deletedCount += this.ridecs.length;
-            this.ridecs = [];
-        }
-
-        // Deletar configurações de integração
-        if (deleteIntegrations) {
-            const systems = ['slack', 'jira', 'teams', 'email', 'webhook', 'calendar'];
-            systems.forEach(system => {
-                localStorage.removeItem(`system_config_${system}`);
-            });
-        }
-
-        // Deletar logs de integração
-        if (deleteLogs) {
-            localStorage.removeItem('integration_logs');
-        }
-
-        // LIMPEZA COMPLETA E FORÇADA
-        this.performCompleteCleanup();
-
-        // GARANTIR QUE O ARRAY ESTÁ VAZIO
-        this.ridecs = [];
-        
-        // Salvar alterações
-        this.saveToLocalStorage();
-        
-        // Limpar notificações
-        this.notifications = [];
-        this.saveNotifications();
-        
-        // Limpar estados de área
-        this.clearAreaStates();
-        
-        // FORÇAR RENDERIZAÇÃO VAZIA
-        this.forceEmptyRender();
-        
-        // Fechar modal
-        this.closeDeleteAllModal();
-        
-        // Mostrar notificação de sucesso
-        this.showNotification(`Todos os dados foram deletados com sucesso! (${deletedCount} itens removidos)`, 'success', false);
-        
-        // Recarregar página após 2 segundos para garantir limpeza completa
-        setTimeout(() => {
-            window.location.reload();
-        }, 2000);
-    }
-
-    // Realizar limpeza completa e forçada
-    performCompleteCleanup() {
-        console.log('Iniciando limpeza completa...');
-        
-        // LIMPEZA AGRESSIVA DO LOCALSTORAGE
-        const keysToRemove = [];
-        
-        // Coletar TODAS as chaves do localStorage
-        for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            if (key && (
-                key === 'ridecs' ||
-                key === 'notifications' ||
-                key === 'integration_logs' ||
-                key.startsWith('system_config_') ||
-                key.startsWith('area_state_') ||
-                key.includes('ridec') ||
-                key.includes('RIDEC') ||
-                key.includes('integration') ||
-                key.includes('timer') ||
-                key.includes('stage') ||
-                key.includes('deadline') ||
-                key.includes('relation')
-            )) {
-                keysToRemove.push(key);
-            }
-        }
-        
-        // Remover todas as chaves encontradas
-        keysToRemove.forEach(key => {
-            localStorage.removeItem(key);
-            console.log(`Removido do localStorage: ${key}`);
-        });
-        
-        // LIMPEZA FORÇADA DE ARRAYS INTERNOS
-        this.ridecs = [];
-        this.notifications = [];
-        this.currentRidecId = null;
-        this.notificationId = 0;
-        
-        // Parar TODOS os intervalos de monitoramento
-        if (this.overdueCheckInterval) {
-            clearInterval(this.overdueCheckInterval);
-            this.overdueCheckInterval = null;
-        }
-        
-        // Limpar TODOS os timers ativos
-        this.clearAllTimers();
-        
-        // LIMPEZA ADICIONAL - Remover qualquer chave que possa conter dados de RIDEC
-        const allKeys = [];
-        for (let i = 0; i < localStorage.length; i++) {
-            allKeys.push(localStorage.key(i));
-        }
-        
-        allKeys.forEach(key => {
-            if (key && (
-                key.toLowerCase().includes('ridec') ||
-                key.toLowerCase().includes('process') ||
-                key.toLowerCase().includes('stage') ||
-                key.toLowerCase().includes('timer')
-            )) {
-                localStorage.removeItem(key);
-                console.log(`Removido chave adicional: ${key}`);
-            }
-        });
-        
-        console.log('Limpeza completa realizada');
-    }
 
     // Limpar todos os timers ativos
     clearAllTimers() {
@@ -5880,80 +6815,34 @@ class RIDECSystem {
         }
     }
 
-    // Forçar limpeza completa (método público)
-    forceCompleteCleanup() {
-        console.log('Iniciando limpeza forçada...');
-        
-        // Limpar localStorage completamente
-        this.performCompleteCleanup();
-        
-        // LIMPEZA NUCLEAR - Limpar todo o localStorage se necessário
-        this.nuclearCleanup();
-        
-        // Forçar recarregamento da página
-        window.location.reload();
-    }
 
-    // Limpeza nuclear - último recurso
-    nuclearCleanup() {
-        console.log('Executando limpeza nuclear...');
-        
-        // Limpar TODO o localStorage
-        localStorage.clear();
-        
-        // Limpar arrays internos
-        this.ridecs = [];
-        this.notifications = [];
-        this.currentRidecId = null;
-        this.notificationId = 0;
-        
-        // Parar todos os intervalos
-        const highestTimeoutId = setTimeout(() => {}, 0);
-        for (let i = 0; i < highestTimeoutId; i++) {
-            clearTimeout(i);
-            clearInterval(i);
-        }
-        
-        console.log('Limpeza nuclear concluída');
-    }
 
-    // Forçar renderização vazia
-    forceEmptyRender() {
-        console.log('Forçando renderização vazia...');
-        
-        // Garantir que o array está vazio
-        this.ridecs = [];
-        
-        // Limpar localStorage
-        localStorage.removeItem('ridecs');
-        
-        // Forçar renderização vazia em todas as visualizações
-        this.renderEmptyState();
-        
-        // Limpar visualizações específicas
-        this.clearAllViews();
-        
-        console.log('Renderização vazia forçada concluída');
-    }
 
     // Renderizar estado vazio
-    renderEmptyState() {
+    renderEmptyState(customMessage = null) {
         const ridecList = document.getElementById('ridecList');
         const flowView = document.getElementById('flowView');
         const chartsView = document.getElementById('chartsView');
         
         if (ridecList) {
+            const message = customMessage || 'Nenhum RIDEC encontrado';
+            const description = customMessage ? 
+                'Verifique se há RIDECs cadastrados para as áreas da sua empresa' : 
+                'Clique em "Novo RIDEC" para criar seu primeiro processo';
+            
             ridecList.innerHTML = `
                 <div class="empty-state">
                     <div class="empty-icon">
                         <i class="fas fa-project-diagram"></i>
                     </div>
-                    <h3>Nenhum RIDEC encontrado</h3>
-                    <p>Clique em "Novo RIDEC" para criar seu primeiro processo</p>
+                    <h3>${message}</h3>
+                    <p>${description}</p>
+                    ${!customMessage ? `
                     <button class="btn btn-primary" onclick="ridecSystem.openRidecModal()">
                         <i class="fas fa-plus"></i>
                         Criar RIDEC
                     </button>
+                    ` : ''}
                 </div>
             `;
         }
@@ -6027,67 +6916,1226 @@ class RIDECSystem {
 
 
 
-    // Método para retornar à última configuração (reset completo)
-    resetToDefaultConfiguration() {
-        // Limpar todos os dados do localStorage
-        localStorage.clear();
-        
-        // Resetar todas as variáveis do sistema
-        this.ridecs = [];
-        this.currentRidecId = null;
-        this.notificationId = 0;
-        this.notifications = [];
-        this.notificationDropdownVisible = false;
-        this.chatOpened = false;
-        this.showAiWelcome = true;
-        this.currentView = 'card';
-        
-        // Parar todos os timers
-        this.clearAllTimers();
-        
-        // Limpar todas as visualizações
-        this.clearAllViews();
-        
-        // Renderizar estado vazio
-        this.renderEmptyState();
-        
-        // Mostrar notificação de sucesso
-        this.showNotification('Sistema resetado para configuração padrão!', 'success');
-    }
-
-    // Método para fazer logout
-    async handleLogout() {
-        try {
-            // Confirmar logout
-            const confirmLogout = confirm('Tem certeza que deseja sair do sistema?');
-            if (!confirmLogout) {
-                return;
-            }
-
-            // Fazer logout através do authManager
-            if (window.authManager) {
-                await window.authManager.signOut();
-            }
-
-            // Limpar dados locais
-            localStorage.clear();
-            
-            // Redirecionar para página de login
-            window.location.href = 'login.html';
-        } catch (error) {
-            console.error('❌ Erro ao fazer logout:', error);
-            alert('Erro ao fazer logout. Tente novamente.');
-        }
-    }
 
     // Abrir página de ocorrências de um RIDEC específico
     openRidecOccurrences(ridecId) {
-        window.location.href = `ridec-occurrences-detail.html?ridecId=${ridecId}`;
+        // Converter para número se for string, pois os IDs no banco são números
+        const numericRidecId = typeof ridecId === 'string' ? parseInt(ridecId, 10) : ridecId;
+        window.location.href = `ridec-occurrences-detail.html?ridecId=${numericRidecId}`;
     }
+
+    // Abrir modal de edição de modelo RIDEC
+    async openEditModelModal(ridecId) {
+        console.log('🔍 Abrindo modal de edição para modelo RIDEC:', ridecId);
+        
+        try {
+            // Verificar se Supabase está disponível
+            if (!window.supabaseDB || !window.supabaseDB.isConnected()) {
+                console.error('❌ Supabase não disponível para carregar dados do modelo');
+                alert('Sistema de banco de dados não disponível. Tente novamente em alguns instantes.');
+                return;
+            }
+
+            // Buscar dados do modelo
+            const modelo = await this.getModeloById(ridecId);
+            if (!modelo) {
+                console.error('❌ Modelo não encontrado:', ridecId);
+                alert('Modelo não encontrado no banco de dados');
+                return;
+            }
+
+            // Buscar etapas do modelo
+            const etapas = await this.getEtapasByModelo(ridecId);
+            
+            // Buscar ocorrências do modelo
+            const ocorrencias = await this.getOccurrencesByModelo(ridecId);
+            
+            // Preencher dados do modal
+            this.populateEditModelModal(modelo, etapas, ocorrencias);
+            
+            // Mostrar modal
+            const modal = document.getElementById('editModelModal');
+            modal.style.display = 'block';
+            
+        } catch (error) {
+            console.error('❌ Erro ao abrir modal de edição:', error);
+            alert('Erro ao carregar dados do modelo: ' + error.message);
+        }
+    }
+
+    // Buscar modelo por ID
+    async getModeloById(ridecId) {
+        try {
+            if (!window.supabaseDB || !window.supabaseDB.isConnected()) {
+                console.error('❌ Supabase não disponível');
+                return null;
+            }
+
+            const { data, error } = await window.supabaseDB.supabase
+                .from('modelo_ridec')
+                .select(`
+                    *,
+                    area:cod_area(nome_area),
+                    tipo_modelo:cod_tipo_modelo(nome_tipo_modelo)
+                `)
+                .eq('cod_modelo_ridec', ridecId)
+                .single();
+
+            if (error) throw error;
+            return data;
+        } catch (error) {
+            console.error('❌ Erro ao buscar modelo:', error);
+            return null;
+        }
+    }
+
+    // Buscar etapas do modelo
+    async getEtapasByModelo(modeloId) {
+        try {
+            if (!window.supabaseDB || !window.supabaseDB.isConnected()) {
+                console.error('❌ Supabase não disponível');
+                return [];
+            }
+
+            const { data, error } = await window.supabaseDB.supabase
+                .from('modelo_etapa_ridec')
+                .select(`
+                    *,
+                    tipo_etapa:cod_tipo_etapa(
+                        nome_tipo_etapa
+                    ),
+                    uom:cod_uom(
+                        desc_uom
+                    )
+                `)
+                .eq('cod_modelo_ridec', modeloId);
+
+            if (error) throw error;
+            
+            // Ordenar etapas pela sequência baseada em cod_m_etapa_anterior
+            const etapas = data || [];
+            return this.sortEtapasBySequence(etapas);
+        } catch (error) {
+            console.error('❌ Erro ao buscar etapas:', error);
+            return [];
+        }
+    }
+
+    // Ordenar etapas pela sequência baseada em cod_m_etapa_anterior
+    sortEtapasBySequence(etapas) {
+        if (!etapas || etapas.length === 0) return [];
+
+        // Encontrar a etapa inicial (cod_m_etapa_anterior = 0)
+        const etapasOrdenadas = [];
+        const etapasProcessadas = new Set(); // Para evitar loops infinitos
+        
+        // Encontrar a primeira etapa (cod_m_etapa_anterior = 0)
+        let etapaAtual = etapas.find(etapa => etapa.cod_m_etapa_anterior === 0);
+        let contador = 0;
+        const maxIteracoes = etapas.length * 2; // Proteção contra loop infinito
+        
+        console.log('🔍 Iniciando ordenação de etapas...');
+        console.log('📋 Etapas disponíveis:', etapas.map(e => ({ 
+            cod_modelo_etapa: e.cod_modelo_etapa, 
+            cod_etapa: e.cod_etapa, 
+            cod_m_etapa_anterior: e.cod_m_etapa_anterior 
+        })));
+        
+        while (etapaAtual && contador < maxIteracoes) {
+            // Verificar se já processamos esta etapa (evitar loops)
+            if (etapasProcessadas.has(etapaAtual.cod_modelo_etapa)) {
+                console.warn('⚠️ Loop detectado na sequência de etapas, interrompendo...');
+                break;
+            }
+            
+            console.log(`📍 Processando etapa ${contador + 1}:`, {
+                cod_modelo_etapa: etapaAtual.cod_modelo_etapa,
+                cod_etapa: etapaAtual.cod_etapa,
+                cod_m_etapa_anterior: etapaAtual.cod_m_etapa_anterior
+            });
+            
+            etapasOrdenadas.push(etapaAtual);
+            etapasProcessadas.add(etapaAtual.cod_modelo_etapa);
+            
+            // Encontrar próxima etapa (onde cod_m_etapa_anterior = cod_modelo_etapa da atual)
+            etapaAtual = etapas.find(etapa => 
+                etapa.cod_m_etapa_anterior === etapaAtual.cod_modelo_etapa &&
+                !etapasProcessadas.has(etapa.cod_modelo_etapa)
+            );
+            
+            contador++;
+        }
+
+        // Se não conseguiu ordenar pela sequência, retornar as etapas padrão RIDEC
+        if (etapasOrdenadas.length === 0) {
+            console.log('📋 Usando ordenação padrão RIDEC');
+            const etapasPadrao = ['RI', 'D', 'E', 'C'];
+            return etapasPadrao.map(codEtapa => 
+                etapas.find(etapa => etapa.cod_etapa === codEtapa)
+            ).filter(Boolean);
+        }
+
+        console.log('✅ Etapas ordenadas:', etapasOrdenadas.map(e => ({
+            cod_modelo_etapa: e.cod_modelo_etapa,
+            cod_etapa: e.cod_etapa,
+            sequencia: etapasOrdenadas.indexOf(e) + 1
+        })));
+        return etapasOrdenadas;
+    }
+
+    // Buscar ocorrências do modelo
+    async getOccurrencesByModelo(modeloId) {
+        try {
+            if (!window.supabaseDB || !window.supabaseDB.isConnected()) {
+                console.error('❌ Supabase não disponível');
+                return [];
+            }
+
+            console.log('🔍 Buscando ocorrências para modelo ID:', modeloId);
+
+            const { data, error } = await window.supabaseDB.supabase
+                .from('card_ridec')
+                .select(`
+                    *,
+                    modelo:cod_modelo_ridec(nome_modelo)
+                `)
+                .eq('cod_modelo_ridec', modeloId);
+
+            if (error) {
+                console.error('❌ Erro na consulta de ocorrências:', error);
+                throw error;
+            }
+
+            console.log('📊 Ocorrências encontradas:', data?.length || 0);
+            console.log('📋 Dados das ocorrências:', data);
+
+            return data || [];
+        } catch (error) {
+            console.error('❌ Erro ao buscar ocorrências:', error);
+            return [];
+        }
+    }
+
+    // Preencher modal de edição
+    populateEditModelModal(modelo, etapas, ocorrencias) {
+        // Preencher informações do modelo
+        document.getElementById('editModelName').textContent = modelo.nome_modelo || '-';
+        document.getElementById('editModelArea').textContent = modelo.area?.nome_area || '-';
+        document.getElementById('editModelType').textContent = modelo.tipo_modelo?.nome_tipo_modelo || '-';
+        document.getElementById('editModelUom').textContent = modelo.valor_uom || '-';
+        document.getElementById('editModelNc').textContent = modelo.valor_nc ? `${modelo.valor_nc}%` : '-';
+        document.getElementById('editModelDescription').textContent = modelo.descricao_modelo || '-';
+
+        // Preencher etapas
+        this.populateModelStages(etapas);
+
+        // Preencher ocorrências
+        this.populateModelOccurrences(ocorrencias);
+    }
+
+    // Preencher etapas do modelo
+    populateModelStages(etapas) {
+        const stagesContainer = document.getElementById('editModelStages');
+        stagesContainer.innerHTML = '';
+
+        if (!etapas || etapas.length === 0) {
+            stagesContainer.innerHTML = '<div class="no-stages">Nenhuma etapa encontrada para este modelo</div>';
+            return;
+        }
+
+        // Mapear códigos de etapa para ícones (mantido para compatibilidade visual)
+        const stageIcons = {
+            'RI': { icon: 'fa-play', class: 'ri-icon' },
+            'D': { icon: 'fa-cogs', class: 'd-icon' },
+            'E': { icon: 'fa-vial', class: 'e-icon' },
+            'C': { icon: 'fa-check-double', class: 'c-icon' }
+        };
+
+        etapas.forEach((etapa, index) => {
+            const stageCode = etapa.cod_etapa;
+            const iconInfo = stageIcons[stageCode] || { 
+                icon: 'fa-circle', 
+                class: 'default-icon' 
+            };
+            
+            // Usar nome_tipo_etapa da tabela tipo_etapa
+            const stageTitle = etapa.tipo_etapa?.nome_tipo_etapa || etapa.nome_etapa || `Etapa ${index + 1}`;
+            
+            const stageCard = document.createElement('div');
+            stageCard.className = 'stage-card';
+            stageCard.innerHTML = `
+                <div class="stage-header">
+                    <div class="stage-icon ${iconInfo.class}">
+                        <i class="fas ${iconInfo.icon}"></i>
+                    </div>
+                    <div class="stage-title">${stageTitle}</div>
+                </div>
+                <div class="stage-details">
+                    <div class="stage-detail-item">
+                        <div class="stage-detail-label">Descrição</div>
+                        <div class="stage-detail-value">${etapa.desc_etapa_modelo || '-'}</div>
+                    </div>
+                    <div class="stage-detail-item">
+                        <div class="stage-detail-label">Path Arquivo</div>
+                        <div class="stage-detail-value">${etapa.path_arquivo || '-'}</div>
+                    </div>
+                    <div class="stage-detail-item">
+                        <div class="stage-detail-label">Tempo Etapa</div>
+                        <div class="stage-detail-value">${this.formatTempoEtapa(etapa.valor_uom, etapa.uom?.desc_uom)}</div>
+                    </div>
+                </div>
+            `;
+            
+            stagesContainer.appendChild(stageCard);
+        });
+    }
+
+    // Preencher ocorrências do modelo
+    populateModelOccurrences(ocorrencias) {
+        console.log('🔍 Processando ocorrências para exibição:', ocorrencias);
+        
+        // Filtrar por ies_concluiu: "N" = ativas, "S" = concluídas
+        const activeOccurrences = ocorrencias.filter(o => o.ies_concluiu === 'N');
+        const completedOccurrences = ocorrencias.filter(o => o.ies_concluiu === 'S');
+
+        console.log('📊 Ocorrências ativas (ies_concluiu = "N"):', activeOccurrences.length);
+        console.log('📊 Ocorrências concluídas (ies_concluiu = "S"):', completedOccurrences.length);
+        console.log('📋 Valores de ies_concluiu encontrados:', [...new Set(ocorrencias.map(o => o.ies_concluiu))]);
+
+        // Atualizar contadores
+        document.getElementById('activeOccurrencesCount').textContent = activeOccurrences.length;
+        document.getElementById('completedOccurrencesCount').textContent = completedOccurrences.length;
+
+        // Preencher lista de ocorrências ativas
+        this.populateOccurrencesList('activeOccurrencesList', activeOccurrences);
+
+        // Preencher lista de ocorrências concluídas
+        this.populateOccurrencesList('completedOccurrencesList', completedOccurrences);
+    }
+
+    // Preencher lista de ocorrências
+    populateOccurrencesList(containerId, ocorrencias) {
+        console.log(`🔍 Preenchendo lista ${containerId} com ${ocorrencias.length} ocorrências`);
+        
+        const container = document.getElementById(containerId);
+        if (!container) {
+            console.error(`❌ Container ${containerId} não encontrado`);
+            return;
+        }
+        
+        container.innerHTML = '';
+
+        if (ocorrencias.length === 0) {
+            container.innerHTML = '<div class="no-occurrences">Nenhuma ocorrência encontrada</div>';
+            console.log(`📝 Exibindo mensagem "Nenhuma ocorrência encontrada" para ${containerId}`);
+            return;
+        }
+
+        ocorrencias.forEach((ocorrencia, index) => {
+            console.log(`📋 Processando ocorrência ${index + 1}:`, {
+                titulo: ocorrencia.titulo_card,
+                ies_concluiu: ocorrencia.ies_concluiu,
+                id_externo: ocorrencia.id_externo,
+                cod_card_ridec: ocorrencia.cod_card_ridec
+            });
+            
+            // Determinar status baseado em ies_concluiu
+            const isCompleted = ocorrencia.ies_concluiu === 'S';
+            const statusClass = isCompleted ? 'completed' : 'active';
+            const statusLabel = isCompleted ? 'Concluída' : 'Ativa';
+            
+            const item = document.createElement('div');
+            item.className = 'occurrence-item';
+            item.innerHTML = `
+                <div class="occurrence-info">
+                    <div class="occurrence-title">${ocorrencia.titulo_card || ocorrencia.modelo?.nome_modelo || 'Ocorrência sem título'}</div>
+                    <div class="occurrence-meta">ID: ${ocorrencia.id_externo || ocorrencia.cod_card_ridec}</div>
+                </div>
+                <div class="occurrence-status ${statusClass}">${statusLabel}</div>
+            `;
+            container.appendChild(item);
+        });
+        
+        console.log(`✅ Lista ${containerId} preenchida com ${ocorrencias.length} itens`);
+    }
+
+    // Obter ícone da etapa
+    getStageIcon(stageCode) {
+        const icons = {
+            'RI': 'fa-play',
+            'D': 'fa-cogs',
+            'E': 'fa-vial',
+            'C': 'fa-check-double'
+        };
+        return icons[stageCode] || 'fa-circle';
+    }
+
+    // Obter label do status
+    getStatusLabel(status) {
+        const labels = {
+            'active': 'Ativa',
+            'in_progress': 'Em Andamento',
+            'completed': 'Concluída',
+            'finished': 'Finalizada',
+            'cancelled': 'Cancelada'
+        };
+        return labels[status] || status;
+    }
+
+    // Formatar tempo da etapa combinando valor e descrição UOM
+    formatTempoEtapa(valorUom, descUom) {
+        if (!valorUom && !descUom) {
+            return '-';
+        }
+        
+        if (valorUom && descUom) {
+            return `${valorUom} ${descUom}`;
+        }
+        
+        if (valorUom) {
+            return valorUom.toString();
+        }
+        
+        if (descUom) {
+            return descUom;
+        }
+        
+        return '-';
+    }
+
+    // Fechar modal de edição de modelo
+    closeEditModelModal() {
+        const modal = document.getElementById('editModelModal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+    }
+
+    // Salvar alterações do modelo
+    async saveEditModel() {
+        try {
+            // Aqui você pode implementar a lógica para salvar as alterações
+            // Por enquanto, apenas fechar o modal
+            console.log('💾 Salvando alterações do modelo...');
+            this.closeEditModelModal();
+            this.showNotification('Alterações salvas com sucesso!', 'success');
+        } catch (error) {
+            console.error('❌ Erro ao salvar alterações:', error);
+            this.showNotification('Erro ao salvar alterações', 'error');
+        }
+    }
+
+    // Alternar expander de ocorrências
+    toggleOccurrencesExpander(type) {
+        const header = document.getElementById(`${type}Header`);
+        const content = document.getElementById(`${type}Content`);
+        
+        if (header && content) {
+            const isActive = header.classList.contains('active');
+            
+            if (isActive) {
+                header.classList.remove('active');
+                content.classList.remove('active');
+            } else {
+                header.classList.add('active');
+                content.classList.add('active');
+            }
+        }
+    }
+
+    // Abrir modal para criar ocorrência
+    async openCreateOccurrenceModal(ridecId) {
+        console.log('🔍 openCreateOccurrenceModal chamada com ID original:', ridecId, 'tipo:', typeof ridecId);
+        
+        // Validar se o ID é válido
+        if (!ridecId || ridecId === 'undefined' || ridecId === 'null') {
+            console.error('❌ ID inválido fornecido:', ridecId);
+            this.showNotification('Erro: ID do modelo não encontrado', 'error', false);
+            return;
+        }
+        
+        // Converter para número se for string, pois os IDs no banco são números
+        const numericRidecId = typeof ridecId === 'string' ? parseInt(ridecId, 10) : ridecId;
+        
+        // Validar se a conversão foi bem-sucedida
+        if (isNaN(numericRidecId) || numericRidecId <= 0) {
+            console.error('❌ ID inválido após conversão:', numericRidecId, 'original:', ridecId);
+            this.showNotification('Erro: ID do modelo inválido', 'error', false);
+            return;
+        }
+        
+        console.log('🔍 ID validado e convertido:', numericRidecId);
+        
+        try {
+            // Armazenar o ID do modelo selecionado
+            this.selectedModelId = numericRidecId;
+
+            // Buscar informações completas do modelo no banco de dados
+            let modeloCompleto = null;
+            
+            if (window.supabaseDB && window.supabaseDB.isConnected()) {
+                console.log('📡 Buscando dados do banco de dados...');
+                modeloCompleto = await window.supabaseDB.getModeloRidecCompleto(numericRidecId);
+            } else {
+                console.log('⚠️ Supabase não disponível, usando dados locais...');
+                // Fallback para dados locais
+                const ridecIdStr = String(numericRidecId);
+                const ridec = this.ridecs.find(r => String(r.id) === ridecIdStr);
+                
+                if (!ridec) {
+                    console.error('❌ RIDEC não encontrado:', numericRidecId);
+                    this.showNotification('RIDEC não encontrado', 'error', false);
+                    return;
+                }
+                
+                modeloCompleto = {
+                    modelo: {
+                        cod_modelo_ridec: ridec.id,
+                        nome_modelo: ridec.title,
+                        descricao_modelo: ridec.description,
+                        cod_empresa: 1,
+                        area: { nome_area: ridec.area }
+                    },
+                    etapas: {
+                        ri: ridec.descriptionRI ? { nome_etapa_ri: ridec.descriptionRI, valor_uom: ridec.deadlineRI, uom: { sigla_uom: ridec.unitRI || 'horas' } } : null,
+                        d: ridec.descriptionD ? { nome_etapa_d: ridec.descriptionD, valor_uom: ridec.deadlineD, uom: { sigla_uom: ridec.unitD || 'horas' } } : null,
+                        e: ridec.descriptionE ? { nome_etapa_e: ridec.descriptionE, valor_uom: ridec.deadlineE, uom: { sigla_uom: ridec.unitE || 'horas' } } : null,
+                        c: ridec.descriptionC ? { nome_etapa_c: ridec.descriptionC, valor_uom: ridec.deadlineC, uom: { sigla_uom: ridec.unitC || 'horas' } } : null
+                    }
+                };
+            }
+
+            if (!modeloCompleto) {
+                console.error('❌ Modelo não encontrado no banco de dados');
+                this.showNotification('Modelo não encontrado', 'error', false);
+                return;
+            }
+
+            console.log('✅ Modelo completo encontrado:', modeloCompleto);
+
+        // Verificar se os elementos existem
+        const titleElement = document.getElementById('selectedModelTitle');
+        const areaElement = document.getElementById('selectedModelArea');
+        const descriptionElement = document.getElementById('selectedModelDescription');
+        const externalIdElement = document.getElementById('externalId');
+        const modalElement = document.getElementById('createOccurrenceModal');
+
+        // Elementos das etapas
+        const stageRIDescription = document.getElementById('stageRIDescription');
+        const stageRITime = document.getElementById('stageRITime');
+        const stageDDescription = document.getElementById('stageDDescription');
+        const stageDTime = document.getElementById('stageDTime');
+        const stageEDescription = document.getElementById('stageEDescription');
+        const stageETime = document.getElementById('stageETime');
+        const stageCDescription = document.getElementById('stageCDescription');
+        const stageCTime = document.getElementById('stageCTime');
+
+        if (!titleElement) {
+            console.error('❌ Elemento selectedModelTitle não encontrado');
+            return;
+        }
+        if (!areaElement) {
+            console.error('❌ Elemento selectedModelArea não encontrado');
+            return;
+        }
+        if (!descriptionElement) {
+            console.error('❌ Elemento selectedModelDescription não encontrado');
+            return;
+        }
+        if (!externalIdElement) {
+            console.error('❌ Elemento externalId não encontrado');
+            return;
+        }
+        if (!modalElement) {
+            console.error('❌ Elemento createOccurrenceModal não encontrado');
+            return;
+        }
+
+            // Preencher informações básicas do modelo no modal
+            titleElement.textContent = modeloCompleto.modelo.nome_modelo;
+            areaElement.textContent = modeloCompleto.modelo.area?.nome_area || 'Sem Área';
+            descriptionElement.textContent = modeloCompleto.modelo.descricao_modelo || 'Sem descrição';
+
+            // Função auxiliar para formatar tempo
+            const formatStageTime = (valorUom, uom) => {
+                if (!valorUom) return 'Não configurado';
+                const unitLabel = uom?.desc_uom || 'horas';
+                return `${valorUom} ${unitLabel}`;
+            };
+
+            // Preencher informações das etapas
+            console.log('📊 Dados das etapas para exibição:', modeloCompleto.etapas);
+            console.log('📊 Detalhes das etapas:');
+            Object.keys(modeloCompleto.etapas).forEach(tipo => {
+                const etapa = modeloCompleto.etapas[tipo];
+                if (etapa) {
+                    console.log(`  ${tipo.toUpperCase()}:`, {
+                        nome: etapa[`nome_etapa_${tipo}`],
+                        valor_uom: etapa.valor_uom,
+                        uom: etapa.uom?.desc_uom,
+                        cod_tipo_etapa: etapa.cod_tipo_etapa
+                    });
+                } else {
+                    console.log(`  ${tipo.toUpperCase()}: null`);
+                }
+            });
+            
+            if (stageRIDescription) {
+                stageRIDescription.textContent = modeloCompleto.etapas.ri?.nome_etapa_ri || 'Etapa não configurada';
+            }
+            if (stageRITime) {
+                const tempoRI = formatStageTime(modeloCompleto.etapas.ri?.valor_uom, modeloCompleto.etapas.ri?.uom);
+                stageRITime.textContent = tempoRI;
+                console.log('⏰ Tempo RI formatado:', tempoRI, 'UOM:', modeloCompleto.etapas.ri?.uom);
+            }
+            
+            if (stageDDescription) {
+                stageDDescription.textContent = modeloCompleto.etapas.d?.nome_etapa_d || 'Etapa não configurada';
+            }
+            if (stageDTime) {
+                const tempoD = formatStageTime(modeloCompleto.etapas.d?.valor_uom, modeloCompleto.etapas.d?.uom);
+                stageDTime.textContent = tempoD;
+                console.log('⏰ Tempo D formatado:', tempoD, 'UOM:', modeloCompleto.etapas.d?.uom);
+            }
+            
+            if (stageEDescription) {
+                stageEDescription.textContent = modeloCompleto.etapas.e?.nome_etapa_e || 'Etapa não configurada';
+            }
+            if (stageETime) {
+                const tempoE = formatStageTime(modeloCompleto.etapas.e?.valor_uom, modeloCompleto.etapas.e?.uom);
+                stageETime.textContent = tempoE;
+                console.log('⏰ Tempo E formatado:', tempoE, 'UOM:', modeloCompleto.etapas.e?.uom);
+            }
+            
+            if (stageCDescription) {
+                stageCDescription.textContent = modeloCompleto.etapas.c?.nome_etapa_c || 'Etapa não configurada';
+            }
+            if (stageCTime) {
+                const tempoC = formatStageTime(modeloCompleto.etapas.c?.valor_uom, modeloCompleto.etapas.c?.uom);
+                stageCTime.textContent = tempoC;
+                console.log('⏰ Tempo C formatado:', tempoC, 'UOM:', modeloCompleto.etapas.c?.uom);
+            }
+
+            // Limpar campo de ID externo
+            externalIdElement.value = '';
+
+            // Mostrar modal
+            modalElement.classList.add('show');
+            
+            // Garantir que o expander esteja fechado por padrão
+            this.closeModelInfoExpander();
+            
+            // Carregar etapas do modelo dinamicamente
+            try {
+                const stages = await this.loadModelStages(numericRidecId);
+                if (stages && stages.length > 0) {
+                    this.updateStagesInfoHTML(stages);
+                    console.log('✅ Etapas do modelo carregadas dinamicamente');
+                } else {
+                    console.log('⚠️ Nenhuma etapa encontrada para o modelo');
+                    // Limpar etapas existentes se não houver etapas
+                    this.updateStagesInfoHTML([]);
+                }
+            } catch (error) {
+                console.error('❌ Erro ao carregar etapas do modelo:', error);
+                this.updateStagesInfoHTML([]);
+            }
+            
+            console.log('✅ Modal exibido com sucesso');
+
+        } catch (error) {
+            console.error('❌ Erro ao abrir modal de criação de ocorrência:', error);
+            this.showNotification('Erro ao carregar informações do modelo', 'error', false);
+        }
+    }
+
+    // Função de teste para debug das UOM
+    async testarUOMs() {
+        if (!window.supabaseDB || !window.supabaseDB.isConnected()) {
+            console.log('⚠️ Supabase não disponível para teste');
+            return;
+        }
+
+        console.log('🧪 Iniciando teste de UOMs...');
+        
+        // Testar estrutura da tabela UOM primeiro
+        console.log('🔍 Testando estrutura da tabela UOM...');
+        await window.supabaseDB.testarEstruturaUOM();
+        
+        // Testar tabelas
+        const tabelasExistem = await window.supabaseDB.testarTabelasEtapas();
+        console.log('📊 Status das tabelas:', tabelasExistem);
+        
+        // Testar UOMs específicas
+        const codigosUOM = [1, 2, 3, 4, 5]; // Códigos comuns de UOM
+        for (const codUom of codigosUOM) {
+            await window.supabaseDB.testarUOM(codUom);
+        }
+        
+        console.log('✅ Teste de UOMs concluído');
+    }
+
+    // Fechar modal de criação de ocorrência
+    closeCreateOccurrenceModal() {
+        const modalElement = document.getElementById('createOccurrenceModal');
+        if (modalElement) {
+            modalElement.classList.remove('show');
+        }
+        this.selectedModelId = null;
+        
+        // Fechar o expander quando o modal for fechado
+        this.closeModelInfoExpander();
+        
+        console.log('✅ Modal fechado');
+    }
+
+    // Controlar o expander de informações do modelo
+    toggleModelInfoExpander() {
+        const expanderContainer = document.querySelector('#createOccurrenceModal .expander-container');
+        if (!expanderContainer) {
+            console.error('❌ Container do expander não encontrado');
+            return;
+        }
+
+        const isExpanded = expanderContainer.classList.contains('expanded');
+        
+        if (isExpanded) {
+            this.closeModelInfoExpander();
+        } else {
+            this.openModelInfoExpander();
+        }
+    }
+
+    // Abrir o expander de informações do modelo
+    openModelInfoExpander() {
+        const expanderContainer = document.querySelector('#createOccurrenceModal .expander-container');
+        if (expanderContainer) {
+            expanderContainer.classList.add('expanded');
+            console.log('✅ Expander de informações do modelo aberto');
+        }
+    }
+
+    // Fechar o expander de informações do modelo
+    closeModelInfoExpander() {
+        const expanderContainer = document.querySelector('#createOccurrenceModal .expander-container');
+        if (expanderContainer) {
+            expanderContainer.classList.remove('expanded');
+            console.log('✅ Expander de informações do modelo fechado');
+        }
+    }
+
+    // Carregar etapas do modelo dinamicamente
+    async loadModelStages(modelId) {
+        try {
+            console.log('🔍 Carregando etapas do modelo:', modelId);
+            
+            if (!window.supabaseDB || !window.supabaseDB.isConnected()) {
+                console.error('❌ Supabase não disponível');
+                return [];
+            }
+
+            // Consulta para obter as etapas do modelo em sequência
+            const { data: stages, error } = await window.supabaseDB.supabase
+                .from('modelo_etapa_ridec')
+                .select(`
+                    cod_modelo_etapa,
+                    cod_tipo_etapa,
+                    desc_etapa_modelo,
+                    valor_uom,
+                    path_arquivo,
+                    cod_m_etapa_anterior,
+                    uom:cod_uom (
+                        desc_uom
+                    ),
+                    tipo_etapa:cod_tipo_etapa (
+                        nome_tipo_etapa
+                    )
+                `)
+                .eq('cod_modelo_ridec', modelId)
+                .order('cod_tipo_etapa');
+
+            if (error) {
+                console.error('❌ Erro ao carregar etapas:', error);
+                return [];
+            }
+
+            if (!stages || stages.length === 0) {
+                console.log('⚠️ Nenhuma etapa encontrada para o modelo:', modelId);
+                return [];
+            }
+
+            // Ordenar etapas sequencialmente baseado na lógica de cod_m_etapa_anterior
+            const orderedStages = this.orderStagesSequentially(stages);
+            
+            console.log('✅ Etapas carregadas:', orderedStages);
+            return orderedStages;
+
+        } catch (error) {
+            console.error('❌ Erro ao carregar etapas do modelo:', error);
+            return [];
+        }
+    }
+
+    // Ordenar etapas sequencialmente baseado na lógica de cod_m_etapa_anterior
+    orderStagesSequentially(stages) {
+        const orderedStages = [];
+        const stageMap = new Map();
+        
+        // Criar mapa das etapas
+        stages.forEach(stage => {
+            stageMap.set(stage.cod_modelo_etapa, stage);
+        });
+
+        // Encontrar a primeira etapa (cod_m_etapa_anterior = 0)
+        const firstStage = stages.find(stage => stage.cod_m_etapa_anterior === 0);
+        if (!firstStage) {
+            console.warn('⚠️ Nenhuma etapa inicial encontrada (cod_m_etapa_anterior = 0)');
+            return stages; // Retornar como estão se não encontrar a primeira
+        }
+
+        // Construir sequência
+        let currentStage = firstStage;
+        while (currentStage) {
+            orderedStages.push(currentStage);
+            
+            // Procurar próxima etapa (onde cod_m_etapa_anterior = cod_modelo_etapa da atual)
+            const nextStage = stages.find(stage => 
+                stage.cod_m_etapa_anterior === currentStage.cod_modelo_etapa
+            );
+            
+            currentStage = nextStage;
+        }
+
+        console.log('✅ Etapas ordenadas sequencialmente:', orderedStages.map(s => s.tipo_etapa?.nome_tipo_etapa || `Etapa ${s.cod_tipo_etapa}`));
+        return orderedStages;
+    }
+
+    // Atualizar HTML com as etapas carregadas
+    updateStagesInfoHTML(stages) {
+        const stagesContainer = document.getElementById('stages-info-section');
+        if (!stagesContainer) {
+            console.error('❌ Container de etapas não encontrado');
+            return;
+        }
+
+        // Limpar etapas existentes (manter apenas o título)
+        const titleElement = stagesContainer.querySelector('.stages-info-title');
+        stagesContainer.innerHTML = '';
+        if (titleElement) {
+            stagesContainer.appendChild(titleElement);
+        }
+
+        // Adicionar cada etapa dinamicamente
+        stages.forEach((stage, index) => {
+            const stageCard = this.createStageCard(stage, index);
+            stagesContainer.appendChild(stageCard);
+        });
+
+        console.log('✅ HTML das etapas atualizado com', stages.length, 'etapas');
+    }
+
+    // Criar card HTML para uma etapa
+    createStageCard(stage, index) {
+        const stageCard = document.createElement('div');
+        stageCard.className = 'stage-info-card';
+        stageCard.setAttribute('data-stage', `ETAPA_${stage.cod_tipo_etapa}`);
+
+        const stageIcon = this.getStageIcon(stage.cod_tipo_etapa);
+        const stageTitle = stage.tipo_etapa?.nome_tipo_etapa || `Etapa ${stage.cod_tipo_etapa}`;
+        const stageDescription = stage.desc_etapa_modelo || 'Sem descrição';
+        const stageTime = this.formatStageTime(stage.valor_uom, stage.uom);
+        const stagePath = stage.path_arquivo || '';
+
+        stageCard.innerHTML = `
+            <div class="stage-header">
+                <div class="stage-icon ${this.getStageIconClass(stage.cod_tipo_etapa)}">
+                    <i class="${stageIcon}"></i>
+                </div>
+                <div class="stage-title">${stageTitle}</div>
+            </div>
+            <div class="stage-details">
+                <div class="stage-description">
+                    <span class="stage-desc-label">Descrição:</span>
+                    <span class="stage-desc-value">${stageDescription}</span>
+                </div>
+                <div class="stage-time">
+                    <span class="stage-time-label">Tempo:</span>
+                    <span class="stage-time-value">${stageTime}</span>
+                </div>
+                ${stagePath ? `
+                <div class="stage-path">
+                    <span class="stage-path-label">Arquivo:</span>
+                    <span class="stage-path-value">${stagePath}</span>
+                </div>
+                ` : ''}
+            </div>
+        `;
+
+        return stageCard;
+    }
+
+    // Obter ícone da etapa baseado no tipo
+    getStageIcon(stageType) {
+        const iconMap = {
+            'RI': 'fas fa-play',
+            'D': 'fas fa-cogs',
+            'E': 'fas fa-vial',
+            'C': 'fas fa-check-double',
+            'A': 'fas fa-puzzle-piece',
+            1: 'fas fa-play',
+            2: 'fas fa-cogs',
+            3: 'fas fa-vial',
+            4: 'fas fa-check-double',
+            5: 'fas fa-puzzle-piece',
+            6: 'fas fa-cog'
+        };
+        return iconMap[stageType] || 'fas fa-circle';
+    }
+
+    // Obter classe CSS do ícone da etapa
+    getStageIconClass(stageType) {
+        const classMap = {
+            'RI': 'ri-icon',
+            'D': 'd-icon',
+            'E': 'e-icon',
+            'C': 'c-icon',
+            'A': 'a-icon',
+            1: 'ri-icon',
+            2: 'd-icon',
+            3: 'e-icon',
+            4: 'c-icon',
+            5: 'a-icon',
+            6: 'custom-icon'
+        };
+        return classMap[stageType] || 'default-icon';
+    }
+
+    // Formatar tempo da etapa
+    formatStageTime(value, uom) {
+        if (!value || !uom) return 'Não definido';
+        
+        const formattedValue = Math.round(parseFloat(value));
+        const unit = uom.desc_uom || 'unidade';
+        
+        return `${formattedValue} ${unit}`;
+    }
+
+    // Obter usuário atual
+    getCurrentUser() {
+        try {
+            // Tentar obter do AuthChecker primeiro
+            if (window.authChecker && window.authChecker.getCurrentUser) {
+                const user = window.authChecker.getCurrentUser();
+                if (user) {
+                    console.log('✅ Usuário obtido do AuthChecker:', user);
+                    return user;
+                }
+            }
+            
+            // Fallback: tentar obter da sessão
+            const sessionData = this.getSessionDataDirectly();
+            if (sessionData && sessionData.user) {
+                console.log('✅ Usuário obtido da sessão:', sessionData.user);
+                return sessionData.user;
+            }
+            
+            console.log('❌ Nenhum usuário encontrado');
+            return null;
+        } catch (error) {
+            console.error('❌ Erro ao obter usuário atual:', error);
+            return null;
+        }
+    }
+
+    // Carregar modelos RIDEC do Supabase
+    async loadModelosRidecFromSupabase() {
+        try {
+            console.log('🔄 Carregando modelos RIDEC do Supabase...');
+            
+            // Conectar ao Supabase
+            const supabase = connectToSupabase();
+            if (!supabase) {
+                console.log('❌ Erro de conexão com Supabase');
+                return false;
+            }
+
+            // Buscar modelos RIDEC (query mínima) - apenas ativos
+            console.log('📡 Executando query no Supabase...');
+            const { data: modelos, error } = await supabase
+                .from('modelo_ridec')
+                .select('*')
+                .eq('ies_ativo', 'S') // Apenas modelos ativos
+                .order('nome_modelo');
+            
+            console.log('📊 Resultado da query:', { data: modelos, error });
+
+            if (error) {
+                console.error('❌ Erro ao buscar modelos RIDEC:', error);
+                return false;
+            }
+
+            console.log('✅ Modelos RIDEC carregados do Supabase:', modelos);
+            console.log('📋 IDs dos modelos carregados:', modelos.map(m => m.cod_modelo_ridec || m.id));
+
+            // Converter para formato da aplicação
+            const modelosConvertidos = modelos.map(modelo => ({
+                id: modelo.cod_modelo_ridec || modelo.id,
+                title: modelo.nome_modelo || modelo.title || 'Modelo sem nome',
+                description: modelo.descricao_modelo || modelo.description || '',
+                area: modelo.cod_area || modelo.area || 'Sem Área',
+                priority: 'média', // Valor padrão
+                maxTime: 24, // Valor padrão
+                timeUnit: 'hours',
+                responsible: modelo.responsavel || modelo.responsible || 'Não definido',
+                createdAt: modelo.created_at || new Date().toISOString(),
+                updatedAt: modelo.updated_at || new Date().toISOString(),
+                isOccurrence: false // Modelos não são ocorrências
+            }));
+
+            // Adicionar aos RIDECs existentes (sem duplicar)
+            const existingIds = this.ridecs.map(r => r.id);
+            const newModelos = modelosConvertidos.filter(m => !existingIds.includes(m.id));
+            
+            this.ridecs.push(...newModelos);
+            console.log(`✅ ${newModelos.length} novos modelos RIDEC adicionados`);
+            console.log('📋 Todos os IDs de RIDECs disponíveis:', this.ridecs.map(r => r.id));
+
+            // Salvar no localStorage
+            this.saveToLocalStorage();
+            
+            return true;
+        } catch (error) {
+            console.error('❌ Erro ao carregar modelos RIDEC:', error);
+            return false;
+        }
+    }
+
+    // Criar ocorrência
+    async createOccurrence() {
+        console.log('🚀 createOccurrence iniciada');
+        
+        const externalId = document.getElementById('externalId').value.trim();
+        console.log('📝 ID externo:', externalId);
+        
+        if (!externalId) {
+            console.log('❌ ID externo vazio');
+            this.showNotification('Por favor, digite o ID externo', 'error', false);
+            return;
+        }
+
+        if (!this.selectedModelId) {
+            console.log('❌ Modelo RIDEC não selecionado');
+            this.showNotification('Modelo RIDEC não selecionado', 'error', false);
+            return;
+        }
+
+        console.log('✅ Validações básicas passaram');
+
+        try {
+            // Obter dados do usuário atual
+            console.log('👤 Obtendo dados do usuário...');
+            const currentUser = this.getCurrentUser();
+            if (!currentUser) {
+                console.log('❌ Usuário não encontrado');
+                this.showNotification('Usuário não autenticado', 'error', false);
+                return;
+            }
+            console.log('✅ Usuário obtido:', currentUser);
+
+            // Verificar se o usuário tem as propriedades necessárias
+            if (!currentUser.cod_empresa || !currentUser.cod_usuario) {
+                console.log('❌ Usuário não possui cod_empresa ou cod_usuario');
+                console.log('cod_empresa:', currentUser.cod_empresa);
+                console.log('cod_usuario:', currentUser.cod_usuario);
+                this.showNotification('Dados do usuário incompletos. Faça login novamente.', 'error', false);
+                return;
+            }
+            console.log('✅ Usuário tem todas as propriedades necessárias');
+
+            // Verificar se o Supabase está disponível
+            if (!window.supabaseDB || !window.supabaseDB.isConnected()) {
+                console.log('❌ Supabase não disponível');
+                this.showNotification('Erro de conexão com o banco de dados', 'error', false);
+                return;
+            }
+
+            // Obter data e hora atual
+            const now = new Date();
+            const dataInicio = now.toISOString().split('T')[0]; // YYYY-MM-DD
+            const horaInicio = now.toTimeString().split(' ')[0]; // HH:MM:SS
+            const usuarioCriacao = currentUser.nome_usuario || currentUser.email_usuario || 'Usuário';
+            
+            console.log('📅 Data e hora:', dataInicio, horaInicio);
+            console.log('👤 Usuário de criação:', usuarioCriacao);
+
+            // PASSO 1: Criar linha na tabela card_ridec
+            console.log('📝 PASSO 1: Criando linha na tabela card_ridec...');
+            const cardRidecData = {
+                cod_modelo_ridec: this.selectedModelId,
+                cod_empresa: currentUser.cod_empresa,
+                id_externo: externalId,
+                cod_usuario: currentUser.cod_usuario,
+                data_criacao: dataInicio,
+                usuario_criacao: usuarioCriacao
+            };
+            console.log('📋 Dados para card_ridec:', cardRidecData);
+
+            const { data: cardRidecResult, error: cardRidecError } = await window.supabaseDB.getClient()
+                .from('card_ridec')
+                .insert(cardRidecData)
+                .select('cod_card_ridec')
+                .single();
+
+            if (cardRidecError) {
+                console.error('❌ Erro ao criar card_ridec:', cardRidecError);
+                this.showNotification('Erro ao criar card RIDEC: ' + cardRidecError.message, 'error', false);
+                return;
+            }
+            console.log('✅ Card RIDEC criado:', cardRidecResult);
+
+            // Obter o valor de cod_card_ridec da linha criada
+            const codCardRidec = cardRidecResult.cod_card_ridec;
+            console.log('🔑 Código do card RIDEC obtido:', codCardRidec);
+
+            // PASSO 2: Buscar o tipo de modelo do modelo_ridec
+            console.log('🔍 PASSO 2: Buscando tipo de modelo...');
+            const { data: modeloData, error: modeloError } = await window.supabaseDB.getClient()
+                .from('modelo_ridec')
+                .select('cod_tipo_modelo')
+                .eq('cod_modelo_ridec', this.selectedModelId)
+                .single();
+
+            if (modeloError) {
+                console.error('❌ Erro ao buscar tipo de modelo:', modeloError);
+                this.showNotification('Erro ao buscar informações do modelo: ' + modeloError.message, 'error', false);
+                return;
+            }
+            console.log('✅ Tipo de modelo encontrado:', modeloData);
+
+            const codTipoModelo = modeloData.cod_tipo_modelo;
+            console.log('📊 Código do tipo de modelo:', codTipoModelo);
+
+            // PASSO 3: Inserir linha na tabela etapa_ridec baseada no tipo de modelo
+            console.log('📝 PASSO 3: Criando linha na tabela etapa_ridec...');
+            
+            let etapaRidecData = {
+                cod_card_ridec: codCardRidec,
+                cod_etapa_anterior: 0,
+                data_inicio: dataInicio,
+                hora_inicio: horaInicio
+            };
+
+            if (codTipoModelo === 1) {
+                // Se cod_tipo_modelo for igual a 1, inserir com cod_tipo_etapa = 1
+                console.log('📊 Tipo de modelo 1 (Detalhado): inserindo cod_tipo_etapa = 1');
+                etapaRidecData.cod_tipo_etapa = 1;
+            } else if (codTipoModelo === 2) {
+                // Se cod_tipo_modelo for igual a 2, inserir com cod_tipo_etapa = 6
+                console.log('📊 Tipo de modelo 2 (Simples): inserindo cod_tipo_etapa = 6');
+                etapaRidecData.cod_tipo_etapa = 6;
+            } else {
+                console.error('❌ Tipo de modelo desconhecido:', codTipoModelo);
+                this.showNotification('Tipo de modelo não reconhecido: ' + codTipoModelo, 'error', false);
+                return;
+            }
+
+            console.log('📋 Dados para etapa_ridec:', etapaRidecData);
+
+            // Inserir linha na tabela etapa_ridec
+            console.log('📝 Inserindo dados na tabela etapa_ridec...');
+            const { data: etapaRidecResult, error: etapaRidecError } = await window.supabaseDB.getClient()
+                .from('etapa_ridec')
+                .insert(etapaRidecData)
+                .select()
+                .single();
+
+            if (etapaRidecError) {
+                console.error('❌ Erro ao criar etapa_ridec:', etapaRidecError);
+                console.error('📋 Detalhes completos do erro:', {
+                    message: etapaRidecError.message,
+                    details: etapaRidecError.details,
+                    hint: etapaRidecError.hint,
+                    code: etapaRidecError.code,
+                    status: etapaRidecError.status,
+                    statusText: etapaRidecError.statusText
+                });
+                
+                if (etapaRidecError.status === 400) {
+                    console.log('💡 Erro 400: Problema com os dados enviados ou estrutura da tabela etapa_ridec');
+                    this.showNotification('Erro 400: Problema com os dados da tabela etapa_ridec. Verifique a estrutura.', 'error', false);
+                } else if (etapaRidecError.status === 401) {
+                    console.log('💡 Erro 401: Problema de autenticação/autorização');
+                    this.showNotification('Erro de autenticação. Verifique se você tem permissão para criar etapas.', 'error', false);
+                } else if (etapaRidecError.status === 403) {
+                    console.log('💡 Erro 403: Problema de permissão RLS');
+                    this.showNotification('Erro de permissão. Verifique as políticas RLS da tabela etapa_ridec.', 'error', false);
+                } else {
+                    this.showNotification('Erro ao criar etapa RIDEC: ' + etapaRidecError.message, 'error', false);
+                }
+                return;
+            }
+            console.log('✅ Etapa RIDEC criada:', etapaRidecResult);
+
+            // Sucesso
+            console.log('🎉 Ocorrência criada com sucesso!');
+            console.log('📋 Resumo da criação:');
+            console.log('  - Card RIDEC:', codCardRidec);
+            console.log('  - Tipo de modelo:', codTipoModelo);
+            console.log('  - Tipo de etapa:', etapaRidecData.cod_tipo_etapa);
+            console.log('  - Etapa iniciada:', codTipoModelo === 1 ? 'RI (Detalhado)' : 'Etapa Simples');
+            console.log('  - Data de início:', dataInicio);
+            console.log('  - Hora de início:', horaInicio);
+            console.log('  - Etapa RIDEC ID:', etapaRidecResult.cod_etapa_ridec || 'N/A');
+            
+            this.showNotification('Ocorrência criada com sucesso!', 'success', false);
+            this.closeCreateOccurrenceModal();
+
+        } catch (error) {
+            console.error('❌ Erro ao criar ocorrência:', error);
+            this.showNotification('Erro inesperado: ' + error.message, 'error', false);
+        }
+    }
+
 }
 
-// Inicializar sistema
+// Inicializar sistema quando DOM estiver pronto
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('🚀 Inicializando sistema RIDEC...');
+    
+    // Aguardar um pouco para garantir que auth-check.js foi carregado
+    setTimeout(() => {
 const ridecSystem = new RIDECSystem();
 
 // Exportar para uso global
 window.ridecSystem = ridecSystem; 
+        
+        console.log('✅ Sistema RIDEC inicializado');
+    }, 100);
+});
+
+// Fallback: inicializar imediatamente se DOM já estiver pronto
+if (document.readyState === 'loading') {
+    // DOM ainda carregando, aguardar evento DOMContentLoaded
+} else {
+    // DOM já carregado, inicializar imediatamente
+    console.log('🚀 DOM já carregado, inicializando sistema RIDEC...');
+    
+    setTimeout(() => {
+        const ridecSystem = new RIDECSystem();
+        window.ridecSystem = ridecSystem;
+        console.log('✅ Sistema RIDEC inicializado (fallback)');
+    }, 100);
+}
+
+// Função de teste para o modal
+function testModal() {
+    console.log('🧪 Testando modal...');
+    const modal = document.getElementById('createOccurrenceModal');
+    if (modal) {
+        console.log('✅ Modal encontrado');
+        modal.classList.add('show');
+        console.log('✅ Modal exibido');
+    } else {
+        console.error('❌ Modal não encontrado');
+    }
+} 

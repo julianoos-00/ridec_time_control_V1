@@ -7,7 +7,7 @@
 
 // Exemplo 1: Configuração do Slack
 const slackConfig = {
-    
+    webhook_url: 'https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX',
     channel: '#ridec-integrations',
     start_message: '/ridec start {stage}',
     finish_message: '/ridec finish {stage}'

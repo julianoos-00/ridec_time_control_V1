@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Inserir Dados de Teste</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .btn { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin: 5px; }
+        .btn:hover { background: #0056b3; }
+        .result { background: #f8f9fa; padding: 10px; border-radius: 3px; margin: 10px 0; font-family: monospace; white-space: pre-wrap; }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🗄️ Inserir Dados de Teste - RIDEC</h1>
+        
+        <div class="section">
+            <h3>1. Verificar Conexão</h3>
+            <button class="btn" onclick="testConnection()">Testar Conexão</button>
+            <div class="result" id="connection-result">Clique para testar</div>
+        </div>
+
+        <div class="section">
+            <h3>2. Inserir Dados de Teste</h3>
+            <button class="btn" onclick="insertTestData()">Inserir Dados</button>
+            <div class="result" id="insert-result">Clique para inserir</div>
+        </div>
+
+        <div class="section">
+            <h3>3. Verificar Dados Inseridos</h3>
+            <button class="btn" onclick="checkData()">Verificar Dados</button>
+            <div class="result" id="check-result">Clique para verificar</div>
+        </div>
+
+        <div class="section">
+            <h3>4. Testar Sistema de Ocorrências</h3>
+            <button class="btn" onclick="testOccurrences()">Testar Ocorrências</button>
+            <div class="result" id="occurrences-result">Clique para testar</div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <script src="supabase-database.js"></script>
+    
+    <script>
+        let db;
+
+        async function testConnection() {
+            const result = document.getElementById('connection-result');
+            result.textContent = 'Testando conexão...';
+            
+            try {
+                db = SupabaseDatabase.getInstance();
+                const connected = await db.init();
+                
+                if (connected) {
+                    result.innerHTML = '<span class="success">✅ Conexão estabelecida com sucesso!</span>';
+                } else {
+                    result.innerHTML = '<span class="error">❌ Falha na conexão</span>';
+                }
+            } catch (error) {
+                result.innerHTML = `<span class="error">❌ Erro: ${error.message}</span>`;
+            }
+        }
+
+        async function insertTestData() {
+            const result = document.getElementById('insert-result');
+            result.textContent = 'Inserindo dados de teste...';
+            
+            try {
+                if (!db) {
+                    db = SupabaseDatabase.getInstance();
+                    await db.init();
+                }
+
+                // 1. Inserir empresa
+                const { data: empresa, error: empresaError } = await db.getClient()
+                    .from('empresa')
+                    .insert([{ nome_empresa: 'Empresa Teste RIDEC', ies_ativo: 'S' }])
+                    .select();
+                
+                if (empresaError && !empresaError.message.includes('duplicate key')) {
+                    throw empresaError;
+                }
+
+                // 2. Inserir áreas (sem ies_ativo por enquanto)
+                const { data: areas, error: areasError } = await db.getClient()
+                    .from('area')
+                    .insert([
+                        { nome_area: 'Engenharia', cod_empresa: 1 },
+                        { nome_area: 'Produção', cod_empresa: 1 },
+                        { nome_area: 'Qualidade', cod_empresa: 1 },
+                        { nome_area: 'Manutenção', cod_empresa: 1 }
+                    ])
+                    .select();
+                
+                if (areasError && !areasError.message.includes('duplicate key')) {
+                    throw areasError;
+                }
+
+                // 3. Inserir tipos de usuário
+                const { data: tipos, error: tiposError } = await db.getClient()
+                    .from('tipo_usuario')
+                    .insert([
+                        { nome_tipo_usuario: 'Sistema', descricao_tipo: 'Usuário do sistema', nivel_acesso: 0, pode_adicionar_usuarios: true, pode_gerenciar_areas: true, pode_acesso_sistema: true, ies_ativo: 'S' },
+                        { nome_tipo_usuario: 'Admin', descricao_tipo: 'Administrador', nivel_acesso: 1, pode_adicionar_usuarios: true, pode_gerenciar_areas: true, pode_acesso_sistema: true, ies_ativo: 'S' }
+                    ])
+                    .select();
+                
+                if (tiposError && !tiposError.message.includes('duplicate key')) {
+                    throw tiposError;
+                }
+
+                // 4. Inserir usuário
+                const { data: usuario, error: usuarioError } = await db.getClient()
+                    .from('usuario')
+                    .insert([{
+                        nome_usuario: 'Juliano Schulz',
+                        email_usuario: 'julianooschulz@gmail.com',
+                        senha_usuario: '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
+                        cod_empresa: 1,
+                        cod_tipo_usuario: 1,
+                        ies_ativo: 'S'
+                    }])
+                    .select();
+                
+                if (usuarioError && !usuarioError.message.includes('duplicate key')) {
+                    throw usuarioError;
+                }
+
+                // 5. Inserir UOMs
+                const { data: uoms, error: uomsError } = await db.getClient()
+                    .from('uom')
+                    .insert([
+                        { nome_uom: 'Hora', descricao_uom: 'Unidade de tempo em horas', ies_ativo: 'S' },
+                        { nome_uom: 'Dia', descricao_uom: 'Unidade de tempo em dias', ies_ativo: 'S' },
+                        { nome_uom: 'Peça', descricao_uom: 'Unidade de quantidade em peças', ies_ativo: 'S' }
+                    ])
+                    .select();
+                
+                if (uomsError && !uomsError.message.includes('duplicate key')) {
+                    throw uomsError;
+                }
+
+                // 6. Inserir modelos RIDEC
+                const { data: modelos, error: modelosError } = await db.getClient()
+                    .from('modelo_ridec')
+                    .insert([
+                        { nome_modelo: 'Modelo A - Desenvolvimento', descricao_modelo: 'Modelo para desenvolvimento de produtos', cod_area: 1, cod_empresa: 1, prioridade: 'alta', responsavel: 'Engenheiro Chefe', prazo_estimado: 30, ies_ativo: 'S' },
+                        { nome_modelo: 'Modelo B - Produção', descricao_modelo: 'Modelo para processos de produção', cod_area: 2, cod_empresa: 1, prioridade: 'média', responsavel: 'Supervisor de Produção', prazo_estimado: 15, ies_ativo: 'S' },
+                        { nome_modelo: 'Modelo C - Qualidade', descricao_modelo: 'Modelo para controle de qualidade', cod_area: 3, cod_empresa: 1, prioridade: 'alta', responsavel: 'Gerente de Qualidade', prazo_estimado: 20, ies_ativo: 'S' }
+                    ])
+                    .select();
+                
+                if (modelosError && !modelosError.message.includes('duplicate key')) {
+                    throw modelosError;
+                }
+
+                result.innerHTML = '<span class="success">✅ Dados de teste inseridos com sucesso!</span>';
+
+            } catch (error) {
+                result.innerHTML = `<span class="error">❌ Erro: ${error.message}</span>`;
+            }
+        }
+
+        async function checkData() {
+            const result = document.getElementById('check-result');
+            result.textContent = 'Verificando dados...';
+            
+            try {
+                if (!db) {
+                    db = SupabaseDatabase.getInstance();
+                    await db.init();
+                }
+
+                // Verificar empresas
+                const { data: empresas } = await db.getClient().from('empresa').select('*');
+                
+                // Verificar áreas
+                const { data: areas } = await db.getClient().from('area').select('*');
+                
+                // Verificar usuários
+                const { data: usuarios } = await db.getClient().from('usuario').select('*');
+                
+                // Verificar modelos
+                const { data: modelos } = await db.getClient().from('modelo_ridec').select('*');
+
+                result.innerHTML = `<span class="success">✅ Dados encontrados:</span>
+Empresas: ${empresas ? empresas.length : 0}
+Áreas: ${areas ? areas.length : 0}
+Usuários: ${usuarios ? usuarios.length : 0}
+Modelos: ${modelos ? modelos.length : 0}
+
+Detalhes das áreas:
+${areas ? areas.map(a => `- ${a.nome_area} (ID: ${a.cod_area})`).join('\n') : 'Nenhuma área encontrada'}`;
+
+            } catch (error) {
+                result.innerHTML = `<span class="error">❌ Erro: ${error.message}</span>`;
+            }
+        }
+
+        async function testOccurrences() {
+            const result = document.getElementById('occurrences-result');
+            result.textContent = 'Testando sistema de ocorrências...';
+            
+            try {
+                if (!db) {
+                    db = SupabaseDatabase.getInstance();
+                    await db.init();
+                }
+
+                // Testar carregamento de áreas
+                const areas = await db.getAreasByEmpresa(1);
+                
+                if (!areas || areas.length === 0) {
+                    result.innerHTML = '<span class="error">❌ Nenhuma área encontrada para empresa 1</span>';
+                    return;
+                }
+
+                // Testar carregamento de modelos para primeira área
+                const { data: modelos } = await db.getClient()
+                    .from('modelo_ridec')
+                    .select('*')
+                    .eq('cod_area', areas[0].cod_area);
+
+                result.innerHTML = `<span class="success">✅ Sistema de ocorrências funcionando!</span>
+
+Áreas encontradas: ${areas.length}
+Modelos na primeira área: ${modelos ? modelos.length : 0}
+
+Primeira área: ${areas[0].nome_area}
+Modelos: ${modelos ? modelos.map(m => `- ${m.nome_modelo}`).join('\n') : 'Nenhum modelo'}`;
+
+            } catch (error) {
+                result.innerHTML = `<span class="error">❌ Erro: ${error.message}</span>`;
+            }
+        }
+
+        // Testar conexão automaticamente
+        window.addEventListener('load', testConnection);
+    </script>
+</body>
+</html>

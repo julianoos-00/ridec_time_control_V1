@@ -1,207 +1,183 @@
-# Sistema de Login RIDEC
+# Sistema de Login - RIDEC Time Control
 
-Este documento descreve o sistema de autenticação implementado no Sistema RIDEC.
+## 📋 Visão Geral
+
+O sistema de login foi implementado para proteger o acesso ao sistema RIDEC Time Control, garantindo que apenas usuários autenticados possam acessar as funcionalidades do sistema.
+
+## 🚀 Funcionalidades
+
+### ✅ Implementadas
+
+- **Tela de Login Moderna**: Interface responsiva com animações e design profissional
+- **Autenticação Local**: Sistema de login com validação de credenciais
+- **Integração Supabase**: Preparado para autenticação com banco de dados
+- **Sessões Persistentes**: Opção "Lembrar de mim" com diferentes tempos de expiração
+- **Credenciais Demo**: Usuários de demonstração para teste
+- **Validação de Formulário**: Validação em tempo real de email e senha
+- **Redirecionamento Automático**: Redirecionamento após login bem-sucedido
+- **Verificação de Sessão**: Verificação automática de sessões ativas
+- **Logout Seguro**: Sistema de logout com confirmação
+- **Informações do Usuário**: Exibição de dados do usuário logado no header
 
 ## 📁 Arquivos Criados
 
-### 1. `login.html`
-- Tela de login principal com design moderno
-- Formulário de autenticação com validação
-- Opções de login social (Google, GitHub)
-- Modal para recuperação de senha
-- Modal para registro de novos usuários
+### `login.html`
+- Página principal de login
+- Formulário de autenticação
 - Credenciais de demonstração
+- Links para cadastro e recuperação de senha
 
-### 2. `login.js`
-- Classe `LoginSystem` para gerenciar autenticação
-- Integração com Supabase Auth
-- Validação de formulários em tempo real
-- Gerenciamento de estados de loading
-- Tratamento de erros e mensagens
-
-### 3. `login-styles.css`
-- Estilos modernos para a tela de login
+### `login-styles.css`
+- Estilos modernos e responsivos
 - Animações e efeitos visuais
-- Design responsivo
-- Tema escuro opcional
-- Estados de validação visual
+- Design adaptativo para mobile
+- Tema consistente com o sistema principal
 
-### 4. `auth-manager.js`
-- Classe `AuthManager` para gerenciar autenticação global
-- Integração com banco de dados Supabase
-- Gerenciamento de permissões e níveis de acesso
-- Criação automática de perfis de usuário
-- Callbacks para eventos de autenticação
+### `login.js`
+- Lógica de autenticação
+- Validação de formulários
+- Integração com Supabase
+- Gerenciamento de sessões
+- Sistema de mensagens
 
-## 🔐 Funcionalidades
+### `auth-check.js`
+- Verificação de autenticação
+- Gerenciamento de sessões
+- Controle de permissões
+- Interface do usuário logado
 
-### Autenticação
-- ✅ Login com email e senha
-- ✅ Registro de novos usuários
-- ✅ Recuperação de senha
-- ✅ Login social (Google, GitHub)
-- ✅ Sessões persistentes
-- ✅ Logout seguro
+## 🔐 Credenciais de Demonstração
 
-### Validação
-- ✅ Validação de email em tempo real
-- ✅ Validação de senha (mínimo 6 caracteres)
-- ✅ Confirmação de senha no registro
-- ✅ Aceite de termos de uso
+### Administrador
+- **Email**: `admin@ridec.com`
+- **Senha**: `admin123`
+- **Permissões**: Todas as funcionalidades
 
-### Interface
-- ✅ Design moderno e responsivo
-- ✅ Animações suaves
-- ✅ Estados de loading
-- ✅ Mensagens de erro e sucesso
-- ✅ Credenciais de demonstração
+### Usuário
+- **Email**: `usuario@ridec.com`
+- **Senha**: `user123`
+- **Permissões**: Visualização básica
 
-### Integração
-- ✅ Integração com Supabase Auth
-- ✅ Criação automática de perfis
-- ✅ Gerenciamento de permissões
-- ✅ Redirecionamento automático
-
-## 🚀 Como Usar
+## 🛠️ Como Usar
 
 ### 1. Acessar o Sistema
-```
-http://localhost:3000/login.html
-```
+- Abra `login.html` no navegador
+- Use as credenciais de demonstração ou crie uma conta
 
-### 2. Credenciais de Demonstração
-- **Admin:** `admin@ridec.com` / `admin123`
-- **Usuário:** `user@ridec.com` / `user123`
+### 2. Login
+- Digite email e senha
+- Marque "Lembrar de mim" para sessão persistente
+- Clique em "Entrar"
 
-### 3. Fluxo de Autenticação
-1. Usuário acessa `login.html`
-2. Sistema verifica se há sessão ativa
-3. Se não houver, exibe tela de login
-4. Após login bem-sucedido, redireciona para `index.html`
-5. Sistema verifica permissões e atualiza UI
+### 3. Navegação
+- Após login, você será redirecionado para `index.html`
+- Suas informações aparecerão no header
+- Use o botão de logout para sair
+
+### 4. Credenciais Demo
+- Use os botões "Usar Admin" ou "Usar Usuário" para preencher automaticamente
+- Ideal para demonstrações e testes
 
 ## 🔧 Configuração
 
-### Supabase
-O sistema usa as configurações do arquivo `supabase-config.js`:
-```javascript
-const SUPABASE_CONFIG = {
-    url: 'https://fphyoywhgelrxtjfovmz.supabase.co',
-    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
-};
-```
+### Integração com Supabase
+O sistema está preparado para integração com Supabase:
 
-### Tabelas Necessárias
-O sistema espera as seguintes tabelas no Supabase:
-- `usuario` - Dados dos usuários
-- `empresa` - Empresas
-- `tipo_usuario` - Tipos de usuário com níveis de acesso
+1. **Configuração**: Use o arquivo `supabase-config.js` existente
+2. **Autenticação**: O sistema detecta automaticamente se o Supabase está disponível
+3. **Fallback**: Se o Supabase não estiver configurado, usa modo demo
 
-## 📊 Níveis de Permissão
+### Personalização
+- **Cores**: Modifique as variáveis CSS em `login-styles.css`
+- **Logo**: Altere o ícone e texto no header do login
+- **Credenciais**: Adicione novos usuários demo em `login.js`
 
-| Nível | Descrição | Permissões |
-|-------|-----------|------------|
-| 1 | Usuário Básico | Leitura |
-| 2 | Usuário Avançado | Leitura + Escrita |
-| 3 | Administrador | Leitura + Escrita + Admin |
-| 4 | Super Admin | Todas as permissões |
+## 🔒 Segurança
 
-## 🔄 Fluxo de Dados
-
-### Login
-1. Usuário insere credenciais
-2. `LoginSystem` valida dados
-3. Supabase Auth autentica usuário
-4. `AuthManager` carrega perfil do usuário
-5. Sistema atualiza UI e redireciona
-
-### Logout
-1. Usuário clica em "Sair"
-2. `AuthManager` faz logout no Supabase
-3. Dados locais são limpos
-4. Redirecionamento para login
-
-## 🛡️ Segurança
-
-### Implementado
-- ✅ Autenticação via Supabase Auth
-- ✅ Validação de sessões
-- ✅ Tokens JWT seguros
-- ✅ HTTPS obrigatório
-- ✅ Validação de entrada
+### Implementada
+- Validação de entrada
+- Sanitização de dados
+- Sessões com expiração
+- Logout seguro
+- Verificação de permissões
 
 ### Recomendações
-- 🔒 Implementar 2FA (Two-Factor Authentication)
-- 🔒 Rate limiting para tentativas de login
-- 🔒 Logs de auditoria
-- 🔒 Política de senhas mais rigorosa
+- Configure HTTPS em produção
+- Use autenticação de dois fatores
+- Implemente rate limiting
+- Configure políticas de senha
+- Use tokens JWT para APIs
 
-## 🎨 Personalização
+## 📱 Responsividade
 
-### Cores
-As cores principais podem ser alteradas no CSS:
-```css
-:root {
-    --primary-color: #667eea;
-    --secondary-color: #764ba2;
-    --success-color: #48bb78;
-    --error-color: #f56565;
-}
-```
+O sistema é totalmente responsivo:
+- **Desktop**: Layout completo com credenciais demo
+- **Tablet**: Layout adaptado
+- **Mobile**: Interface otimizada para touch
 
-### Logo
-Para alterar o logo, modifique o ícone no `login.html`:
-```html
-<div class="logo-icon">
-    <i class="fas fa-project-diagram"></i>
-</div>
-```
+## 🎨 Design
 
-## 🐛 Solução de Problemas
+### Características
+- **Moderno**: Design limpo e profissional
+- **Animado**: Animações suaves e transições
+- **Consistente**: Tema alinhado com o sistema principal
+- **Acessível**: Suporte a navegação por teclado
 
-### Erro: "Biblioteca do Supabase não carregada"
-- Verifique se o script do Supabase está carregado antes do `login.js`
+### Elementos Visuais
+- Gradientes e sombras
+- Ícones Font Awesome
+- Animações de fundo
+- Feedback visual para interações
 
-### Erro: "Configuração do Supabase não encontrada"
-- Verifique se o arquivo `supabase-config.js` está presente e configurado
+## 🚨 Solução de Problemas
 
-### Usuário não é redirecionado após login
-- Verifique se o `auth-manager.js` está carregado no `index.html`
-- Verifique se há erros no console do navegador
+### Problemas Comuns
 
-### Permissões não funcionam
-- Verifique se a tabela `tipo_usuario` tem os níveis corretos
-- Verifique se o usuário tem um registro na tabela `usuario`
+1. **Não consegue fazer login**
+   - Verifique se as credenciais estão corretas
+   - Use as credenciais demo fornecidas
+   - Verifique o console do navegador para erros
 
-## 📝 Logs
+2. **Redirecionamento não funciona**
+   - Verifique se `index.html` existe
+   - Confirme que não há erros de JavaScript
+   - Teste em modo incógnito
 
-O sistema gera logs detalhados no console:
-- `🚀` - Inicialização
-- `✅` - Sucesso
-- `❌` - Erro
-- `🔐` - Autenticação
-- `👤` - Usuário
-- `🔄` - Estado alterado
+3. **Estilos não carregam**
+   - Verifique se `login-styles.css` está no mesmo diretório
+   - Confirme que o arquivo CSS não está corrompido
+   - Teste em diferentes navegadores
 
-## 🔮 Próximas Funcionalidades
+### Logs e Debug
+- Abra o console do navegador (F12)
+- Verifique mensagens de erro
+- Use `console.log` para debug adicional
 
-- [ ] Autenticação de dois fatores (2FA)
-- [ ] Gerenciamento de perfis de usuário
-- [ ] Logs de auditoria
-- [ ] Integração com Active Directory
-- [ ] Single Sign-On (SSO)
-- [ ] Políticas de senha personalizáveis
+## 🔄 Próximos Passos
+
+### Melhorias Sugeridas
+- [ ] Integração completa com Supabase
+- [ ] Recuperação de senha por email
+- [ ] Autenticação de dois fatores
+- [x] ~~Login social (Google, Microsoft)~~ - Removido conforme solicitado
+- [ ] Sistema de permissões granular
+- [ ] Auditoria de login
+- [ ] Bloqueio por tentativas
+
+### Integração com Sistema Principal
+- [ ] Controle de acesso por funcionalidade
+- [ ] Logs de atividade do usuário
+- [ ] Personalização por perfil
+- [ ] Notificações por usuário
 
 ## 📞 Suporte
 
-Para dúvidas ou problemas:
-1. Verifique os logs no console do navegador
-2. Consulte a documentação do Supabase
-3. Verifique a configuração do banco de dados
-4. Teste com as credenciais de demonstração
+Para suporte ou dúvidas:
+1. Verifique este README
+2. Consulte os comentários no código
+3. Teste com as credenciais demo
+4. Verifique o console do navegador
 
 ---
 
-**Sistema RIDEC - Controle de Processos e Tempo**
-*Desenvolvido com ❤️ para otimizar processos empresariais*
-
+**Sistema RIDEC Time Control** - Sistema de Login v1.0

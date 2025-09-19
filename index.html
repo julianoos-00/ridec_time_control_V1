@@ -11,18 +11,7 @@
     <div class="container">
         <!-- Header -->
         <header class="header">
-            <div class="header-left">
-                <h1><i class="fas fa-project-diagram"></i> Sistema RIDEC</h1>
-                <div class="user-info auth-required" style="display: none;">
-                    <div class="user-details">
-                        <span class="user-name">Usuário</span>
-                        <span class="user-company">Empresa</span>
-                    </div>
-                    <div class="user-avatar">
-                        <i class="fas fa-user"></i>
-                    </div>
-                </div>
-            </div>
+            <h1><i class="fas fa-project-diagram"></i> Sistema RIDEC</h1>
             <div class="header-actions">
                 <button id="newRidecBtn" class="btn btn-primary">
                     <i class="fas fa-plus"></i> Novo RIDEC
@@ -31,22 +20,11 @@
                     <i class="fas fa-magic"></i> Criar com IA
                     <span class="ai-badge">🤖</span>
                 </button>
-                <button id="deleteAllBtn" class="btn btn-danger" title="Deletar Todos os RIDECs">
-                    <i class="fas fa-trash-alt"></i> Limpar Tudo
-                </button>
-                <button id="resetConfigBtn" class="btn btn-warning" title="Retornar à Configuração Padrão">
-                    <i class="fas fa-undo"></i> Reset Config
-                </button>
                 <button id="occurrencesBtn" class="btn btn-info" title="Gerenciar Ocorrências">
-                    <i class="fas fa-list-alt"></i> Ocorrências
+                    <i class="fas fa-list-alt"></i> Cards
                 </button>
                 <button id="cadastroBtn" class="btn btn-success" title="Cadastros">
                     <i class="fas fa-user-plus"></i> Cadastros
-                </button>
-                
-                <!-- Botão de logout -->
-                <button id="logoutBtn" class="btn btn-outline auth-required" title="Sair" style="display: none;">
-                    <i class="fas fa-sign-out-alt"></i> Sair
                 </button>
 
                 <div class="notification-bell">
@@ -63,6 +41,16 @@
                             <!-- Notificações serão adicionadas aqui -->
                         </div>
                     </div>
+                </div>
+
+                <!-- Seção do Usuário -->
+                <div id="userSection" class="user-section" style="display: none;">
+                    
+                    <span id="userName" class="user-name">Usuário</span>
+                    
+                    <button id="logoutBtn" class="btn btn-logout" title="Sair do Sistema">
+                        <i class="fas fa-sign-out-alt"></i> Sair
+                    </button>
                 </div>
             </div>
         </header>
@@ -89,12 +77,6 @@
             <div class="view-toggle">
                 <button id="cardViewBtn" class="btn btn-primary active">
                     <i class="fas fa-th-large"></i> Visualização em Cards
-                </button>
-                <button id="flowViewBtn" class="btn btn-secondary">
-                    <i class="fas fa-project-diagram"></i> Visualização de Fluxo
-                </button>
-                <button id="chartsViewBtn" class="btn btn-secondary">
-                    <i class="fas fa-chart-bar"></i> Gráficos
                 </button>
             </div>
 
@@ -328,6 +310,22 @@
                         </div>
                         
                         <div class="form-card">
+                            <div class="nonconformity-section">
+                                <div class="form-group modern-group">
+                                    <label for="ridecNonconformityPercent" class="modern-label">
+                                        <i class="fas fa-exclamation-triangle"></i> Percentual de Não Conformidades
+                                    </label>
+                                    <div class="percent-input-wrapper">
+                                        <input type="number" id="ridecNonconformityPercent" class="modern-input" min="0" max="100" step="0.1" placeholder="0.0">
+                                        <span class="percent-label">%</span>
+                                    </div>
+                                    <div class="input-help">
+                                        <i class="fas fa-info-circle"></i>
+                                        <span>Define o percentual esperado de não conformidades para este modelo de processo</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
                             <div class="time-config-section">
                                 <div class="form-group modern-group">
                                     <label for="ridecTimeUnit" class="modern-label">
@@ -425,14 +423,33 @@
                                         </div>
                                         <div class="deadline-inputs">
                                             <div class="time-input-group modern-group">
-                                                <input type="number" id="deadlineRI" class="modern-input" min="1">
-                                                <select class="deadline-unit-select modern-select" id="unitRI">
-                                                    <option value="seconds">Segundos</option>
-                                                    <option value="minutes">Minutos</option>
-                                                    <option value="hours" selected>Horas</option>
-                                                    <option value="days">Dias</option>
-                                                    <option value="weeks">Semanas</option>
-                                                </select>
+                                                <label for="deadlineRI" class="modern-label">
+                                                    <i class="fas fa-clock"></i> Prazo
+                                                </label>
+                                                <div class="time-input-wrapper">
+                                                    <input type="number" id="deadlineRI" class="modern-input" min="1">
+                                                    <select class="deadline-unit-select modern-select" id="unitRI">
+                                                        <option value="seconds">Segundos</option>
+                                                        <option value="minutes">Minutos</option>
+                                                        <option value="hours" selected>Horas</option>
+                                                        <option value="days">Dias</option>
+                                                        <option value="weeks">Semanas</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="form-group modern-group">
+                                                <label for="descriptionRI" class="modern-label">
+                                                    <i class="fas fa-align-left"></i> Descrição da Etapa
+                                                </label>
+                                                <textarea id="descriptionRI" class="modern-textarea" rows="2" placeholder="Descreva as atividades desta etapa..."></textarea>
+                                            </div>
+                                            <div class="form-group modern-group">
+                                                <label for="pathRI" class="modern-label">
+                                                    <i class="fas fa-folder-open"></i> Caminho do Arquivo
+                                                </label>
+                                                <div class="input-wrapper">
+                                                    <input type="text" id="pathRI" class="modern-input" placeholder="Ex: /caminho/para/arquivo/documento.pdf">
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -449,14 +466,33 @@
                                         </div>
                                         <div class="deadline-inputs">
                                             <div class="time-input-group modern-group">
-                                                <input type="number" id="deadlineD" class="modern-input" min="1">
-                                                <select class="deadline-unit-select modern-select" id="unitD">
-                                                    <option value="seconds">Segundos</option>
-                                                    <option value="minutes">Minutos</option>
-                                                    <option value="hours" selected>Horas</option>
-                                                    <option value="days">Dias</option>
-                                                    <option value="weeks">Semanas</option>
-                                                </select>
+                                                <label for="deadlineD" class="modern-label">
+                                                    <i class="fas fa-clock"></i> Prazo
+                                                </label>
+                                                <div class="time-input-wrapper">
+                                                    <input type="number" id="deadlineD" class="modern-input" min="1">
+                                                    <select class="deadline-unit-select modern-select" id="unitD">
+                                                        <option value="seconds">Segundos</option>
+                                                        <option value="minutes">Minutos</option>
+                                                        <option value="hours" selected>Horas</option>
+                                                        <option value="days">Dias</option>
+                                                        <option value="weeks">Semanas</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="form-group modern-group">
+                                                <label for="descriptionD" class="modern-label">
+                                                    <i class="fas fa-align-left"></i> Descrição da Etapa
+                                                </label>
+                                                <textarea id="descriptionD" class="modern-textarea" rows="2" placeholder="Descreva as atividades desta etapa..."></textarea>
+                                            </div>
+                                            <div class="form-group modern-group">
+                                                <label for="pathD" class="modern-label">
+                                                    <i class="fas fa-folder-open"></i> Caminho do Arquivo
+                                                </label>
+                                                <div class="input-wrapper">
+                                                    <input type="text" id="pathD" class="modern-input" placeholder="Ex: /caminho/para/arquivo/documento.pdf">
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -473,14 +509,33 @@
                                         </div>
                                         <div class="deadline-inputs">
                                             <div class="time-input-group modern-group">
-                                                <input type="number" id="deadlineE" class="modern-input" min="1">
-                                                <select class="deadline-unit-select modern-select" id="unitE">
-                                                    <option value="seconds">Segundos</option>
-                                                    <option value="minutes">Minutos</option>
-                                                    <option value="hours" selected>Horas</option>
-                                                    <option value="days">Dias</option>
-                                                    <option value="weeks">Semanas</option>
-                                                </select>
+                                                <label for="deadlineE" class="modern-label">
+                                                    <i class="fas fa-clock"></i> Prazo
+                                                </label>
+                                                <div class="time-input-wrapper">
+                                                    <input type="number" id="deadlineE" class="modern-input" min="1">
+                                                    <select class="deadline-unit-select modern-select" id="unitE">
+                                                        <option value="seconds">Segundos</option>
+                                                        <option value="minutes">Minutos</option>
+                                                        <option value="hours" selected>Horas</option>
+                                                        <option value="days">Dias</option>
+                                                        <option value="weeks">Semanas</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="form-group modern-group">
+                                                <label for="descriptionE" class="modern-label">
+                                                    <i class="fas fa-align-left"></i> Descrição da Etapa
+                                                </label>
+                                                <textarea id="descriptionE" class="modern-textarea" rows="2" placeholder="Descreva as atividades desta etapa..."></textarea>
+                                            </div>
+                                            <div class="form-group modern-group">
+                                                <label for="pathE" class="modern-label">
+                                                    <i class="fas fa-folder-open"></i> Caminho do Arquivo
+                                                </label>
+                                                <div class="input-wrapper">
+                                                    <input type="text" id="pathE" class="modern-input" placeholder="Ex: /caminho/para/arquivo/documento.pdf">
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -497,14 +552,33 @@
                                         </div>
                                         <div class="deadline-inputs">
                                             <div class="time-input-group modern-group">
-                                                <input type="number" id="deadlineC" class="modern-input" min="1">
-                                                <select class="deadline-unit-select modern-select" id="unitC">
-                                                    <option value="seconds">Segundos</option>
-                                                    <option value="minutes">Minutos</option>
-                                                    <option value="hours" selected>Horas</option>
-                                                    <option value="days">Dias</option>
-                                                    <option value="weeks">Semanas</option>
-                                                </select>
+                                                <label for="deadlineC" class="modern-label">
+                                                    <i class="fas fa-clock"></i> Prazo
+                                                </label>
+                                                <div class="time-input-wrapper">
+                                                    <input type="number" id="deadlineC" class="modern-input" min="1">
+                                                    <select class="deadline-unit-select modern-select" id="unitC">
+                                                        <option value="seconds">Segundos</option>
+                                                        <option value="minutes">Minutos</option>
+                                                        <option value="hours" selected>Horas</option>
+                                                        <option value="days">Dias</option>
+                                                        <option value="weeks">Semanas</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="form-group modern-group">
+                                                <label for="descriptionC" class="modern-label">
+                                                    <i class="fas fa-align-left"></i> Descrição da Etapa
+                                                </label>
+                                                <textarea id="descriptionC" class="modern-textarea" rows="2" placeholder="Descreva as atividades desta etapa..."></textarea>
+                                            </div>
+                                            <div class="form-group modern-group">
+                                                <label for="pathC" class="modern-label">
+                                                    <i class="fas fa-folder-open"></i> Caminho do Arquivo
+                                                </label>
+                                                <div class="input-wrapper">
+                                                    <input type="text" id="pathC" class="modern-input" placeholder="Ex: /caminho/para/arquivo/documento.pdf">                                                    
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -936,11 +1010,300 @@
 
     <!-- Modal para configuração de integrações -->
 
+    <!-- Modal para editar modelo RIDEC -->
+    <div id="editModelModal" class="modal modern-modal edit-model-modal">
+        <div class="modal-content modern-modal-content edit-model-content">
+            <div class="modal-header modern-header">
+                <div class="modal-title-section">
+                    <div class="modal-icon">
+                        <i class="fas fa-edit"></i>
+                    </div>
+                    <div class="modal-title-content">
+                        <h2 id="editModelModalTitle">Editar Modelo RIDEC</h2>
+                        <p class="modal-subtitle">Visualize e edite as informações do modelo</p>
+                    </div>
+                </div>
+                <span class="close modern-close" id="closeEditModelModal">&times;</span>
+            </div>
+            
+            <div class="modal-body modern-body edit-model-body">
+                <div class="edit-model-grid">
+                    <!-- Seção 1: Informações do Modelo -->
+                    <div class="model-info-section">
+                        <div class="section-header">
+                            <h3><i class="fas fa-info-circle"></i> Informações do Modelo</h3>
+                        </div>
+                        <div class="model-info-grid">
+                            <div class="info-field">
+                                <label>Nome do Modelo</label>
+                                <div class="info-value" id="editModelName">-</div>
+                            </div>
+                            <div class="info-field">
+                                <label>Área</label>
+                                <div class="info-value" id="editModelArea">-</div>
+                            </div>
+                            <div class="info-field">
+                                <label>Tipo de Modelo</label>
+                                <div class="info-value" id="editModelType">-</div>
+                            </div>
+                            <div class="info-field">
+                                <label>Valor UOM</label>
+                                <div class="info-value" id="editModelUom">-</div>
+                            </div>
+                            <div class="info-field">
+                                <label>Valor NC (%)</label>
+                                <div class="info-value" id="editModelNc">-</div>
+                            </div>
+                            <div class="info-field full-width">
+                                <label>Descrição</label>
+                                <div class="info-value" id="editModelDescription">-</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Seção 2: Etapas do Modelo -->
+                    <div class="model-stages-section">
+                        <div class="section-header">
+                            <h3><i class="fas fa-list-ol"></i> Etapas do Modelo</h3>
+                            <button class="btn btn-primary btn-sm" id="addStageBtn">
+                                <i class="fas fa-plus"></i> Adicionar Etapa
+                            </button>
+                        </div>
+                        <div class="stages-grid" id="editModelStages">
+                            <!-- Etapas serão carregadas dinamicamente -->
+                        </div>
+                    </div>
+
+                    <!-- Seção 3: Ocorrências -->
+                    <div class="model-occurrences-section">
+                        <div class="occurrences-container">
+                            <!-- Ocorrências Ativas -->
+                            <div class="occurrence-expander">
+                                <div class="expander-header" id="activeOccurrencesHeader">
+                                    <div class="expander-title">
+                                        <i class="fas fa-play-circle"></i>
+                                        <span>Ocorrências Ativas</span>
+                                        <span class="occurrence-count" id="activeOccurrencesCount">0</span>
+                                    </div>
+                                    <div class="expander-toggle">
+                                        <i class="fas fa-chevron-down expander-icon"></i>
+                                    </div>
+                                </div>
+                                <div class="expander-content" id="activeOccurrencesContent">
+                                    <div class="occurrences-list" id="activeOccurrencesList">
+                                        <!-- Lista de ocorrências ativas -->
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Ocorrências Concluídas -->
+                            <div class="occurrence-expander">
+                                <div class="expander-header" id="completedOccurrencesHeader">
+                                    <div class="expander-title">
+                                        <i class="fas fa-check-circle"></i>
+                                        <span>Ocorrências Concluídas</span>
+                                        <span class="occurrence-count" id="completedOccurrencesCount">0</span>
+                                    </div>
+                                    <div class="expander-toggle">
+                                        <i class="fas fa-chevron-down expander-icon"></i>
+                                    </div>
+                                </div>
+                                <div class="expander-content" id="completedOccurrencesContent">
+                                    <div class="occurrences-list" id="completedOccurrencesList">
+                                        <!-- Lista de ocorrências concluídas -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-footer modern-footer">
+                <div class="footer-actions">
+                    <button type="button" class="btn btn-secondary modern-btn" id="cancelEditModelBtn">
+                        <i class="fas fa-times"></i> Fechar
+                    </button>
+                    <button type="button" class="btn btn-primary modern-btn" id="saveEditModelBtn">
+                        <i class="fas fa-save"></i> Salvar Alterações
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para criar ocorrência -->
+    <div id="createOccurrenceModal" class="modal modern-modal">
+        <div class="modal-content modern-modal-content">
+            <div class="modal-header modern-header">
+                <div class="modal-title-section">
+                    <div class="modal-icon">
+                        <i class="fas fa-plus-circle"></i>
+                    </div>
+                    <div class="modal-title-content">
+                        <h2 id="createOccurrenceModalTitle">Novo Card</h2>
+                        <p class="modal-subtitle">Preencha os dados para criar um card</p>
+                    </div>
+                </div>
+                <span class="close modern-close" id="closeCreateOccurrenceModal">&times;</span>
+            </div>
+            
+            <div class="modal-body modern-body">
+                <form id="createOccurrenceForm" class="modern-form">
+                    <div class="form-card">
+                        <div class="form-group modern-group">
+                            <label for="externalId" class="modern-label">
+                                <i class="fas fa-tag"></i> ID Externo
+                            </label>
+                            <div class="input-wrapper">
+                                <input type="text" id="externalId" class="modern-input" placeholder="Digite o ID externo da ocorrência" required>
+                                <div class="input-icon">
+                                    <i class="fas fa-check-circle valid-icon"></i>
+                                    <i class="fas fa-exclamation-circle error-icon"></i>
+                                </div>
+                            </div>
+                            <div class="input-feedback"></div>
+                        </div>
+                        
+                        <div class="form-group modern-group">
+                            <div class="expander-container">
+                                <div class="expander-header" id="modelInfoExpanderHeader">
+                                    <div class="expander-title">
+                                        <i class="fas fa-info-circle"></i>
+                                        <span>Informações do Modelo</span>
+                                    </div>
+                                    <div class="expander-toggle">
+                                        <i class="fas fa-chevron-down expander-icon"></i>
+                                    </div>
+                                </div>
+                                
+                                <div class="expander-content" id="modelInfoExpanderContent">
+                                    <div class="info-display">
+                                        <div class="info-item">
+                                            <span class="info-label">Modelo RIDEC:</span>
+                                            <span id="selectedModelTitle" class="info-value">-</span>
+                                        </div>
+                                        <div class="info-item">
+                                            <span class="info-label">Área:</span>
+                                            <span id="selectedModelArea" class="info-value">-</span>
+                                        </div>
+                                        <div class="info-item">
+                                            <span class="info-label">Descrição:</span>
+                                            <span id="selectedModelDescription" class="info-value">-</span>
+                                        </div>
+                                        
+                                        <!-- Seção de Etapas RIDEC -->
+                                        <div class="stages-info-section" id="stages-info-section">
+                                            <h4 class="stages-info-title">
+                                                <i class="fas fa-list-ol"></i> Etapas do Modelo
+                                            </h4>
+                                            
+                                            <!-- Etapa RI -->
+                                            <div class="stage-info-card" data-stage="RI">
+                                                <div class="stage-header">
+                                                    <div class="stage-icon ri-icon">
+                                                        <i class="fas fa-play"></i>
+                                                    </div>
+                                                    <div class="stage-title">Requisitos e Início (RI)</div>
+                                                </div>
+                                                <div class="stage-details">
+                                                    <div class="stage-description">
+                                                        <span class="stage-desc-label">Descrição:</span>
+                                                        <span id="stageRIDescription" class="stage-desc-value">-</span>
+                                                    </div>
+                                                    <div class="stage-time">
+                                                        <span class="stage-time-label">Tempo:</span>
+                                                        <span id="stageRITime" class="stage-time-value">-</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- Etapa D -->
+                                            <div class="stage-info-card" data-stage="D">
+                                                <div class="stage-header">
+                                                    <div class="stage-icon d-icon">
+                                                        <i class="fas fa-cogs"></i>
+                                                    </div>
+                                                    <div class="stage-title">Desenvolvimento (D)</div>
+                                                </div>
+                                                <div class="stage-details">
+                                                    <div class="stage-description">
+                                                        <span class="stage-desc-label">Descrição:</span>
+                                                        <span id="stageDDescription" class="stage-desc-value">-</span>
+                                                    </div>
+                                                    <div class="stage-time">
+                                                        <span class="stage-time-label">Tempo:</span>
+                                                        <span id="stageDTime" class="stage-time-value">-</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- Etapa E -->
+                                            <div class="stage-info-card" data-stage="E">
+                                                <div class="stage-header">
+                                                    <div class="stage-icon e-icon">
+                                                        <i class="fas fa-vial"></i>
+                                                    </div>
+                                                    <div class="stage-title">Execução e Testes (E)</div>
+                                                </div>
+                                                <div class="stage-details">
+                                                    <div class="stage-description">
+                                                        <span class="stage-desc-label">Descrição:</span>
+                                                        <span id="stageEDescription" class="stage-desc-value">-</span>
+                                                    </div>
+                                                    <div class="stage-time">
+                                                        <span class="stage-time-label">Tempo:</span>
+                                                        <span id="stageETime" class="stage-time-value">-</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- Etapa C -->
+                                            <div class="stage-info-card" data-stage="C">
+                                                <div class="stage-header">
+                                                    <div class="stage-icon c-icon">
+                                                        <i class="fas fa-check-double"></i>
+                                                    </div>
+                                                    <div class="stage-title">Conclusão (C)</div>
+                                                </div>
+                                                <div class="stage-details">
+                                                    <div class="stage-description">
+                                                        <span class="stage-desc-label">Descrição:</span>
+                                                        <span id="stageCDescription" class="stage-desc-value">-</span>
+                                                    </div>
+                                                    <div class="stage-time">
+                                                        <span class="stage-time-label">Tempo:</span>
+                                                        <span id="stageCTime" class="stage-time-value">-</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="modal-footer modern-footer">
+                <div class="footer-actions">
+                    <button type="button" class="btn btn-secondary modern-btn" id="cancelCreateOccurrenceBtn">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                    <button type="button" class="btn btn-primary modern-btn" id="confirmCreateOccurrenceBtn">
+                        <i class="fas fa-check"></i> Concluir
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script src="supabase-config.js"></script>
-    <script src="auth-manager.js"></script>
     <script src="supabase-database.js"></script>
+    <script src="auth-check.js"></script>
     <script src="script.js"></script>
     <script src="integration-example.js"></script>
 </body>

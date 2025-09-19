@@ -76,5 +76,3 @@ Após executar o script no Supabase:
 
 
 
-
-

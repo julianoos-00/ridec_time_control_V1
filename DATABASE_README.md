@@ -121,7 +121,7 @@ psql -h localhost -p 5432 -U ridec_app -d ridec_time_control
 - `cod_m_etapa_e` (INTEGER)
 - `cod_m_etapa_c` (INTEGER)
 - `cod_empresa` (INTEGER NOT NULL)
-- `valor_NC` (DOUBLE PRECISION DEFAULT 0.0)
+- `valor_nc` (DOUBLE PRECISION DEFAULT 0.0)
 
 ### card_ridec
 - `cod_card_ridec` (SERIAL PRIMARY KEY)
