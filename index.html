@@ -1021,6 +1021,17 @@
                     <div class="modal-title-content">
                         <h2 id="editModelModalTitle">Editar Modelo RIDEC</h2>
                         <p class="modal-subtitle">Visualize e edite as informações do modelo</p>
+                        <div class="modal-header-actions" style="display: flex; gap: 8px; margin-top: 12px;">
+                            <button type="button" class="btn btn-success btn-sm" id="createOccurrenceFromModelBtn" title="Criar Ocorrência">
+                                <i class="fas fa-plus-circle"></i> Criar Ocorrência
+                            </button>
+                            <button type="button" class="btn btn-info btn-sm" id="configureIntegrationsFromModelBtn" title="Configurar Integrações">
+                                <i class="fas fa-plug"></i> Integrações
+                            </button>
+                            <button type="button" class="btn btn-danger btn-sm" id="deleteModelFromModalBtn" title="Excluir Modelo">
+                                <i class="fas fa-trash"></i> Excluir
+                            </button>
+                        </div>
                     </div>
                 </div>
                 <span class="close modern-close" id="closeEditModelModal">&times;</span>
@@ -1065,9 +1076,7 @@
                     <div class="model-stages-section">
                         <div class="section-header">
                             <h3><i class="fas fa-list-ol"></i> Etapas do Modelo</h3>
-                            <button class="btn btn-primary btn-sm" id="addStageBtn">
-                                <i class="fas fa-plus"></i> Adicionar Etapa
-                            </button>
+                            
                         </div>
                         <div class="stages-grid" id="editModelStages">
                             <!-- Etapas serão carregadas dinamicamente -->

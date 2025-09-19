@@ -223,6 +223,18 @@ class RIDECSystem {
             saveEditModelBtn.addEventListener('click', () => this.saveEditModel());
         }
 
+        // Event listener para botão criar ocorrência a partir do modelo
+        const createOccurrenceFromModelBtn = document.getElementById('createOccurrenceFromModelBtn');
+        if (createOccurrenceFromModelBtn) {
+            createOccurrenceFromModelBtn.addEventListener('click', () => this.createOccurrenceFromModel());
+        }
+
+        // Event listener para botão excluir modelo a partir do modal
+        const deleteModelFromModalBtn = document.getElementById('deleteModelFromModalBtn');
+        if (deleteModelFromModalBtn) {
+            deleteModelFromModalBtn.addEventListener('click', () => this.deleteModelFromModal());
+        }
+
         // Event listeners para expanders de ocorrências
         const activeOccurrencesHeader = document.getElementById('activeOccurrencesHeader');
         const completedOccurrencesHeader = document.getElementById('completedOccurrencesHeader');
@@ -1574,40 +1586,21 @@ class RIDECSystem {
         
         const card = document.createElement('div');
         card.className = `ridec-card model-card ${this.isOverdue(ridec) ? 'overdue' : ''}`;
+        card.setAttribute('data-ridec-id', ridec.id);
         
         card.innerHTML = `
-            <div class="ridec-header">
+            <div class="ridec-header" style="position: relative;">
+                <div class="model-badge" style="position: absolute; top: 8px; left: 8px; z-index: 10;">${ridec.tipo_modelo?.nome_tipo_modelo || 'Modelo'}</div>
                 <div class="ridec-title">
                     ${ridec.title}
-                    <span class="model-badge">Modelo</span>
                 </div>
                 <div class="ridec-description">${ridec.description}</div>
-                <div class="ridec-area-badge">${ridec.area || 'Sem Área'}</div>
-                <div class="ridec-actions">
-                    <button class="action-btn" onclick="ridecSystem.editRidec('${ridec.id}')" title="Editar Modelo">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="action-btn" onclick="ridecSystem.deleteRidec('${ridec.id}')" title="Excluir Modelo">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                    <button class="action-btn integration-btn" onclick="ridecSystem.openIntegrationModal('${ridec.id}')" title="Configurar Integrações">
-                        <i class="fas fa-plug"></i>
-                        ${ridec.integrations && Object.keys(ridec.integrations).length > 0 ? `<span class="integration-count">${Object.keys(ridec.integrations).length}</span>` : ''}
-                    </button>
-                    <button class="action-btn create-occurrence-btn" onclick="console.log('🔍 Botão clicado! ID:', '${ridec.id}', 'Tipo:', typeof '${ridec.id}'); ridecSystem.openCreateOccurrenceModal('${ridec.id}')" title="Criar Ocorrência">
-                        <i class="fas fa-plus-circle"></i>
-                    </button>
-                </div>
             </div>
             <div class="ridec-body">
                 <div class="ridec-info">                    
                     <div class="info-item">
                         <div class="info-label">Tempo Máximo</div>
                         <div class="info-value ${!ridec.maxTime ? 'missing-value' : ''}">${ridec.maxTime ? ridec.maxTime + this.getTimeUnitLabel(ridec.timeUnit || 'hours').charAt(0) : 'Não configurado'}</div>
-                    </div>
-                    <div class="info-item">
-                        <div class="info-label">Modo de Controle</div>
-                        <div class="info-value">${ridec.tipo_modelo?.nome_tipo_modelo || 'Não definido'}</div>
                     </div>
                     <div class="info-item">
                         <div class="info-label">Etapas A</div>
@@ -1621,10 +1614,12 @@ class RIDECSystem {
             </div>
         `;
         
+        // Adicionar event listener para clique no card (abrir modal de edição)
+        card.addEventListener('click', (event) => {
+            console.log('🖱️ Clique no card do modelo RIDEC:', ridec.id);
+            this.editRidec(ridec.id);
+        });
 
-        
-
-        
         return card;
     }
 
@@ -2258,8 +2253,15 @@ class RIDECSystem {
         const numericRidecId = typeof ridecId === 'string' ? parseInt(ridecId, 10) : ridecId;
         
         // Verificar se é um modelo RIDEC (tem a classe model-card)
-        const cardElement = document.querySelector(`[onclick*="editRidec('${ridecId}')"]`);
-        if (cardElement && cardElement.closest('.model-card')) {
+        // Como todos os cards criados pela função createRidecCard são modelos, vamos verificar diretamente
+        // se o ID corresponde a um modelo existente
+        const isModelCard = document.querySelector(`.model-card[data-ridec-id="${numericRidecId}"]`) !== null;
+        
+        // Alternativamente, verificar se existe algum card modelo no DOM
+        const hasModelCards = document.querySelectorAll('.model-card').length > 0;
+        
+        // Se há cards modelo e estamos editando um deles, abrir modal de edição de modelo
+        if (hasModelCards && isModelCard) {
             this.openEditModelModal(numericRidecId);
         } else {
             this.openRidecModal(numericRidecId);
@@ -6929,6 +6931,16 @@ class RIDECSystem {
         console.log('🔍 Abrindo modal de edição para modelo RIDEC:', ridecId);
         
         try {
+            // Converter para número se for string, pois os IDs no banco são números
+            const numericRidecId = typeof ridecId === 'string' ? parseInt(ridecId, 10) : ridecId;
+            
+            // Validar se a conversão foi bem-sucedida
+            if (isNaN(numericRidecId) || numericRidecId <= 0) {
+                console.error('❌ ID inválido:', numericRidecId, 'original:', ridecId);
+                alert('ID do modelo inválido');
+                return;
+            }
+            
             // Verificar se Supabase está disponível
             if (!window.supabaseDB || !window.supabaseDB.isConnected()) {
                 console.error('❌ Supabase não disponível para carregar dados do modelo');
@@ -6937,18 +6949,21 @@ class RIDECSystem {
             }
 
             // Buscar dados do modelo
-            const modelo = await this.getModeloById(ridecId);
+            const modelo = await this.getModeloById(numericRidecId);
             if (!modelo) {
-                console.error('❌ Modelo não encontrado:', ridecId);
+                console.error('❌ Modelo não encontrado:', numericRidecId);
                 alert('Modelo não encontrado no banco de dados');
                 return;
             }
 
             // Buscar etapas do modelo
-            const etapas = await this.getEtapasByModelo(ridecId);
+            const etapas = await this.getEtapasByModelo(numericRidecId);
             
             // Buscar ocorrências do modelo
-            const ocorrencias = await this.getOccurrencesByModelo(ridecId);
+            const ocorrencias = await this.getOccurrencesByModelo(numericRidecId);
+            
+            // Armazenar o ID do modelo atual para uso posterior
+            this.currentModelId = numericRidecId;
             
             // Preencher dados do modal
             this.populateEditModelModal(modelo, etapas, ocorrencias);
@@ -7322,6 +7337,62 @@ class RIDECSystem {
         } catch (error) {
             console.error('❌ Erro ao salvar alterações:', error);
             this.showNotification('Erro ao salvar alterações', 'error');
+        }
+    }
+
+    // Criar ocorrência a partir do modelo atual
+    async createOccurrenceFromModel() {
+        console.log('🔍 Criando ocorrência a partir do modelo...');
+        
+        try {
+            // Verificar se há um modelo selecionado
+            if (!this.currentModelId) {
+                console.error('❌ Nenhum modelo selecionado');
+                this.showNotification('Erro: Nenhum modelo selecionado', 'error', false);
+                return;
+            }
+
+            console.log('✅ Modelo selecionado:', this.currentModelId);
+            
+            // Fechar o modal de edição de modelo
+            this.closeEditModelModal();
+            
+            // Abrir o modal de criação de ocorrência com os dados do modelo
+            await this.openCreateOccurrenceModal(this.currentModelId);
+            
+            console.log('✅ Modal de criação de ocorrência aberto com dados do modelo');
+            
+        } catch (error) {
+            console.error('❌ Erro ao criar ocorrência a partir do modelo:', error);
+            this.showNotification('Erro ao criar ocorrência: ' + error.message, 'error', false);
+        }
+    }
+
+    // Excluir modelo a partir do modal
+    async deleteModelFromModal() {
+        console.log('🔍 Excluindo modelo a partir do modal...');
+        
+        try {
+            // Verificar se há um modelo selecionado
+            if (!this.currentModelId) {
+                console.error('❌ Nenhum modelo selecionado');
+                this.showNotification('Erro: Nenhum modelo selecionado', 'error', false);
+                return;
+            }
+
+            console.log('✅ Modelo selecionado para exclusão:', this.currentModelId);
+            
+            // Fechar o modal de edição de modelo
+            this.closeEditModelModal();
+            
+            // Chamar a função de exclusão existente
+            await this.deleteRidec(this.currentModelId);
+            
+            console.log('✅ Modelo excluído com sucesso');
+            
+        } catch (error) {
+            console.error('❌ Erro ao excluir modelo a partir do modal:', error);
+            this.showNotification('Erro ao excluir modelo: ' + error.message, 'error', false);
         }
     }
 

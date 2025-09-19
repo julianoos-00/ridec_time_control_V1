@@ -3519,8 +3519,9 @@ body {
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     position: relative;
     z-index: 1;
-    padding-right: 100px;
-    padding-left: 100px;
+    padding-top: 10px;
+    padding-right: 5px;
+    padding-left: 5px;
     word-wrap: break-word;
     overflow-wrap: break-word;
 }
@@ -3531,8 +3532,8 @@ body {
     line-height: 1.4;
     position: relative;
     z-index: 1;
-    padding-right: 100px;
-    padding-left: 100px;
+    padding-right: 5px;
+    padding-left: 5px;
     word-wrap: break-word;
     overflow-wrap: break-word;
 }
@@ -3638,7 +3639,7 @@ body {
 }
 
 .ridec-body {
-    padding: 20px 15px;
+    padding: 8px 8px;
     background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
     flex: 1;
     display: flex;
@@ -3650,14 +3651,14 @@ body {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 15px;
-    margin-bottom: 20px;
+    margin-bottom: 8px;
     justify-items: center;
     align-items: center;
 }
 
 .info-item {
     text-align: center;
-    padding: 12px 10px;
+    padding: 8px 5px;
     background: linear-gradient(145deg, #f7fafc 0%, #edf2f7 100%);
     border-radius: 10px;
     border: 1px solid rgba(226, 232, 240, 0.8);
